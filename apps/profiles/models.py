@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
+
 from apps.utils import TimeStampedUUIDModel
 
 User = get_user_model()
@@ -19,7 +20,7 @@ class Profile(TimeStampedUUIDModel):
     phone_number = PhoneNumberField(
         verbose_name=_("Phone Number"), max_length=30, blank=True, null=True
     )
-    
+
     team_name = models.CharField(
         verbose_name=_("Team Name"), max_length=100, blank=False, null=False
     )
@@ -40,12 +41,8 @@ class Profile(TimeStampedUUIDModel):
         blank=False,
         null=False,
     )
-    total_points = models.IntegerField(
-        verbose_name=_("Total Points"), default=0
-    )
-    transfers_made = models.IntegerField(
-        verbose_name=_("Transfers Made"), default=0
-    )
+    total_points = models.IntegerField(verbose_name=_("Total Points"), default=0)
+    transfers_made = models.IntegerField(verbose_name=_("Transfers Made"), default=0)
     current_rank = models.IntegerField(
         verbose_name=_("Current Rank"), null=True, blank=True
     )

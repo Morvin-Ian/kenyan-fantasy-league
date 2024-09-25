@@ -1,5 +1,6 @@
 from django_countries.serializer_fields import CountryField
 from rest_framework import fields, serializers
+
 from apps.profiles.models import Profile
 
 
@@ -24,7 +25,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "profile_photo",
             "gender",
             "country",
-            "city"
+            "city",
         ]
 
     def get_full_name(self, obj):
@@ -38,11 +39,4 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = [
-            "phone_number",
-            "profile_photo",
-            "gender",
-            "country",
-            "city"
-        ]
-
+        fields = ["phone_number", "profile_photo", "gender", "country", "city"]
