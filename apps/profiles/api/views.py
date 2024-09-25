@@ -4,10 +4,12 @@ from rest_framework.views import APIView
 
 from apps.profiles.models import Profile
 from .serializers import ProfileSerializer, UpdateProfileSerializer
+from .renderers import ProfileJSONRenderer
 
 
 class GetProfileAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [ProfileJSONRenderer]
 
     def get(self, request):
         user = self.request.user
@@ -18,6 +20,7 @@ class GetProfileAPIView(APIView):
 
 class UpdateProfileAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    renderer_classes = [ProfileJSONRenderer]
     serializer_class = UpdateProfileSerializer
 
     def patch(self, request, username):
