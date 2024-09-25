@@ -15,7 +15,7 @@ class Gender(models.TextChoices):
 
 
 class Profile(TimeStampedUUIDModel):
-    user = models.OneToOneField(User, related_name="fpl_manager", on_delete=models.CASCADE)
+    user = models.OneToOneField(User, related_name="profile", on_delete=models.CASCADE)
     phone_number = PhoneNumberField(
         verbose_name=_("Phone Number"), max_length=30, blank=True, null=True
     )
