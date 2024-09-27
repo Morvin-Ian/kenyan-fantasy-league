@@ -31,7 +31,7 @@ DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8080']
 
 # Application definition
 
@@ -54,6 +54,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "djoser",
     "rest_framework_simplejwt",
+    "djcelery_email"
 ]
 
 LOCAL_APPS = [
@@ -123,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Africa/Nairobi"
 
 USE_I18N = True
 

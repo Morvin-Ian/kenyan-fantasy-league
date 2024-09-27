@@ -14,6 +14,7 @@ services:
       - .env
     depends_on:
       - postgres-db
+      - redis
     networks:
       - fpl-vue
 
@@ -27,6 +28,11 @@ services:
       - POSTGRES_USER=${PG_USER}
       - POSTGRES_PASSWORD=${PG_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB}
+    networks:
+      - fpl-vue
+  
+  redis:
+    image: redis:latest
     networks:
       - fpl-vue
   
@@ -44,7 +50,21 @@ services:
       - "8080:80"
     networks:
       - fpl-vue
-
+  
+  celery_worker:
+    build:
+        context: .
+        dockerfile: ./docker/local/django/Dockerfile
+    command: /start-celeryworker
+    volumes:
+        - .:/app
+    env_file:
+        - .env
+    depends_on:
+        - redis
+        - postgres-db
+    networks:
+        - fpl-vue
 
 networks:
   fpl-vue:
