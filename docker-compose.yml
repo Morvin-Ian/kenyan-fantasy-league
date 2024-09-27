@@ -8,8 +8,8 @@ services:
       - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
-    ports:
-      - "8000:8000"
+    # ports:
+    #   - "8000:8000"
     env_file:
       - .env
     depends_on:
@@ -29,6 +29,22 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - fpl-vue
+  
+  nginx:
+    restart: always
+    depends_on:
+      - api
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/mediafiles
+    build:
+      context: ./docker/local/nginx
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    networks:
+      - fpl-vue
+
 
 networks:
   fpl-vue:

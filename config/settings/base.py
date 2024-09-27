@@ -31,6 +31,8 @@ DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
 
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1']
+
 # Application definition
 
 SITE_ID = 1
@@ -119,7 +121,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "Africa/Nairobi"
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = "UTC"
 
