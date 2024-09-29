@@ -1,1 +1,1 @@
-# Kenyan Premier League.
+# Fantasy Kenya League (FKL).
