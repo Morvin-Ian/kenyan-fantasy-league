@@ -60,7 +60,8 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.accounts",
     "apps.profiles",
-    # 'apps.league'
+    'apps.teams',
+    'apps.scrapper'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
