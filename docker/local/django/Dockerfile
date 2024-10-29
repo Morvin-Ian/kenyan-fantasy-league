@@ -6,7 +6,7 @@ RUN mkdir $APP_HOME/staticfiles
 WORKDIR $APP_HOME
 
 LABEL maintainer='morvinian@gmail.com'
-LABEL description='KPL Fantasy'
+LABEL description='Fantasy Kenyan Legue'
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1

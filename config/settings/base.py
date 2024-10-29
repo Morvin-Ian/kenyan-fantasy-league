@@ -31,9 +31,8 @@ DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8080']
+CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8080', 'http://0.0.0.0:8080']
 
-# Application definition
 
 SITE_ID = 1
 
