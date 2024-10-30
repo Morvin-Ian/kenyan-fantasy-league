@@ -1,11 +1,9 @@
 export interface User {
-    id: number;
+    pkid: number;
     email: string;
     username: string;
-    role: 'user' | 'admin';
-    isEmailVerified: boolean;
-    createdAt: string;
-    lastLogin: string;
+    first_name: string;
+    last_name: string;
   }
   
   export interface LoginCredentials {
@@ -15,6 +13,8 @@ export interface User {
   }
   
   export interface RegisterData {
+    first_name: string,
+    last_name: string,
     email: string;
     password: string;
     username: string;

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import type { AuthState, LoginCredentials, RegisterData, User, AuthResponse, ActivationResponse } from '@/types/auth';
-import apiClient from '@/api/axios';
+import apiClient, { activationUrl, loginUrl, registerUrl } from '@/api/axios';
 
 export const useAuthStore = defineStore('auth', {
   state: (): AuthState => ({
@@ -16,12 +16,6 @@ export const useAuthStore = defineStore('auth', {
     },
     userFullName(): string | null {
       return this.user ? `${this.user.username}` : null;
-    },
-    isEmailVerified(): boolean {
-      return !!this.user?.isEmailVerified;
-    },
-    isAdmin(): boolean {
-      return this.user?.role === 'admin';
     },
     authToken(): string | null {
       return this.token;
@@ -55,9 +49,9 @@ export const useAuthStore = defineStore('auth', {
       this.setError(null);          
 
       try {
-        const { data } = await apiClient.post<AuthResponse>('/auth/jwt/create/', credentials);
+        const { data } = await apiClient.post<AuthResponse>(loginUrl, credentials);
         this.setToken(data.access);
-        await this.refreshUserProfile();
+        // await this.refreshUserProfile();
 
         if (credentials.rememberMe) {
           localStorage.setItem('rememberMe', 'true');
@@ -72,14 +66,15 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(registerData: RegisterData): Promise<string | void> {
+    async register(registerData: RegisterData): Promise<void> {
       this.setLoading(true);
       this.setError(null);
       try {
-        const { data } = await apiClient.post<{ activationUrl: string }>('/auth/users/', registerData);
-        return data.activationUrl;
+        const data  = await apiClient.post<User>(registerUrl, registerData);
+        console.log(data)
+        // this.setUser(data)
       } catch (error: any) {
-        const errorMessage = error.response?.data?.detail || 'Registration failed';
+        const errorMessage = error.response?.data?.detail || 'Registration failed. Please try again.';
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
@@ -87,29 +82,31 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async activateAccount(activationToken: string): Promise<void> {
-      this.setLoading(true);
-      this.setError(null);
-      try {
-        const { data } = await apiClient.post<ActivationResponse>('/auth/users/activation', { token: activationToken });
-        if (!data.success) throw new Error(data.message);
-      } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 'Account activation failed';
-        this.setError(errorMessage);
-        throw new Error(errorMessage);
-      } finally {
-        this.setLoading(false);
-      }
+    async activateAccount(uid:string, token: string): Promise<void> {
+        this.setLoading(true);
+        this.setError(null);
+        
+        try {
+          const response = await apiClient.post<ActivationResponse>(activationUrl, { uid, token });
+          if (response.status === 204) {
+            console.log("Ok")
+          } else {
+            throw new Error(response.data.message);
+          }
+        } catch (error: any) {
+          const errorMessage = error.response?.data?.message || 'Account activation failed';
+          this.setError(errorMessage);
+          throw new Error(errorMessage);
+        } finally {
+          this.setLoading(false);
+        }
     },
 
     async logout(): Promise<void> {
-      try {
-        if (this.token) await apiClient.post('/api/auth/logout');
-      } finally {
+
         this.setToken(null);
         this.setUser(null);
         localStorage.removeItem('rememberMe');
-      }
     },
 
     async refreshUserProfile(): Promise<void> {

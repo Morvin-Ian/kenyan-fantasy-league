@@ -14,6 +14,53 @@
         </div>
   
         <form @submit.prevent="handleSubmit" class="register-form" novalidate>
+          <!-- First Name field -->
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <div class="input-wrapper">
+              <input
+                id="firstName"
+                v-model="form.firstName"
+                type="text"
+                required
+                placeholder="Enter your first name"
+                :class="{ 'error': v$.firstName.$error }"
+                @blur="v$.firstName.$touch"
+              />
+              <div class="input-icon" v-if="form.firstName">
+                <CheckCircle v-if="!v$.firstName.$error" class="valid-icon" />
+                <XCircle v-else class="invalid-icon" />
+              </div>
+            </div>
+            <span v-if="v$.firstName.$error" class="error-text">
+              {{ v$.firstName.$errors[0].$message }}
+            </span>
+          </div>
+  
+          <!-- Last Name field -->
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <div class="input-wrapper">
+              <input
+                id="lastName"
+                v-model="form.lastName"
+                type="text"
+                required
+                placeholder="Enter your last name"
+                :class="{ 'error': v$.lastName.$error }"
+                @blur="v$.lastName.$touch"
+              />
+              <div class="input-icon" v-if="form.lastName">
+                <CheckCircle v-if="!v$.lastName.$error" class="valid-icon" />
+                <XCircle v-else class="invalid-icon" />
+              </div>
+            </div>
+            <span v-if="v$.lastName.$error" class="error-text">
+              {{ v$.lastName.$errors[0].$message }}
+            </span>
+          </div>
+  
+          <!-- Existing username field -->
           <div class="form-group">
             <label for="username">Username</label>
             <div class="input-wrapper">
@@ -187,6 +234,8 @@
   const showConfirmPassword = ref(false);
   
   const form = reactive({
+    firstName: '',
+    lastName: '',
     username: '',
     email: '',
     password: '',
@@ -197,7 +246,26 @@
   // Custom password validator
   const strongPassword = helpers.regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/);
   
+  // Name validator
+  const nameValidator = helpers.regex(/^[a-zA-Z\s-']+$/);
+  
   const rules = {
+    firstName: { 
+      required,
+      minLength: minLength(2),
+      validName: helpers.withMessage(
+        'First name can only contain letters, spaces, hyphens and apostrophes',
+        nameValidator
+      )
+    },
+    lastName: { 
+      required,
+      minLength: minLength(2),
+      validName: helpers.withMessage(
+        'Last name can only contain letters, spaces, hyphens and apostrophes',
+        nameValidator
+      )
+    },
     username: { 
       required,
       minLength: minLength(3),
@@ -249,7 +317,7 @@
     if (passwordStrength.value <= 60) return 'Medium';
     return 'Strong';
   });
-  
+    
   const formIsValid = computed(() => {
     return !v$.value.$error && form.acceptTerms && passwordStrength.value >= 80;
   });
@@ -260,11 +328,13 @@
     if (!isFormValid || !formIsValid.value) return;
   
     try {
-      const activationUrl = await authStore.register({
+      const response = await authStore.register({
+        first_name: form.firstName,
+        last_name: form.lastName,
         username: form.username,
         email: form.email,
         password: form.password,
-        confirmPassword: form.confirmPassword,
+        re_password: form.confirmPassword,
       });
       
       router.push({
