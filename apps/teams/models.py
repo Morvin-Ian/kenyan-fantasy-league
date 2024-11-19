@@ -1,32 +1,30 @@
-# from django.db import models
-# from django.contrib.auth.models import User
-# from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
 
-# POSITION_CHOICES = [
-#     ('GK', 'Goalkeeper'),
-#     ('DF', 'Defender'),
-#     ('MF', 'Midfielder'),
-#     ('FW', 'Forward')
-# ]
+POSITION_CHOICES = [
+    ('GK', 'Goalkeeper'),
+    ('DF', 'Defender'),
+    ('MF', 'Midfielder'),
+    ('FW', 'Forward')
+]
 
-# class Team(models.Model):
-#     name = models.CharField(max_length=100, unique=True)
-#     city = models.CharField(max_length=100)
-#     founded_year = models.PositiveIntegerField(validators=[MinValueValidator(1800), MaxValueValidator(2100)])
-#     logo = models.ImageField(upload_to='team_logos/', blank=True, null=True)
+class Team(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    city = models.CharField(max_length=100)
+    logo = models.ImageField(upload_to='team_logos/', blank=True, null=True)
 
-#     def __str__(self):
-#         return f"{self.name} ({self.city})"
+    def __str__(self):
+        return f"{self.name} ({self.city})"
 
-# class Player(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE)
-#     team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, related_name='players')
-#     jersey_number = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
-#     position = models.CharField(max_length=2, choices=POSITION_CHOICES)
-#     price = models.DecimalField(max_digits=5, decimal_places=1, default=5.0)
+class Player(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.SET_NULL, null=True, related_name='players')
+    jersey_number = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(99)])
+    position = models.CharField(max_length=2, choices=POSITION_CHOICES)
+    price = models.DecimalField(max_digits=5, decimal_places=1, default=5.0)
 
-#     def __str__(self):
-#         return f"{self.user.get_full_name()} - {self.team.name} - {self.get_position_display()}"
+    def __str__(self):
+        return f"{self.user.get_full_name()} - {self.team.name} - {self.get_position_display()}"
 
 # class Coach(models.Model):
 #     user = models.OneToOneField(User, on_delete=models.CASCADE)

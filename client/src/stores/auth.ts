@@ -82,7 +82,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async activateAccount(uid:string, token: string): Promise<void> {
+    async activateAccount(uid:string | string[], token: string | string[]): Promise<void> {
         this.setLoading(true);
         this.setError(null);
         

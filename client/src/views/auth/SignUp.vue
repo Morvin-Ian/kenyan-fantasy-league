@@ -256,8 +256,7 @@ const handleSubmit = async () => {
     });
 
     toast.success("🎉 Activation email sent! Please check your inbox to complete your registration", {
-      timeout: 10000,
-      position: "top-right",
+      timeout: 10000
     });
   } catch (error) {
     console.error('Registration failed:', error);
