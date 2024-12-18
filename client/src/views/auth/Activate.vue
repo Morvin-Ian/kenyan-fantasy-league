@@ -1,41 +1,66 @@
 <template>
-  <div class="activation-container">
-    <div class="activation-card">
-      <h1>Account Activation</h1>
+  <div class="activation-wrapper">
+    <div class="activation-card" :class="{ 'card-success': activationSuccess, 'card-error': error }">
+      <div class="brand">
+        <h1 class="title">Account Activation</h1>
+      </div>
 
       <!-- Loading State -->
-      <div v-if="loading" class="state-container">
-        <div class="loader"></div>
-        <p>Activating your account...</p>
-      </div>
+      <transition name="fade-scale">
+        <div v-if="loading" class="state-container">
+          <div class="loading-ring">
+            <div></div><div></div><div></div><div></div>
+          </div>
+          <p class="status-text">Verifying your account...</p>
+          <p class="sub-text">This may take a few moments</p>
+        </div>
+      </transition>
 
       <!-- Success State -->
-      <div v-if="activationSuccess" class="state-container">
-        <div class="icon-circle success">
-          <svg class="icon" viewBox="0 0 24 24">
-            <path d="M5 13l4 4L19 7"></path>
-          </svg>
+      <transition name="fade-scale">
+        <div v-if="activationSuccess" class="state-container">
+          <div class="status-icon success">
+            <svg viewBox="0 0 24 24" class="icon">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" 
+                fill="none" stroke-width="2" 
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="status-title success">Activation Complete!</h2>
+          <p class="status-text">Your account has been successfully verified</p>
+          <router-link to="/sign-in" class="action-button success">
+            Continue to Login
+            <svg class="button-icon" viewBox="0 0 24 24">
+              <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" 
+                fill="none" stroke-width="2" 
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </router-link>
         </div>
-        <h2>Account Activated!</h2>
-        <p>Your account has been successfully activated.</p>
-        <router-link to="/sign-in" class="button">
-          Proceed to Login
-        </router-link>
-      </div>
+      </transition>
 
       <!-- Error State -->
-      <div v-if="error" class="state-container">
-        <div class="icon-circle error">
-          <svg class="icon" viewBox="0 0 24 24">
-            <path d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
+      <transition name="fade-scale">
+        <div v-if="error" class="state-container">
+          <div class="status-icon error">
+            <svg viewBox="0 0 24 24" class="icon">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                stroke="currentColor" fill="none" stroke-width="2" 
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="status-title error">Activation Failed</h2>
+          <p class="error-message">{{ error }}</p>
+          <button @click="activateAccount" class="action-button error">
+            Try Again
+            <svg class="button-icon" viewBox="0 0 24 24">
+              <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                stroke="currentColor" fill="none" stroke-width="2" 
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
-        <h2>Activation Failed</h2>
-        <p class="error-text">{{ error }}</p>
-        <button @click="activateAccount" class="button">
-          Retry Activation
-        </button>
-      </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -43,7 +68,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -56,18 +81,20 @@ async function activateAccount() {
   const { uid, token } = route.params
 
   if (!uid || !token) {
-    error.value = 'Invalid activation link. Please check your email for the correct link.'
+    error.value = 'Invalid activation link. Please request a new one.'
     loading.value = false
     return
   }
 
   try {
+    loading.value = true
+    error.value = ''
     await authStore.activateAccount(uid, token)
-    loading.value = false
     activationSuccess.value = true
   } catch (err) {
+    error.value = 'We couldn\'t activate your account. Please try again or contact support.'
+  } finally {
     loading.value = false
-    error.value = 'An error occurred during account activation. Please try again.'
   }
 }
 
@@ -77,49 +104,60 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.activation-container {
-  display: flex;
+.activation-wrapper {
   min-height: 100vh;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #dbdbdb 0%, #ffffff 100%);
-  padding: 20px;
-  color: #ffffff;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 .activation-card {
-  background: rgba(255, 255, 255, 0.9);
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: white;
+  border-radius: 24px;
+  padding: 2.5rem;
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05),
+              0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  transition: all 0.4s ease;
+}
+
+.card-success {
+  background: linear-gradient(to bottom right, #f0fdf4, #ffffff);
+}
+
+.card-error {
+  background: linear-gradient(to bottom right, #fef2f2, #ffffff);
+}
+
+.brand {
   text-align: center;
-  transition: transform 0.3s ease-in-out;
+  margin-bottom: 2rem;
 }
 
-.activation-card:hover {
-  transform: scale(1.02);
+.logo-circle {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  background: #f3f4f6;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
 }
 
-h1 {
-  color: #1b5e20;
-  font-size: 1.75rem;
-  margin-bottom: 1.5rem;
-  font-weight: bold;
+.brand-logo {
+  width: 32px;
+  height: 32px;
+  color: #4b5563;
 }
 
-h2 {
-  color: #1b5e20;
-  font-size: 1.35rem;
-  margin: 1rem 0;
-  font-weight: 600;
-}
-
-p {
-  color: #424242;
-  margin: 0.5rem 0;
-  font-size: 1rem;
+.title {
+  color: #111827;
+  font-size: 1.875rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .state-container {
@@ -129,82 +167,162 @@ p {
   gap: 1rem;
 }
 
-.loader {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #ffffff;
-  border-top: 4px solid #0288d1;
+/* Loading Animation */
+.loading-ring {
+  display: inline-block;
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.loading-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  margin: 8px;
+  border: 4px solid #6366f1;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: loading-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #6366f1 transparent transparent transparent;
 }
 
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
+.loading-ring div:nth-child(1) { animation-delay: -0.45s; }
+.loading-ring div:nth-child(2) { animation-delay: -0.3s; }
+.loading-ring div:nth-child(3) { animation-delay: -0.15s; }
 
-  100% {
-    transform: rotate(360deg);
-  }
+@keyframes loading-ring {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
-.icon-circle {
-  width: 68px;
-  height: 68px;
+/* Status Icons */
+.status-icon {
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+  display: grid;
+  place-items: center;
 }
 
-.icon-circle.success {
-  background-color: #c8e6c9;
+.status-icon.success {
+  background: #dcfce7;
+  color: #15803d;
 }
 
-.icon-circle.error {
-  background-color: #ffcdd2;
+.status-icon.error {
+  background: #fee2e2;
+  color: #dc2626;
 }
 
 .icon {
-  width: 34px;
-  height: 34px;
-  stroke: currentColor;
-  stroke-width: 2;
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 32px;
+  height: 32px;
 }
 
-.success .icon {
-  color: #2e7d32;
+/* Text Styles */
+.status-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
 }
 
-.error .icon {
-  color: #d32f2f;
+.status-title.success {
+  color: #15803d;
 }
 
-.button {
-  display: inline-block;
+.status-title.error {
+  color: #dc2626;
+}
+
+.status-text {
+  color: #4b5563;
+  font-size: 1.125rem;
+}
+
+.sub-text {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.error-message {
+  color: #991b1b;
+  text-align: center;
+  font-size: 1rem;
+  max-width: 280px;
+  margin: 0 auto;
+}
+
+/* Button Styles */
+.action-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   padding: 0.75rem 1.5rem;
+  border-radius: 5px;
+  font-weight: 500;
+  transition: all 0.2s ease;
   margin-top: 1rem;
-  background-color: #0288d1;
-  color: white;
   border: none;
-  border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
   font-size: 1rem;
-  transition: background-color 0.3s, transform 0.2s;
 }
 
-.button:hover {
-  background-color: #0277bd;
+.action-button.success {
+  background: #15803d;
+  color: white;
+}
+
+.action-button.success:hover {
+  background: #166534;
   transform: translateY(-2px);
 }
 
-.error-text {
-  color: #d32f2f;
-  font-weight: 500;
+.action-button.error {
+  background: #dc2626;
+  color: white;
+}
+
+.action-button.error:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+.button-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Transitions */
+.fade-scale-enter-active,
+.fade-scale-leave-active {
+  transition: all 0.4s ease;
+}
+
+.fade-scale-enter-from,
+.fade-scale-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+@media (max-width: 640px) {
+  .activation-card {
+    padding: 2rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .status-title {
+    font-size: 1.25rem;
+  }
+
+  .status-text {
+    font-size: 1rem;
+  }
 }
 </style>

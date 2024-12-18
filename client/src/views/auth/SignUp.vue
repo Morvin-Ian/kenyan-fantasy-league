@@ -1,11 +1,9 @@
-<!-- src/components/auth/RegisterForm.vue -->
 <template>
   <div class="register-container">
     <div class="register-card">
       <div class="header">
         <div class="logo">Fantasy Kenyan League</div>
-        <h2>Create Account</h2>
-        <p>Join the Kenyan Premier League Fantasy community</p>
+        <p style="font-size:small">Join the Kenyan Premier League Fantasy community</p>
       </div>
 
       <div v-if="authStore.error" class="error-alert">
@@ -258,6 +256,8 @@ const handleSubmit = async () => {
     toast.success("🎉 Activation email sent! Please check your inbox to complete your registration", {
       timeout: 10000
     });
+    router.push({ path: '/sign-in' });
+
   } catch (error) {
     console.error('Registration failed:', error);
   }
@@ -272,7 +272,7 @@ const handleSubmit = async () => {
   justify-content: center;
   padding: 2rem;
   background: linear-gradient(135deg, #dbdbdb 0%, #ffffff 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
 }
 
 .register-card {
@@ -291,13 +291,11 @@ const handleSubmit = async () => {
 }
 
 .logo {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #1a472a;
   text-align: center;
   margin-bottom: 1.25rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .header {
@@ -352,6 +350,26 @@ const handleSubmit = async () => {
   display: flex;
   align-items: center;
 }
+
+.input-wrapper input {
+  width: 100%;
+  padding: 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.input-wrapper .toggle-password {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+}
+
 
 .form-group label {
   display: block;
@@ -550,33 +568,26 @@ const handleSubmit = async () => {
   color: #2d5a3f;
   text-decoration: underline;
 }
-
+/* Buttons */
 .submit-button {
   width: 100%;
-  padding: 0.875rem;
+  padding: 0.8rem;
   background: #1a472a;
   color: white;
+  font-weight: bold;
   border: none;
-  border-radius: 0.75rem;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 0.5rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  transition: all 0.2s;
 }
 
-.submit-button:not(:disabled):hover {
-  background: #2d5a3f;
-  transform: translateY(-1px);
+.submit-button:hover {
+  background: #164624;
 }
 
 .submit-button:disabled {
   background: #9ca3af;
   cursor: not-allowed;
-  opacity: 0.7;
 }
 
 .loading-spinner {
@@ -595,22 +606,18 @@ const handleSubmit = async () => {
 }
 
 .login-link {
-  text-align: center;
-  margin-top: 1.5rem;
-  font-size: 0.875rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
   color: #6b7280;
 }
 
 .login-link a {
   color: #1a472a;
+  font-weight: bold;
   text-decoration: none;
-  font-weight: 500;
-  margin-left: 0.25rem;
-  transition: color 0.2s ease;
 }
 
 .login-link a:hover {
-  color: #2d5a3f;
   text-decoration: underline;
 }
 
