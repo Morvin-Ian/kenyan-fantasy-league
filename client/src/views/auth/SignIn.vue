@@ -118,9 +118,8 @@ const handleSubmit = async () => {
   }
 };
 onMounted(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    router.replace({ name: 'home' });
+  if (authStore.isAuthenticated) {
+    router.replace({ name: 'home' }); 
   }
 });
 </script>

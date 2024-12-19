@@ -1,23 +1,63 @@
 <template>
-  <div v-if="isAuthenticated">
-    <Navbar/>
+  <div class="min-h-screen bg-gray-50">
+    <!-- Navigation -->
+    <Navbar />
+
+
+    <!-- <Footer/> -->
+
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
+import { onMounted, ref } from 'vue'
 import Navbar from '@/components/Navbar.vue';
-import { onMounted, ref } from 'vue';
+import Footer from '@/components/Footer.vue';
+import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
+import UpcomingGames from '@/components/home/UpcomingGames.vue';
 
-const isAuthenticated = ref(false);
+const authStore = useAuthStore();
 const router = useRouter();
 
-onMounted(() => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    isAuthenticated.value = true;
-  } else {
-    router.replace({ name: 'sign-in' }); 
+const races = ref([
+  {
+    country: 'Belgium',
+    name: 'De Brabantse Pijl',
+    status: 'ENDED',
+    startDate: '13.04.2022',
+    stages: 'One day race',
+    lockIcon: false
+  },
+  {
+    country: 'France',
+    name: 'Paris - Roubaix',
+    status: 'UPCOMING',
+    startDate: '17.04.2022',
+    stages: 'One day race',
+    lockIcon: false
+  },
+  {
+    country: 'Italy',
+    name: 'Tour of the Alps',
+    status: 'LOCKED',
+    startDate: '18.04.2022',
+    stages: '5',
+    lockIcon: true
+  },
+  {
+    country: 'Belgium',
+    name: 'La Flèche Wallonne',
+    status: 'LOCKED',
+    startDate: '20.04.2022',
+    stages: 'One day race',
+    lockIcon: true
   }
-});
+])
+
+onMounted(() => {
+  if (!authStore.isAuthenticated) {
+    router.push('/sign-in');
+  }
+})
 </script>

@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated(): boolean {
-      return !!this.token && !!this.user;
+      return !!this.token;
     },
     userFullName(): string | null {
       return this.user ? `${this.user.username}` : null;
