@@ -1,10 +1,11 @@
 <template>
   <div v-if="isAuthenticated">
-    <h1>Hello</h1>
+    <Navbar/>
   </div>
 </template>
 
 <script setup lang="ts">
+import Navbar from '@/components/Navbar.vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 

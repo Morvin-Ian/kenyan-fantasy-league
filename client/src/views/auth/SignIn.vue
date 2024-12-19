@@ -24,8 +24,8 @@
               @blur="v$.email.$touch"
             />
             <div class="input-icon" v-if="form.email">
-              <CheckCircle v-if="!v$.email.$error" class="valid-icon" />
-              <XCircle v-else class="invalid-icon" />
+              <CheckCircle v-if="!v$.email.$error" class="valid-icon h-4" />
+              <XCircle v-else class="invalid-icon h-4 text-red-400" />
             </div>
           </div>
           <span v-if="v$.email.$error" class="error-text">
@@ -84,6 +84,7 @@ import { AlertCircle, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth';
 import useVuelidate from '@vuelidate/core';
 import { required, email } from '@vuelidate/validators';
+import { onMounted } from 'vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -116,6 +117,12 @@ const handleSubmit = async () => {
     console.error('Sign-in failed:', error);
   }
 };
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    router.replace({ name: 'home' });
+  }
+});
 </script>
 
 <style scoped>
@@ -163,6 +170,8 @@ const handleSubmit = async () => {
 
 .input-wrapper {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-wrapper input {

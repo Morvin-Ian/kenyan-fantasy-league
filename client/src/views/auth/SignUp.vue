@@ -19,8 +19,8 @@
             <input id="firstName" v-model="form.firstName" type="text" required placeholder="Enter your first name"
               :class="{ 'error': v$.firstName.$error }" @blur="v$.firstName.$touch" />
             <div class="input-icon" v-if="form.firstName">
-              <CheckCircle v-if="!v$.firstName.$error" class="valid-icon" />
-              <XCircle v-else class="invalid-icon" />
+              <CheckCircle v-if="!v$.firstName.$error" class="valid-icon h-4" />
+              <XCircle v-else class="invalid-icon h-4 text-red-400" />
             </div>
           </div>
           <span v-if="v$.firstName.$error" class="error-text">
@@ -35,8 +35,8 @@
             <input id="lastName" v-model="form.lastName" type="text" required placeholder="Enter your last name"
               :class="{ 'error': v$.lastName.$error }" @blur="v$.lastName.$touch" />
             <div class="input-icon" v-if="form.lastName">
-              <CheckCircle v-if="!v$.lastName.$error" class="valid-icon" />
-              <XCircle v-else class="invalid-icon" />
+              <CheckCircle v-if="!v$.lastName.$error" class="valid-icon h4" />
+              <XCircle v-else class="invalid-icon h-4 text-red-400" />
             </div>
           </div>
           <span v-if="v$.lastName.$error" class="error-text">
@@ -50,8 +50,8 @@
             <input id="email" v-model="form.email" type="email" required placeholder="Enter your email"
               :class="{ 'error': v$.email.$error }" @blur="v$.email.$touch" />
             <div class="input-icon" v-if="form.email">
-              <CheckCircle v-if="!v$.email.$error" class="valid-icon" />
-              <XCircle v-else class="invalid-icon" />
+              <CheckCircle v-if="!v$.email.$error" class="valid-icon h-4" />
+              <XCircle v-else class="invalid-icon h-4 text-red-400" />
             </div>
           </div>
           <span v-if="v$.email.$error" class="error-text">
@@ -146,7 +146,8 @@ import { AlertCircle, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-vue-next'
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from "vue-toastification";
 import useVuelidate from '@vuelidate/core';
-import { required, email, minLength, helpers } from '@vuelidate/validators';
+import { required, email, minLength, maxLength, helpers } from '@vuelidate/validators';
+import { onMounted } from 'vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -154,6 +155,7 @@ const toast = useToast();
 
 const showPassword = ref(false);
 const showConfirmPassword = ref(false);
+
 
 const form = reactive({
   firstName: '',
@@ -174,6 +176,7 @@ const rules = {
   firstName: {
     required,
     minLength: minLength(2),
+    maxLength: maxLength(20),
     validName: helpers.withMessage(
       'First name can only contain letters, spaces, hyphens and apostrophes',
       nameValidator
@@ -182,6 +185,7 @@ const rules = {
   lastName: {
     required,
     minLength: minLength(2),
+    maxLength: maxLength(20),
     validName: helpers.withMessage(
       'Last name can only contain letters, spaces, hyphens and apostrophes',
       nameValidator
@@ -244,7 +248,7 @@ const handleSubmit = async () => {
   if (!isFormValid || !formIsValid.value) return;
 
   try {
-    const response = await authStore.register({
+    await authStore.register({
       first_name: form.firstName,
       last_name: form.lastName,
       username: form.lastName,
@@ -262,6 +266,13 @@ const handleSubmit = async () => {
     console.error('Registration failed:', error);
   }
 };
+
+onMounted(() => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    router.replace({ name: 'home' });
+  }
+});
 </script>
 
 <style scoped>
@@ -568,6 +579,7 @@ const handleSubmit = async () => {
   color: #2d5a3f;
   text-decoration: underline;
 }
+
 /* Buttons */
 .submit-button {
   width: 100%;
