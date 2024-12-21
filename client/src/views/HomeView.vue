@@ -2,6 +2,7 @@
   <div class="min-h-screen bg-gray-50">
     <!-- Navigation -->
     <Navbar />
+    <Team/>
 
 
     <!-- <Footer/> -->
@@ -15,7 +16,7 @@ import Navbar from '@/components/Navbar.vue';
 import Footer from '@/components/Footer.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
-import UpcomingGames from '@/components/home/UpcomingGames.vue';
+import Team from '@/components/home/Team.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
