@@ -22,7 +22,7 @@ import {
     faSquarePollVertical,faCircleXmark,
     faBell, faStar, faArrowRotateRight,
     faLock,faTrash,faBan, faVideoCamera,
-    faThumbsDown, faCheckDouble, faCheck, faImage
+    faThumbsDown, faCheckDouble, faCheck, faImage, faPen
 
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -34,7 +34,7 @@ library.add(
     faSquarePhone, faMicrophone, faVideoCamera,
     faFaceSmile, faArrowLeft,faTrash,
     faFile, faImages, faCamera,faBan,faImage,
-    faSquarePollVertical, faCircleXmark, faBell,
+    faSquarePollVertical, faCircleXmark, faBell, faPen,
     faStar, faArrowRotateRight, faLock, faCheckDouble, faCheck
 )
 
