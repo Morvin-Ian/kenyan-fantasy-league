@@ -24,7 +24,9 @@ import {
     faLock,faTrash,faBan, faVideoCamera,
     faThumbsDown, faCheckDouble, faCheck, faImage, faPen,
     faCalendar,
-    faTrophy
+    faTrophy,
+    faFutbol,
+    faHome
 
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -34,8 +36,8 @@ library.add(
     faSort, faMagnifyingGlass,
     faChevronDown, faVideo, faThumbsDown,
     faSquarePhone, faMicrophone, faVideoCamera,
-    faFaceSmile, faArrowLeft,faTrash,
-    faFile, faImages, faCamera,faBan,faImage,
+    faHome, faArrowLeft,faTrash,
+    faFile, faImages, faCamera,faBan,faImage, faFutbol,
     faSquarePollVertical, faCircleXmark, faBell, faPen,
     faStar, faArrowRotateRight, faLock, faCheckDouble, faCheck
 )

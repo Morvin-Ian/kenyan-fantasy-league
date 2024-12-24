@@ -1,13 +1,16 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <Navbar />
-    <UpcomingGames/>
-    <Team/>
-    <SearchPlayer/>
-    <Performance/>
-    <Footer/>
+    <UpcomingGames />
+    <Team />
+    <SearchPlayer />
+    <Performance />
+    <div class="hidden md:block">
+      <Footer />
+    </div>
   </div>
 </template>
+
 
 <script setup>
 import { onMounted, ref } from 'vue'
