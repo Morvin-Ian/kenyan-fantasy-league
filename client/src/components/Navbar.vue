@@ -2,11 +2,12 @@
   <div>
     <!-- Desktop Navigation -->
     <nav class="bg-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Mobile-only logo -->
-        <div class="md:hidden fixed bg-white w-full flex justify-center ">
+      <div class="md:hidden fixed bg-white w-full mt-0 flex justify-center ">
           <img src="/logo.png" alt="Logo" class="h-16 w-auto" />
         </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Mobile-only logo -->
+      
 
         <!-- Desktop navigation with aligned logo and items -->
         <div class="hidden md:flex justify-between items-center h-20">
@@ -59,7 +60,7 @@
     </nav>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-red-50 border-t rounded-full border-gray-200 mx-2 mb-1">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-200 border-t rounded-full border-gray-200 mx-2 mb-1">
       <div class="grid grid-cols-4 h-16">
         <a v-for="item in mobileNavItems" :key="item.name" :href="item.href"
           class="flex flex-col items-center justify-center" :class="[
@@ -93,7 +94,7 @@ const authStore = useAuthStore()
 // Simplified navigation items
 const navItems = ref([
   { name: 'Leagues', href: '#', current: true },
-  { name: 'Teams', href: '#', current: false },
+  { name: 'Team', href: '/fkl_team', current: false },
   { name: 'Fixtures', href: '#', current: false },
   { name: 'Results', href: '#', current: false },
   { name: 'Standings', href: '#', current: false },
@@ -101,9 +102,9 @@ const navItems = ref([
 
 // Mobile navigation items with icons
 const mobileNavItems = ref([
-  { name: 'Home', href: '#', icon: "fa-solid fa-home", current: false },
-  { name: 'Team', href: '#', icon: "fa-solid fa-users", current: false },
-  { name: 'Leagues', href: '#', icon: "fa-solid fa-futbol", current: true },
+  { name: 'Home', href: '/', icon: "fa-solid fa-home", current: false },
+  { name: 'Team', href: '/fkl_team', icon: "fa-solid fa-users", current: false },
+  { name: 'Leagues', href: '#', icon: "fa-solid fa-futbol", current: false },
   { name: 'Account', href: '#', icon: "fa-solid fa-user", current: false },
 ])
 
