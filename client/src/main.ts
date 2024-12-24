@@ -22,12 +22,14 @@ import {
     faSquarePollVertical,faCircleXmark,
     faBell, faStar, faArrowRotateRight,
     faLock,faTrash,faBan, faVideoCamera,
-    faThumbsDown, faCheckDouble, faCheck, faImage, faPen
+    faThumbsDown, faCheckDouble, faCheck, faImage, faPen,
+    faCalendar,
+    faTrophy
 
 } from '@fortawesome/free-solid-svg-icons'
 
 library.add(
-    faUsers, faCircle,faUser,
+    faUsers, faCircle,faUser, faCalendar, faUsers, faTrophy,
     faSquarePlus, faEllipsisVertical, faPlus,
     faSort, faMagnifyingGlass,
     faChevronDown, faVideo, faThumbsDown,

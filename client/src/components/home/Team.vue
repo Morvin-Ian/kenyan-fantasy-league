@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col justify-between p-6 md:p-10 mt-6 main">
+    <div class="flex flex-col justify-between p-6 md:p-10 mt-2 main">
         <div class="flex flex-col md:flex-row title">
             <div class="flex flex-col md:flex-row justify-between items-center w-full">
                 <div class="flex flex-col md:flex-row">
@@ -65,7 +65,7 @@
 
 <script setup>
 import { ref } from "vue";
-import olungaImage from "@/assets/images/olunga.png";
+import olunga from "@/assets/images/olunga.png";
 import player1 from "@/assets/images/player1.png";
 import player2 from "@/assets/images/player2.png";
 import player3 from "@/assets/images/player3.png";
@@ -76,7 +76,7 @@ const players = ref([
   {
     name: "E. Olunga",
     team: "Al DulHail",
-    image: olungaImage,
+    image: olunga,
   },
   {
     name: "V. Manyara",
@@ -99,4 +99,5 @@ const players = ref([
     image: user,
   },
 ]);
+
 </script>

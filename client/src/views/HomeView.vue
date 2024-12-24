@@ -1,12 +1,11 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Navigation -->
     <Navbar />
+    <UpcomingGames/>
     <Team/>
-
-
-    <!-- <Footer/> -->
-
+    <SearchPlayer/>
+    <Performance/>
+    <Footer/>
   </div>
 </template>
 
@@ -17,6 +16,9 @@ import Footer from '@/components/Footer.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 import Team from '@/components/home/Team.vue';
+import SearchPlayer from '@/components/home/SearchPlayer.vue';
+import UpcomingGames from '@/components/home/UpcomingGames.vue';
+import Performance from '@/components/home/Performance.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
