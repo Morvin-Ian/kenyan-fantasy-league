@@ -1,122 +1,147 @@
 <template>
-    <div class="min-h-screen bg-gray-100 p-4">
-        <Navbar />
+    <Navbar />
+
+    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div class="max-w-7xl mt-4 mx-auto">
             <!-- Header Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <h3 class="text-sm text-gray-500">Gameweek Points</h3>
-                    <p class="text-2xl font-bold text-gray-900">{{ totalPoints }}</p>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Gameweek Points</h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ totalPoints }}</p>
                 </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <h3 class="text-sm text-gray-500">Average Points</h3>
-                    <p class="text-2xl font-bold text-gray-900">{{ averagePoints }}</p>
+                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Average Points</h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ averagePoints }}</p>
                 </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <h3 class="text-sm text-gray-500">Highest Score</h3>
-                    <p class="text-2xl font-bold text-gray-900">{{ highestPoints }}</p>
+                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Highest Score</h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ highestPoints }}</p>
                 </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <h3 class="text-sm text-gray-500">Overall Rank</h3>
-                    <p class="text-2xl font-bold text-gray-900">{{ overallRank }}</p>
+                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Overall Rank</h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ overallRank }}</p>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="bg-white rounded-xl shadow-sm p-4 md:p-6">
-                <!-- Header with Navigation -->
-                <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
-                    <div class="flex items-center gap-3">
-                        <h2 class="text-xl md:text-2xl font-bold text-gray-900">{{ teamName }}</h2>
-                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm text-gray-600">Team Value: £{{ teamValue
-                            }}m</span>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button @click="previousGameWeek" :disabled="currentGameWeek === 1"
-                            class="p-2 rounded-full bg-white shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="15 18 9 12 15 6"></polyline>
-                            </svg>
-                        </button>
-                        <div class="flex flex-col items-center">
-                            <span class="text-sm text-gray-500">Gameweek {{ currentGameWeek }}</span>
-                        </div>
-                        <button @click="nextGameWeek" :disabled="currentGameWeek === 38"
-                            class="p-2 rounded-full bg-white shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-gray-600" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
 
-                <!-- Pitch -->
-                <div class="relative rounded-lg overflow-hidden aspect-video bg-green-800">
-                    <div class="absolute inset-0 bg-[url('/pitch-pattern.svg')] opacity-20"></div>
-                    <div class="relative h-full p-6">
-                        <!-- Formation Layout -->
-                        <div class="h-full flex flex-col justify-between">
-                            <!-- Forwards (3) -->
-                            <div class="grid grid-cols-3 gap-4 mb-8">
-                                <div v-for="player in forwards" :key="player.id" class="flex justify-center">
-                                    <PlayerCard :player="player" />
-                                </div>
-                            </div>
-                            <!-- Midfielders (3) -->
-                            <div class="grid grid-cols-3 gap-4 mb-8">
-                                <div v-for="player in midfielders" :key="player.id" class="flex justify-center">
-                                    <PlayerCard :player="player" />
-                                </div>
-                            </div>
-                            <!-- Defenders (4) -->
-                            <div class="grid grid-cols-4 gap-4 mb-8">
-                                <div v-for="player in defenders" :key="player.id" class="flex justify-center">
-                                    <PlayerCard :player="player" />
-                                </div>
-                            </div>
-                            <!-- Goalkeeper (1) -->
-                            <div class="flex justify-center">
+            <!-- Main Content -->
+            <div class="bg-white rounded-xl shadow-md p-2">
+                <!-- Responsive Pitch -->
+                <div class="relative mx-auto bg-green-700 rounded-lg overflow-scroll">
+                    <div
+                        class="absolute inset-0 bg-[url('https://fantasy.premierleague.com/static/media/pitch-default.dab51b01.svg')] bg-cover bg-center opacity-90">
+                    </div>
+
+                    <!-- Players -->
+                    <div class="relative min-h-[500px] md:min-h-[600px] p-4 md:p-8">
+                        <!-- Goalkeeper -->
+                        <div
+                            class="absolute bottom-[80%] left-1/2 transform -translate-x-1/2 w-full max-w-[115px] md:max-w-[150px] ">
+                            <div class="p-4 cursor-pointer"
+                                :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
+                                @click="openPlayerModal(goalkeeper)">
                                 <PlayerCard :player="goalkeeper" />
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Bench -->
-                <div class="mt-6">
-                    <h3 class="text-gray-700 font-semibold mb-4">Substitutes</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div v-for="player in benchPlayers" :key="player.id">
-                            <PlayerCard :player="player" isBench />
+                        <!-- Defenders -->
+                        <div class="absolute top-[20%] left-0 right-0">
+                            <div class="flex justify-center">
+                                <div v-for="player in defenders" :key="player.id" class="p-1 cursor-pointer"
+                                    :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
+                                    @click="openPlayerModal(player)">
+                                    <PlayerCard :player="player" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Midfielders -->
+                        <div class="absolute top-[45%] left-0 right-0">
+                            <div class="flex justify-center">
+                                <div v-for="player in midfielders" :key="player.id" class="p-1 cursor-pointer"
+                                    :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
+                                    @click="openPlayerModal(player)">
+                                    <PlayerCard :player="player" />
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Forwards -->
+                        <div class="absolute top-[70%] left-0 right-0">
+                            <div class="flex gap-8 justify-center">
+                                <div v-for="player in forwards" :key="player.id" class="p-4 cursor-pointer"
+                                    :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
+                                    @click="openPlayerModal(player)">
+                                    <PlayerCard :player="player" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bench -->
+                    <div class="bg-white rounded-lg">
+                        <div class="grid grid-cols-4 gap-2">
+                            <div v-for="player in benchPlayers" :key="player.id" class="p-4 cursor-pointer"
+                                :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
+                                @click="openPlayerModal(player)">
+                                <PlayerCard :player="player" isBench />
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
+            <!-- Modal -->
+            <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+                <div class="bg-white rounded-lg p-6 shadow-lg max-w-md w-full m-4 sm:p-4 sm:max-w-sm">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-sm font-bold text-gray-900 sm:text-base">Manage {{ selectedPlayer?.name }}</h3>
+                        <button @click="closeModal" class="text-red-500 font-bold hover:text-gray-800 sm:text-sm">
+                            X
+                        </button>
+                    </div>
+                    <div class="space-y-4">
+                        <button @click="initiateSwitch"
+                            class="w-full bg-gray-100 py-1 text-gray-800 hover:bg-gray-200 rounded-lg text-xs font-medium sm:py-2 sm:text-xs">
+                            Switch {{ selectedPlayer?.name }}
+                        </button>
+                        <button @click="makeCaptain"
+                            class="w-full bg-gray-100 py-1 text-gray-800 hover:bg-gray-200 rounded-lg text-xs font-medium sm:py-2 sm:text-xs">
+                            Make Captain
+                        </button>
+                        <button @click="makeViceCaptain"
+                            class="w-full bg-gray-100 py-1 text-gray-800 hover:bg-gray-200 rounded-lg text-xs font-medium sm:py-2 sm:text-xs">
+                            Make Vice-Captain
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </template>
 
-<script setup>
-import { ref, computed } from 'vue';
-import Navbar from '@/components/Navbar.vue';
-import PlayerCard from '@/components/team/PlayerCard.vue';
 
-// Team Information
-const teamName = ref('Black Stone FC');
-const teamValue = ref(102.5);
+<script setup>
+import { ref, computed } from "vue";
+import Navbar from "@/components/Navbar.vue";
+import PlayerCard from "@/components/team/PlayerCard.vue";
+
+
 const currentGameWeek = ref(1);
-const overallRank = ref('234,567');
+const overallRank = ref("234,567");
+
+// Modal State
+const showModal = ref(false);
+const selectedPlayer = ref(null);
+const switchActive = ref(true);
 
 // Stats
 const totalPoints = ref(57);
 const averagePoints = ref(52);
 const highestPoints = ref(121);
 
-// Starting 11 Players with detailed information
 const startingEleven = ref({
     // Goalkeeper (1)
     goalkeeper: {
@@ -135,9 +160,10 @@ const startingEleven = ref({
 
     // Defenders (4)
     defenders: [
+
         {
             id: 2,
-            name: "Alexander-Arnold",
+            name: "Arnold",
             team: "AFC",
             position: "DEF",
             points: 12,
@@ -207,7 +233,7 @@ const startingEleven = ref({
         {
             id: 7,
             name: "Son",
-            team: "TOT",
+            team: "TUSKER",
             position: "MID",
             points: 8,
             form: "7.1",
@@ -220,7 +246,7 @@ const startingEleven = ref({
         {
             id: 8,
             name: "Saka",
-            team: "ARS",
+            team: "ULINZI",
             position: "MID",
             points: 7,
             form: "7.4",
@@ -237,7 +263,7 @@ const startingEleven = ref({
         {
             id: 9,
             name: "Haaland",
-            team: "MCI",
+            team: "GOR",
             position: "FWD",
             points: 13,
             form: "8.9",
@@ -250,7 +276,7 @@ const startingEleven = ref({
         {
             id: 10,
             name: "Darwin",
-            team: "LIV",
+            team: "AFC",
             position: "FWD",
             points: 6,
             form: "6.8",
@@ -264,7 +290,7 @@ const startingEleven = ref({
         {
             id: 11,
             name: "Watkins",
-            team: "AVL",
+            team: "AFC",
             position: "FWD",
             points: 8,
             form: "7.2",
@@ -283,7 +309,7 @@ const benchPlayers = ref([
     {
         id: 12,
         name: "Raya",
-        team: "ARS",
+        team: "AFC",
         position: "GK",
         points: 0,
         form: "6.2",
@@ -296,7 +322,7 @@ const benchPlayers = ref([
     {
         id: 13,
         name: "White",
-        team: "ARS",
+        team: "GOR",
         position: "DEF",
         points: 0,
         form: "6.5",
@@ -309,7 +335,7 @@ const benchPlayers = ref([
     {
         id: 14,
         name: "Gordon",
-        team: "NEW",
+        team: "TUSKER",
         position: "MID",
         points: 0,
         form: "6.8",
@@ -322,7 +348,7 @@ const benchPlayers = ref([
     {
         id: 15,
         name: "Archer",
-        team: "AVL",
+        team: "ULINZI",
         position: "FWD",
         points: 0,
         form: "5.4",
@@ -334,30 +360,107 @@ const benchPlayers = ref([
     }
 ]);
 
-// Computed properties for easy access
 const goalkeeper = computed(() => startingEleven.value.goalkeeper);
 const defenders = computed(() => startingEleven.value.defenders);
 const midfielders = computed(() => startingEleven.value.midfielders);
 const forwards = computed(() => startingEleven.value.forwards);
 
-// Navigation functions
-const previousGameWeek = () => {
-    if (currentGameWeek.value > 1) {
-        currentGameWeek.value--;
-        // Here you would typically fetch data for the new gameweek
-    }
+
+// Modal Functions
+const openPlayerModal = (player) => {
+    selectedPlayer.value = player;
+    showModal.value = true;
 };
 
-const nextGameWeek = () => {
-    if (currentGameWeek.value < 38) {
-        currentGameWeek.value++;
-        // Here you would typically fetch data for the new gameweek
-    }
+
+const initiateSwitch = () => {
+    switchActive.value = true;
+    closeModal();
 };
+
+const closeModal = () => {
+    showModal.value = false;
+    selectedPlayer.value = null;
+};
+
+
+const switchPlayers = (benchPlayer) => {
+    if (!switchActive.value || !selectedPlayer.value) return;
+
+    // Store the selected field player
+    const fieldPlayer = selectedPlayer.value;
+
+
+    // Verify positions match
+    if (fieldPlayer.position !== benchPlayer.position) {
+        switchActive.value = false;
+        return;
+    }
+
+    // Find and replace the field player
+    if (fieldPlayer.position === "GK") {
+        benchPlayers.value.push(startingEleven.value.goalkeeper);
+        startingEleven.value.goalkeeper = benchPlayer;
+    } else if (fieldPlayer.position === "DEF") {
+        const index = startingEleven.value.defenders.findIndex(p => p.id === fieldPlayer.id);
+        if (index !== -1) {
+            benchPlayers.value.push(startingEleven.value.defenders[index]);
+            startingEleven.value.defenders[index] = benchPlayer;
+        }
+    } else if (fieldPlayer.position === "MID") {
+        const index = startingEleven.value.midfielders.findIndex(p => p.id === fieldPlayer.id);
+        if (index !== -1) {
+            benchPlayers.value.push(startingEleven.value.midfielders[index]);
+            startingEleven.value.midfielders[index] = benchPlayer;
+        }
+    } else if (fieldPlayer.position === "FWD") {
+        const index = startingEleven.value.forwards.findIndex(p => p.id === fieldPlayer.id);
+        if (index !== -1) {
+            benchPlayers.value.push(startingEleven.value.forwards[index]);
+            startingEleven.value.forwards[index] = benchPlayer;
+        }
+    }
+
+    // Remove the bench player from benchPlayers
+    const benchIndex = benchPlayers.value.findIndex(p => p.id === benchPlayer.id);
+    if (benchIndex !== -1) {
+        benchPlayers.value.splice(benchIndex, 1);
+    }
+
+    // Reset states
+    switchActive.value = false;
+    selectedPlayer.value = null;
+};
+
+const makeCaptain = () => {
+    clearCaptaincy();
+    selectedPlayer.value.isCaptain = true;
+    closeModal();
+};
+
+const makeViceCaptain = () => {
+    clearCaptaincy();
+    selectedPlayer.value.isViceCaptain = true;
+    closeModal();
+};
+
+const clearCaptaincy = () => {
+    startingEleven.value.forwards.forEach((p) => {
+        p.isCaptain = false;
+        p.isViceCaptain = false;
+    });
+};
+
 </script>
 
 <style scoped>
 .aspect-video {
     aspect-ratio: 16 / 9;
 }
-</style>
+
+@media (max-width: 768px) {
+    .aspect-video {
+        aspect-ratio: 4 / 3;
+    }
+}
+</style>234,567
