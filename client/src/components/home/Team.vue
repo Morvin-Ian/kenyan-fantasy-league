@@ -5,12 +5,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
                 <!-- Title and Links -->
                 <div class="flex flex-col md:flex-row">
-                    <h1 class="text-lg font-bold md:text-2xl md:mr-4">Black Stone</h1>
-                    <div class="mt-2 md:mt-0 hidden md:block">
-                        <a class="mx-1 md:mx-3 text-xs md:text-base text-blue-600" href="#">Transfers</a>
-                        <a class="mx-1 md:mx-3 text-xs md:text-base text-blue-600" href="#">Rules</a>
-                        <a class="mx-1 md:mx-3 text-xs md:text-base text-blue-600" href="#">Prizes</a>
-                    </div>
+                    <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Black Stone</h2>
                 </div>
                 <!-- Hidden on small devices -->
                 <div class="flex mt-4 md:mt-0 hidden md:flex">

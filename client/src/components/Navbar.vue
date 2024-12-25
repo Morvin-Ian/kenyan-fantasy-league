@@ -2,12 +2,11 @@
   <div>
     <!-- Desktop Navigation -->
     <nav class="bg-white">
-      <div class="md:hidden fixed bg-white w-full mt-0 flex justify-center ">
+      <div class="md:hidden fixed bg-white w-full flex justify-center ">
           <img src="/logo.png" alt="Logo" class="h-16 w-auto" />
         </div>
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Mobile-only logo -->
-      
 
         <!-- Desktop navigation with aligned logo and items -->
         <div class="hidden md:flex justify-between items-center h-20">

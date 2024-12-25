@@ -3,7 +3,7 @@
     <!-- Featured Players Section -->
     <div class="bg-gray-50 p-4 md:p-6 rounded-xl">
       <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
-        <h2 class="text-lg md:text-2xl font-bold text-gray-900">Featured Players</h2>
+        <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Featured Players</h2>
         <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
           View all players
         </button>
@@ -51,7 +51,8 @@
     <!-- Featured Goals Section -->
     <div class="bg-gray-50 p-4 md:p-6 rounded-xl">
       <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
-        <h2 class="text-lg md:text-2xl font-bold text-gray-900">Featured Goals</h2>
+        
+        <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Featured Goals</h2>
         <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
           View all goals
         </button>
@@ -67,7 +68,7 @@
                 title="The Money Test You Need To Take." frameborder="0"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerpolicy="strict-origin-when-cross-origin" allowfullscreen
-                class="w-full h-[200px] sm:h-[300px] md:h-[480px] transition-all"></iframe>
+                class="w-full h-[200px] sm:h-[300px] md:h-[350px] transition-all"></iframe>
             </div>
           </div>
 
