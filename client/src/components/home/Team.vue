@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col justify-between p-6 md:p-10 mt-2 main">
+    <div class="flex flex-col bg-white rounded-md justify-between p-6 md:p-10 mt-4 main">
         <!-- Title Section -->
         <div class="flex flex-col md:flex-row title">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center w-full">

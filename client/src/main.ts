@@ -26,7 +26,8 @@ import {
     faCalendar,
     faTrophy,
     faFutbol,
-    faHome
+    faHome,
+    faRankingStar
 
 } from '@fortawesome/free-solid-svg-icons'
 
@@ -35,7 +36,7 @@ library.add(
     faSquarePlus, faEllipsisVertical, faPlus,
     faSort, faMagnifyingGlass,
     faChevronDown, faVideo, faThumbsDown,
-    faSquarePhone, faMicrophone, faVideoCamera,
+    faSquarePhone, faMicrophone, faVideoCamera, faRankingStar,
     faHome, faArrowLeft,faTrash,
     faFile, faImages, faCamera,faBan,faImage, faFutbol,
     faSquarePollVertical, faCircleXmark, faBell, faPen,

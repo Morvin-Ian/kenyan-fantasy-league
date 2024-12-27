@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-gradient-to-br from-blue-50 to-gray-100 p-4 sm:p-3 md:p-6 lg:p-8">
+    <div class="bg-white mt-4 p-4 sm:p-3 md:p-6 lg:p-8">
       <div class="mx-auto max-w-7xl">
         <h1 class="text-sm sm:text-base md:text-lg font-semibold text-gray-800 mb-4 sm:mb-6">
           Fantasy Player Search

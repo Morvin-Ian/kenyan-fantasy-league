@@ -354,12 +354,7 @@ const benchPlayers = ref([
     }
 ]);
 
-// Add these new refs for formation tracking
-const formation = ref({
-    DEF: { min: 3, max: 5, current: 4 },
-    MID: { min: 3, max: 5, current: 3 },
-    FWD: { min: 1, max: 3, current: 3 }
-});
+
 
 // Modify the initiateSwitch function
 const initiateSwitch = () => {
@@ -418,6 +413,50 @@ const performSwitch = (targetPlayer, isBench) => {
         return;
     }
 
+    const getFormationCounts = () => {
+        return {
+            DEF: startingEleven.value.defenders.length,
+            MID: startingEleven.value.midfielders.length,
+            FWD: startingEleven.value.forwards.length
+        };
+    };
+
+    const getTotalFieldPlayers = () => {
+        const counts = getFormationCounts();
+        return counts.DEF + counts.MID + counts.FWD + 1; // +1 for goalkeeper
+    };
+
+    const isValidFormationChange = (sourcePos, targetPos) => {
+        if (sourcePos === 'GK' || targetPos === 'GK') {
+            return false; // Goalkeepers can only switch with goalkeepers
+        }
+
+        const currentCounts = getFormationCounts();
+        const newCounts = { ...currentCounts };
+
+        // Calculate new formation numbers
+        if (isBenchSwitch.value) {
+            // Player coming from bench to replace targetPos
+            newCounts[targetPos]--;
+            newCounts[sourcePos]++;
+        } else {
+            // Player from field going to bench, being replaced by targetPos
+            newCounts[sourcePos]--;
+            newCounts[targetPos]++;
+        }
+
+        // Check formation constraints
+        const constraints = {
+            DEF: { min: 3, max: 5 },
+            MID: { min: 3, max: 5 },
+            FWD: { min: 1, max: 3 }
+        };
+
+        return Object.entries(newCounts).every(([pos, count]) => {
+            return count >= constraints[pos].min && count <= constraints[pos].max;
+        });
+    };
+
     // Perform the switch based on positions
     if (isBenchSwitch.value) {
         // Switching from bench to starting 11
@@ -430,7 +469,7 @@ const performSwitch = (targetPlayer, isBench) => {
                 startingEleven.value.goalkeeper = sourcePlayer;
                 benchPlayers.value[benchIndex] = tempGK;
             } else {
-                // Switch other positions
+                // Switch same positions
                 const positionArray = getPositionArray(targetPlayer.position);
                 const fieldIndex = positionArray.findIndex(p => p.id === targetPlayer.id);
 
@@ -439,6 +478,28 @@ const performSwitch = (targetPlayer, isBench) => {
                     positionArray[fieldIndex] = sourcePlayer;
                     benchPlayers.value[benchIndex] = tempPlayer;
                 }
+            }
+        } else {
+            // Different positions - check if valid formation change
+            if (!isValidFormationChange(sourcePlayer.position, targetPlayer.position)) {
+                console.warn("Invalid formation change. Must maintain valid formation constraints.");
+                return;
+            }
+
+            // Remove target player from their position array
+            const targetPosArray = getPositionArray(targetPlayer.position);
+            const fieldIndex = targetPosArray.findIndex(p => p.id === targetPlayer.id);
+
+            if (fieldIndex !== -1) {
+                // Remove target player
+                targetPosArray.splice(fieldIndex, 1);
+
+                // Add source player to their new position array
+                const sourcePosArray = getPositionArray(sourcePlayer.position);
+                sourcePosArray.push(sourcePlayer);
+
+                // Update bench
+                benchPlayers.value[benchIndex] = targetPlayer;
             }
         }
     } else {
@@ -452,7 +513,7 @@ const performSwitch = (targetPlayer, isBench) => {
                 startingEleven.value.goalkeeper = targetPlayer;
                 benchPlayers.value[benchIndex] = tempGK;
             } else {
-                // Switch other positions
+                // Switch same positions
                 const positionArray = getPositionArray(sourcePlayer.position);
                 const fieldIndex = positionArray.findIndex(p => p.id === sourcePlayer.id);
 
@@ -462,7 +523,35 @@ const performSwitch = (targetPlayer, isBench) => {
                     benchPlayers.value[benchIndex] = tempPlayer;
                 }
             }
+        } else {
+            // Different positions - check if valid formation change
+            if (!isValidFormationChange(sourcePlayer.position, targetPlayer.position)) {
+                console.warn("Invalid formation change. Must maintain valid formation constraints.");
+                return;
+            }
+
+            // Remove source player from their position array
+            const sourcePosArray = getPositionArray(sourcePlayer.position);
+            const fieldIndex = sourcePosArray.findIndex(p => p.id === sourcePlayer.id);
+
+            if (fieldIndex !== -1) {
+                // Remove source player
+                sourcePosArray.splice(fieldIndex, 1);
+
+                // Add target player to their new position array
+                const targetPosArray = getPositionArray(targetPlayer.position);
+                targetPosArray.push(targetPlayer);
+
+                // Update bench
+                benchPlayers.value[benchIndex] = sourcePlayer;
+            }
         }
+    }
+
+    // Validate total players is still 11
+    if (getTotalFieldPlayers() !== 11) {
+        console.error("Invalid total number of players");
+        return;
     }
 
     // Reset switch state
@@ -484,26 +573,121 @@ const getPositionArray = (position) => {
     }
 };
 
+const isPlayerInStartingEleven = (player) => {
+    if (!player) return false;
+
+    // Check goalkeeper
+    if (startingEleven.value.goalkeeper.id === player.id) {
+        return true;
+    }
+
+    // Check other positions
+    return ['defenders', 'midfielders', 'forwards'].some(position => {
+        return startingEleven.value[position].some(p => p.id === player.id);
+    });
+};
+
+const findCurrentCaptain = () => {
+    // Check all positions for current captain
+    const positions = ['defenders', 'midfielders', 'forwards'];
+    for (const position of positions) {
+        const player = startingEleven.value[position].find(p => p.isCaptain);
+        if (player) return player;
+    }
+    // Check goalkeeper
+    if (startingEleven.value.goalkeeper.isCaptain) {
+        return startingEleven.value.goalkeeper;
+    }
+    return null;
+};
+
+const findCurrentViceCaptain = () => {
+    // Check all positions for current vice captain
+    const positions = ['defenders', 'midfielders', 'forwards'];
+    for (const position of positions) {
+        const player = startingEleven.value[position].find(p => p.isViceCaptain);
+        if (player) return player;
+    }
+    // Check goalkeeper
+    if (startingEleven.value.goalkeeper.isViceCaptain) {
+        return startingEleven.value.goalkeeper;
+    }
+    return null;
+};
+
+const clearCaptaincy = () => {
+    // Clear goalkeeper
+    if (startingEleven.value.goalkeeper) {
+        startingEleven.value.goalkeeper.isCaptain = false;
+        startingEleven.value.goalkeeper.isViceCaptain = false;
+    }
+
+    // Clear all positions
+    ['defenders', 'midfielders', 'forwards'].forEach(position => {
+        startingEleven.value[position].forEach(player => {
+            player.isCaptain = false;
+            player.isViceCaptain = false;
+        });
+    });
+};
 
 const makeCaptain = () => {
+    if (!selectedPlayer.value) {
+        console.warn("No player selected");
+        return;
+    }
+
+    if (!isPlayerInStartingEleven(selectedPlayer.value)) {
+        console.warn("Cannot make bench player captain");
+        return;
+    }
+
+    const currentCaptain = findCurrentCaptain();
+    const currentViceCaptain = findCurrentViceCaptain();
+
+    // If current captain is becoming vice captain, clear their captain status
+    if (currentCaptain?.id === selectedPlayer.value.id) {
+        currentCaptain.isCaptain = false;
+    }
+
+    // If current vice captain is becoming captain, clear their vice captain status
+    if (currentViceCaptain?.id === selectedPlayer.value.id) {
+        currentViceCaptain.isViceCaptain = false;
+    }
+
     clearCaptaincy();
     selectedPlayer.value.isCaptain = true;
     closeModal();
 };
 
 const makeViceCaptain = () => {
+    if (!selectedPlayer.value) {
+        console.warn("No player selected");
+        return;
+    }
+
+    if (!isPlayerInStartingEleven(selectedPlayer.value)) {
+        console.warn("Cannot make bench player vice captain");
+        return;
+    }
+
+    const currentCaptain = findCurrentCaptain();
+    const currentViceCaptain = findCurrentViceCaptain();
+
+    // If current captain is becoming vice captain, clear their captain status
+    if (currentCaptain?.id === selectedPlayer.value.id) {
+        currentCaptain.isCaptain = false;
+    }
+
+    // If current vice captain is becoming captain, clear their vice captain status
+    if (currentViceCaptain?.id === selectedPlayer.value.id) {
+        currentViceCaptain.isViceCaptain = false;
+    }
+
     clearCaptaincy();
     selectedPlayer.value.isViceCaptain = true;
     closeModal();
 };
-
-const clearCaptaincy = () => {
-    startingEleven.value.forwards.forEach((p) => {
-        p.isCaptain = false;
-        p.isViceCaptain = false;
-    });
-};
-
 
 // Template helper computed properties
 const getStartingPlayerClass = (player) => {

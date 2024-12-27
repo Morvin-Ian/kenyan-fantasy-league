@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-8">
+  <div class="mt-3 space-y-8">
     <!-- Featured Players Section -->
     <div class="bg-gray-50 p-4 md:p-6 rounded-xl">
       <div class="flex flex-wrap justify-between items-center mb-6 gap-2">

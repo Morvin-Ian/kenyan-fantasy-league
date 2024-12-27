@@ -3,8 +3,8 @@
     <!-- Desktop Navigation -->
     <nav class="bg-white">
       <div class="md:hidden fixed bg-white w-full flex justify-center ">
-          <img src="/logo.png" alt="Logo" class="h-16 w-auto" />
-        </div>
+        <img src="/logo.png" alt="Logo" class="h-16 w-auto" />
+      </div>
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Mobile-only logo -->
 
@@ -59,8 +59,8 @@
     </nav>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-gray-200 border-t rounded-full border-gray-200 mx-2 mb-1">
-      <div class="grid grid-cols-4 h-16">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 mx-2 mb-1 rounded-t-full">
+      <div class="grid grid-cols-5 h-16">
         <a v-for="item in mobileNavItems" :key="item.name" :href="item.href"
           class="flex flex-col items-center justify-center" :class="[
             item.current
@@ -72,6 +72,7 @@
         </a>
       </div>
     </nav>
+
 
     <!-- Add bottom padding to main content on mobile -->
     <div class="pb-20 md:pb-0">
@@ -104,6 +105,7 @@ const mobileNavItems = ref([
   { name: 'Home', href: '/', icon: "fa-solid fa-home", current: false },
   { name: 'Team', href: '/fkl_team', icon: "fa-solid fa-users", current: false },
   { name: 'Leagues', href: '#', icon: "fa-solid fa-futbol", current: false },
+  { name: 'Standings', href: '#', icon: "fa-solid fa-ranking-star", current: false },
   { name: 'Account', href: '#', icon: "fa-solid fa-user", current: false },
 ])
 
