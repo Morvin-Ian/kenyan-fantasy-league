@@ -23,119 +23,113 @@
                 </div>
             </div>
 
-
             <!-- Main Content -->
             <div class="bg-white rounded-xl shadow-md p-2">
-                <!-- Responsive Pitch -->
-                <div class="relative mx-auto bg-green-700 rounded-lg overflow-scroll">
+                <!-- Pitch Background -->
+                <div class="relative mx-auto bg-green-700 rounded-lg overflow-hidden">
                     <div
                         class="absolute inset-0 bg-[url('https://fantasy.premierleague.com/static/media/pitch-default.dab51b01.svg')] bg-cover bg-center opacity-90">
                     </div>
 
-                    <!-- Players -->
+                    <!-- Players Layout -->
                     <div class="relative min-h-[500px] md:min-h-[600px] p-4 md:p-8">
                         <!-- Goalkeeper -->
                         <div
-                            class="absolute bottom-[80%] left-1/2 transform -translate-x-1/2 w-full max-w-[115px] md:max-w-[150px] ">
-                            <div class="p-4 cursor-pointer"
-                                :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
-                                @click="openPlayerModal(goalkeeper)">
-                                <PlayerCard :player="goalkeeper" />
+                            class="absolute bottom-[83%] left-1/2 transform -translate-x-1/2 w-full max-w-[80px] md:max-w-[90px]">
+                            <div :class="getStartingPlayerClass(goalkeeper)" @click="handlePlayerClick(goalkeeper)">
+                                <PlayerCard :player="goalkeeper" :is-active="switchSource?.id === goalkeeper.id" />
                             </div>
                         </div>
 
+
                         <!-- Defenders -->
                         <div class="absolute top-[20%] left-0 right-0">
-                            <div class="flex justify-center">
-                                <div v-for="player in defenders" :key="player.id" class="p-1 cursor-pointer"
-                                    :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
-                                    @click="openPlayerModal(player)">
-                                    <PlayerCard :player="player" />
+                            <div class="flex justify-center gap-2">
+                                <div v-for="player in defenders" :key="player.id"
+                                    :class="getStartingPlayerClass(player)" @click="handlePlayerClick(player)">
+                                    <PlayerCard :player="player" :is-active="switchSource?.id === player.id" />
                                 </div>
                             </div>
                         </div>
 
                         <!-- Midfielders -->
                         <div class="absolute top-[45%] left-0 right-0">
-                            <div class="flex justify-center">
-                                <div v-for="player in midfielders" :key="player.id" class="p-1 cursor-pointer"
-                                    :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
-                                    @click="openPlayerModal(player)">
-                                    <PlayerCard :player="player" />
+                            <div class="flex justify-center gap-2">
+                                <div v-for="player in midfielders" :key="player.id"
+                                    :class="getStartingPlayerClass(player)" @click="handlePlayerClick(player)">
+                                    <PlayerCard :player="player" :is-active="switchSource?.id === player.id" />
                                 </div>
                             </div>
                         </div>
 
-
                         <!-- Forwards -->
                         <div class="absolute top-[70%] left-0 right-0">
-                            <div class="flex gap-8 justify-center">
-                                <div v-for="player in forwards" :key="player.id" class="p-4 cursor-pointer"
-                                    :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
-                                    @click="openPlayerModal(player)">
-                                    <PlayerCard :player="player" />
+                            <div class="flex justify-center gap-8">
+                                <div v-for="player in forwards" :key="player.id" :class="getStartingPlayerClass(player)"
+                                    @click="handlePlayerClick(player)">
+                                    <PlayerCard :player="player" :is-active="switchSource?.id === player.id" />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bench -->
-                    <div class="bg-white rounded-lg">
-                        <div class="grid grid-cols-4 gap-2">
-                            <div v-for="player in benchPlayers" :key="player.id" class="p-4 cursor-pointer"
-                                :class="!switchActive ? 'opacity-50 pointer-events-none' : ''"
-                                @click="openPlayerModal(player)">
-                                <PlayerCard :player="player" isBench />
+                    <div class="bg-white rounded-lg mt-4">
+                        <div class="grid grid-cols-4 gap-2 p-2">
+                            <div v-for="player in benchPlayers" :key="player.id" :class="getBenchPlayerClass(player)"
+                                @click="handlePlayerClick(player, true)">
+                                <PlayerCard :player="player" :is-active="switchSource?.id === player.id" isBench />
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Modal -->
+            <!-- Player Management Modal -->
             <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div class="bg-white rounded-lg p-6 shadow-lg max-w-md w-full m-4 sm:p-4 sm:max-w-sm">
+                <div class="bg-white rounded-lg p-6 shadow-lg max-w-md w-full m-4">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-sm font-bold text-gray-900 sm:text-base">Manage {{ selectedPlayer?.name }}</h3>
-                        <button @click="closeModal" class="text-red-500 font-bold hover:text-gray-800 sm:text-sm">
+                        <h3 class="text-sm font-bold text-gray-900">
+                            Manage {{ selectedPlayer?.name }}
+                        </h3>
+                        <button @click="closeModal" class="text-red-500 font-bold hover:text-gray-800">
                             X
                         </button>
                     </div>
                     <div class="space-y-4">
                         <button @click="initiateSwitch"
-                            class="w-full bg-gray-100 py-1 text-gray-800 hover:bg-gray-200 rounded-lg text-xs font-medium sm:py-2 sm:text-xs">
-                            Switch {{ selectedPlayer?.name }}
+                            class="w-full bg-gray-100 py-2 text-gray-800 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                            Switch
                         </button>
                         <button @click="makeCaptain"
-                            class="w-full bg-gray-100 py-1 text-gray-800 hover:bg-gray-200 rounded-lg text-xs font-medium sm:py-2 sm:text-xs">
+                            class="w-full bg-gray-100 py-2 text-gray-800 hover:bg-gray-200 rounded-lg text-sm font-medium">
                             Make Captain
                         </button>
                         <button @click="makeViceCaptain"
-                            class="w-full bg-gray-100 py-1 text-gray-800 hover:bg-gray-200 rounded-lg text-xs font-medium sm:py-2 sm:text-xs">
+                            class="w-full bg-gray-100 py-2 text-gray-800 hover:bg-gray-200 rounded-lg text-sm font-medium">
                             Make Vice-Captain
                         </button>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 </template>
-
 
 <script setup>
 import { ref, computed } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import PlayerCard from "@/components/team/PlayerCard.vue";
 
-
-const currentGameWeek = ref(1);
 const overallRank = ref("234,567");
 
 // Modal State
 const showModal = ref(false);
 const selectedPlayer = ref(null);
-const switchActive = ref(true);
+const switchActive = ref(false);
+const switchSource = ref(null);
+const switchTarget = ref(null);
+const isBenchSwitch = ref(false);
 
 // Stats
 const totalPoints = ref(57);
@@ -360,11 +354,27 @@ const benchPlayers = ref([
     }
 ]);
 
+// Add these new refs for formation tracking
+const formation = ref({
+    DEF: { min: 3, max: 5, current: 4 },
+    MID: { min: 3, max: 5, current: 3 },
+    FWD: { min: 1, max: 3, current: 3 }
+});
+
+// Modify the initiateSwitch function
+const initiateSwitch = () => {
+    switchSource.value = selectedPlayer.value;
+    switchActive.value = true;
+    // Set isBenchSwitch based on whether the selected player is from bench
+    isBenchSwitch.value = benchPlayers.value.some(p => p.id === selectedPlayer.value.id);
+    showModal.value = false;
+};
+
+
 const goalkeeper = computed(() => startingEleven.value.goalkeeper);
 const defenders = computed(() => startingEleven.value.defenders);
 const midfielders = computed(() => startingEleven.value.midfielders);
 const forwards = computed(() => startingEleven.value.forwards);
-
 
 // Modal Functions
 const openPlayerModal = (player) => {
@@ -373,64 +383,107 @@ const openPlayerModal = (player) => {
 };
 
 
-const initiateSwitch = () => {
-    switchActive.value = true;
-    closeModal();
-};
-
 const closeModal = () => {
     showModal.value = false;
     selectedPlayer.value = null;
 };
 
+const isPlayerDisabled = (player, isBench = false) => {
+    if (!switchActive.value || !switchSource.value) return false;
 
-const switchPlayers = (benchPlayer) => {
-    if (!switchActive.value || !selectedPlayer.value) return;
+    // If it's a goalkeeper, only allow switching with other goalkeepers
+    if (switchSource.value.position === 'GK' || player.position === 'GK') {
+        return switchSource.value.position !== player.position;
+    }
 
-    // Store the selected field player
-    const fieldPlayer = selectedPlayer.value;
+    // Allow switching only between bench and field players
+    return isBenchSwitch.value === isBench;
+};
 
+const handlePlayerClick = (player, isBench = false) => {
+    if (switchActive.value) {
+        // Handle second click (target selection)
+        performSwitch(player, isBench);
+    } else {
+        // Handle first click (normal modal opening)
+        openPlayerModal(player);
+    }
+};
 
-    // Verify positions match
-    if (fieldPlayer.position !== benchPlayer.position) {
-        switchActive.value = false;
+const performSwitch = (targetPlayer, isBench) => {
+    const sourcePlayer = switchSource.value;
+
+    // Only allow switches between bench and starting 11
+    if (isBenchSwitch.value === isBench) {
         return;
     }
 
-    // Find and replace the field player
-    if (fieldPlayer.position === "GK") {
-        benchPlayers.value.push(startingEleven.value.goalkeeper);
-        startingEleven.value.goalkeeper = benchPlayer;
-    } else if (fieldPlayer.position === "DEF") {
-        const index = startingEleven.value.defenders.findIndex(p => p.id === fieldPlayer.id);
-        if (index !== -1) {
-            benchPlayers.value.push(startingEleven.value.defenders[index]);
-            startingEleven.value.defenders[index] = benchPlayer;
+    // Perform the switch based on positions
+    if (isBenchSwitch.value) {
+        // Switching from bench to starting 11
+        const benchIndex = benchPlayers.value.findIndex(p => p.id === sourcePlayer.id);
+
+        if (targetPlayer.position === sourcePlayer.position) {
+            if (targetPlayer.position === 'GK') {
+                // Switch goalkeepers
+                const tempGK = startingEleven.value.goalkeeper;
+                startingEleven.value.goalkeeper = sourcePlayer;
+                benchPlayers.value[benchIndex] = tempGK;
+            } else {
+                // Switch other positions
+                const positionArray = getPositionArray(targetPlayer.position);
+                const fieldIndex = positionArray.findIndex(p => p.id === targetPlayer.id);
+
+                if (fieldIndex !== -1) {
+                    const tempPlayer = positionArray[fieldIndex];
+                    positionArray[fieldIndex] = sourcePlayer;
+                    benchPlayers.value[benchIndex] = tempPlayer;
+                }
+            }
         }
-    } else if (fieldPlayer.position === "MID") {
-        const index = startingEleven.value.midfielders.findIndex(p => p.id === fieldPlayer.id);
-        if (index !== -1) {
-            benchPlayers.value.push(startingEleven.value.midfielders[index]);
-            startingEleven.value.midfielders[index] = benchPlayer;
-        }
-    } else if (fieldPlayer.position === "FWD") {
-        const index = startingEleven.value.forwards.findIndex(p => p.id === fieldPlayer.id);
-        if (index !== -1) {
-            benchPlayers.value.push(startingEleven.value.forwards[index]);
-            startingEleven.value.forwards[index] = benchPlayer;
+    } else {
+        // Switching from starting 11 to bench
+        const benchIndex = benchPlayers.value.findIndex(p => p.id === targetPlayer.id);
+
+        if (sourcePlayer.position === targetPlayer.position) {
+            if (sourcePlayer.position === 'GK') {
+                // Switch goalkeepers
+                const tempGK = startingEleven.value.goalkeeper;
+                startingEleven.value.goalkeeper = targetPlayer;
+                benchPlayers.value[benchIndex] = tempGK;
+            } else {
+                // Switch other positions
+                const positionArray = getPositionArray(sourcePlayer.position);
+                const fieldIndex = positionArray.findIndex(p => p.id === sourcePlayer.id);
+
+                if (fieldIndex !== -1) {
+                    const tempPlayer = positionArray[fieldIndex];
+                    positionArray[fieldIndex] = targetPlayer;
+                    benchPlayers.value[benchIndex] = tempPlayer;
+                }
+            }
         }
     }
 
-    // Remove the bench player from benchPlayers
-    const benchIndex = benchPlayers.value.findIndex(p => p.id === benchPlayer.id);
-    if (benchIndex !== -1) {
-        benchPlayers.value.splice(benchIndex, 1);
-    }
-
-    // Reset states
+    // Reset switch state
     switchActive.value = false;
-    selectedPlayer.value = null;
+    switchSource.value = null;
+    isBenchSwitch.value = false;
 };
+
+const getPositionArray = (position) => {
+    switch (position) {
+        case 'DEF':
+            return startingEleven.value.defenders;
+        case 'MID':
+            return startingEleven.value.midfielders;
+        case 'FWD':
+            return startingEleven.value.forwards;
+        default:
+            return null;
+    }
+};
+
 
 const makeCaptain = () => {
     clearCaptaincy();
@@ -451,7 +504,23 @@ const clearCaptaincy = () => {
     });
 };
 
+
+// Template helper computed properties
+const getStartingPlayerClass = (player) => {
+    return {
+        'opacity-50 pointer-events-none': switchActive.value && isPlayerDisabled(player),
+        'cursor-pointer': true
+    };
+};
+
+const getBenchPlayerClass = (player) => {
+    return {
+        'opacity-50 pointer-events-none': switchActive.value && isPlayerDisabled(player, true),
+        'cursor-pointer': true
+    };
+};
 </script>
+
 
 <style scoped>
 .aspect-video {
@@ -463,4 +532,4 @@ const clearCaptaincy = () => {
         aspect-ratio: 4 / 3;
     }
 }
-</style>234,567
+</style>
