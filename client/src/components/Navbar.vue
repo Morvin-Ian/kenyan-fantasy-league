@@ -59,7 +59,7 @@
     </nav>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 mx-2 mb-1 rounded-t-full">
+    <nav class="md:hidden fixed bottom-0 p-4 left-0 right-0 bg-white border-t border-gray-200 mx-2 mb-1 rounded-t-3xl">
       <div class="grid grid-cols-5 h-16">
         <a v-for="item in mobileNavItems" :key="item.name" :href="item.href"
           class="flex flex-col items-center justify-center" :class="[
@@ -93,20 +93,20 @@ const authStore = useAuthStore()
 
 // Simplified navigation items
 const navItems = ref([
-  { name: 'Leagues', href: '#', current: true },
+  { name: 'Leagues', href: '/leagues', current: true },
   { name: 'Team', href: '/fkl_team', current: false },
-  { name: 'Fixtures', href: '#', current: false },
+  { name: 'Fixtures', href: '/fixtures', current: false },
   { name: 'Results', href: '#', current: false },
-  { name: 'Standings', href: '#', current: false },
+  { name: 'Standings', href: '/standings', current: false },
 ])
 
 // Mobile navigation items with icons
 const mobileNavItems = ref([
   { name: 'Home', href: '/', icon: "fa-solid fa-home", current: false },
   { name: 'Team', href: '/fkl_team', icon: "fa-solid fa-users", current: false },
-  { name: 'Leagues', href: '#', icon: "fa-solid fa-futbol", current: false },
-  { name: 'Standings', href: '#', icon: "fa-solid fa-ranking-star", current: false },
-  { name: 'Account', href: '#', icon: "fa-solid fa-user", current: false },
+  { name: 'Leagues', href: '/leagues', icon: "fa-solid fa-futbol", current: false },
+  { name: 'Standings', href: '/standings', icon: "fa-solid fa-ranking-star", current: false },
+  { name: 'Account', href: '/profile', icon: "fa-solid fa-user", current: false },
 ])
 
 const accountItems = ref([

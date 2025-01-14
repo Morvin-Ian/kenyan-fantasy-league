@@ -4,6 +4,8 @@ import SignIn from '@/views/auth/SignIn.vue'
 import SignUp from '@/views/auth/SignUp.vue'
 import Activate from '@/views/auth/Activate.vue'
 import TeamView from '@/views/TeamView.vue'
+import FixturesView from '@/views/FixturesView.vue'
+import StandingsView from '@/views/StandingsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +34,16 @@ const router = createRouter({
       path: '/fkl_team',
       name: 'team',
       component: TeamView
+    },
+    {
+      path: '/standings',
+      name: 'standings',
+      component: StandingsView
+    },
+    {
+      path: '/fixtures',
+      name: 'fixtures',
+      component: FixturesView
     }
   ]
 })
