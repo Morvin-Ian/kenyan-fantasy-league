@@ -1,81 +1,101 @@
 <template>
     <div>
-        <!-- Navbar -->
-        <Navbar />
-        <div class="w-full max-w-6xl mt-5 mx-auto bg-white shadow-lg rounded-lg overflow-hidden">
+        <Navbar/>
 
-            <!-- Header -->
-            <div class="p-6 bg-white text-center relative">
-                <h2 class="text-xl md:text-2xl font-extrabold text-dark tracking-wide">
-                    Kenyan Premier League Standings
-                </h2>
-                <div class="absolute -bottom-2 left-0 right-0 h-1 bg-red-500 animate-pulse"></div>
+    </div>
+    <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 md:p-10">
+        <div class=" mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
+            <!-- Animated Header -->
+            <div class="bg-green-800 p-6 text-center relative">
+                <h1 class="text-3xl font-extrabold text-white tracking-wide flex items-center justify-center space-x-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
+                        <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                    </svg>
+                    <span>Kenyan Premier League Standings</span>
+                </h1>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-700 animate-pulse"></div>
             </div>
 
-            <div class="p-4 md:p-6">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs md:text-sm text-left text-gray-500">
-                        <thead class="bg-gray-50 text-gray-700 uppercase text-[10px] md:text-xs tracking-wide">
-                            <tr class="border-b-2 border-green-200">
-                                <th class="p-2 md:p-4">Pos</th>
-                                <th class="p-2 md:p-4">Team</th>
-                                <th class="p-2 md:p-4 text-center">P</th>
-                                <th class="p-2 md:p-4 text-center">W</th>
-                                <th class="p-2 md:p-4 text-center">D</th>
-                                <th class="p-2 md:p-4 text-center">L</th>
-                                <th class="p-2 md:p-4 text-center">GF</th>
-                                <th class="p-2 md:p-4 text-center">GA</th>
-                                <th class="p-2 md:p-4 text-center">GD</th>
-                                <th class="p-2 md:p-4 text-center">Pts</th>
-                                <th class="p-2 md:p-4 text-center">Form</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="team in standings" :key="team.team"
-                                class="hover:bg-gray-100 transition duration-300 ease-in-out transform hover:scale-105">
-                                <td class="p-2 md:p-4 font-semibold">
-                                    <span :class="getPositionClass(team.position)"
-                                        class="inline-block w-6 h-6 text-center rounded">
-                                        {{ team.position }}
+            <!-- Standings Table -->
+            <div class="p-6 overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-green-100 text-green-800">
+                        <tr>
+                            <th v-for="header in tableHeaders" :key="header" class="p-3 text-center font-semibold">
+                                {{ header }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr 
+                            v-for="team in standings" 
+                            :key="team.team" 
+                            class="hover:bg-green-50 transition-all duration-300 transform hover:scale-[1.01]"
+                        >
+                            <td class="p-3 text-center">
+                                <span 
+                                    :class="getPositionClass(team.position)"
+                                    class="inline-block w-8 h-8 rounded-full flex items-center justify-center font-bold"
+                                >
+                                    {{ team.position }}
+                                </span>
+                            </td>
+                            <td class="p-3 font-semibold text-gray-800">{{ team.team }}</td>
+                            <td class="p-3 text-center">{{ team.played }}</td>
+                            <td class="p-3 text-center text-green-600">{{ team.won }}</td>
+                            <td class="p-3 text-center text-yellow-600">{{ team.drawn }}</td>
+                            <td class="p-3 text-center text-red-600">{{ team.lost }}</td>
+                            <td class="p-3 text-center">{{ team.goalsFor }}</td>
+                            <td class="p-3 text-center">{{ team.goalsAgainst }}</td>
+                            <td class="p-3 text-center font-bold">{{ team.goalsFor - team.goalsAgainst }}</td>
+                            <td class="p-3 text-center font-bold text-green-700">{{ team.points }}</td>
+                            <td class="p-3">
+                                <div class="flex justify-center space-x-1">
+                                    <span 
+                                        v-for="(result, index) in team.form" 
+                                        :key="index"
+                                        :class="getFormBadgeColor(result)"
+                                        class="w-6 h-6 rounded-full flex items-center justify-center text-white font-bold"
+                                    >
+                                        {{ result }}
                                     </span>
-                                </td>
-                                <td class="p-2 md:p-4 font-medium text-gray-800">{{ team.team }}</td>
-                                <td class="p-2 md:p-4 text-center">{{ team.played }}</td>
-                                <td class="p-2 md:p-4 text-center">{{ team.won }}</td>
-                                <td class="p-2 md:p-4 text-center">{{ team.drawn }}</td>
-                                <td class="p-2 md:p-4 text-center">{{ team.lost }}</td>
-                                <td class="p-2 md:p-4 text-center">{{ team.goalsFor }}</td>
-                                <td class="p-2 md:p-4 text-center">{{ team.goalsAgainst }}</td>
-                                <td class="p-2 md:p-4 text-center font-semibold text-gray-700">
-                                    {{ team.goalsFor - team.goalsAgainst }}
-                                </td>
-                                <td class="p-2 md:p-4 text-center font-bold text-green-600">
-                                    {{ team.points }}
-                                </td>
-                                <td class="p-2 md:p-4">
-                                    <div class="flex gap-1 justify-center">
-                                        <span v-for="(result, index) in team.form" :key="index"
-                                            :class="getFormBadgeColor(result)"
-                                            class="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-white text-[10px] md:text-xs font-bold shadow-md">
-                                            {{ result }}
-                                        </span>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Performance Insights -->
+            <div class="bg-green-50 p-6 grid md:grid-cols-3 gap-4">
+                <div class="bg-white rounded-lg p-4 shadow-md">
+                    <h3 class="text-lg font-bold text-green-700 mb-2">Top Performer</h3>
+                    <p class="text-gray-600">{{ standings[0].team }} - {{ standings[0].points }} points</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow-md">
+                    <h3 class="text-lg font-bold text-blue-700 mb-2">Goals Leader</h3>
+                    <p class="text-gray-600">{{ standings[0].team }} - {{ standings[0].goalsFor }} goals</p>
+                </div>
+                <div class="bg-white rounded-lg p-4 shadow-md">
+                    <h3 class="text-lg font-bold text-red-700 mb-2">Best Defense</h3>
+                    <p class="text-gray-600">{{ standings[0].team }} - {{ standings[0].goalsAgainst }} conceded</p>
                 </div>
             </div>
         </div>
     </div>
-
 </template>
 
 <script setup>
-import { reactive } from 'vue';
+import { ref } from 'vue';
 import Navbar from '@/components/Navbar.vue';
 
-const standings = reactive([
+
+const tableHeaders = [
+    'Pos', 'Team', 'P', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'Pts', 'Form'
+];
+
+const standings = ref([
     {
         position: 1,
         team: "Gor Mahia",
@@ -124,21 +144,9 @@ function getFormBadgeColor(result) {
 }
 
 function getPositionClass(position) {
-    if (position === 1) return 'bg-green-400 text-white';
-    if (position === 2) return 'bg-green-400 text-white';
-    if (position === 3) return 'bg-red-600 text-white';
-    return 'text-gray-700';
+    if (position === 1) return 'bg-green-500 text-white';
+    if (position === 2) return 'bg-blue-500 text-white';
+    if (position === 3) return 'bg-yellow-500 text-white';
+    return 'bg-gray-200 text-gray-700';
 }
 </script>
-
-<style>
-/* Mobile Optimizations */
-body {
-    font-size: 14px;
-}
-
-/* Add subtle hover effect for table rows */
-tr:hover {
-    background-color: #f1f5f9;
-}
-</style>

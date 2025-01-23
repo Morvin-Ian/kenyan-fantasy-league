@@ -1,3 +1,11 @@
-from django.shortcuts import render
+import requests
+from bs4 import BeautifulSoup
 
-# Create your views here.
+
+def scrape():
+    URL = "https://footballkenya.org/competitions/fkf-premier-league/fixtures/"
+    r = requests.get(URL)
+    print(r.content)
+
+if __name__ == '__main__':
+    scrape()

@@ -1,6 +1,6 @@
 services:
   api:
-    build: 
+    build:
       context: .
       dockerfile: ./docker/local/django/Dockerfile
     command: /start
@@ -17,9 +17,9 @@ services:
       - redis
     networks:
       - fpl-vue
-  
+
   client:
-    build: 
+    build:
       context: ./client
       dockerfile: Dockerfile
     ports:
@@ -34,7 +34,6 @@ services:
     networks:
       - fpl-vue
 
-
   postgres-db:
     image: postgres:12.0-alpine
     ports:
@@ -47,12 +46,12 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     networks:
       - fpl-vue
-  
+
   redis:
     image: redis:latest
     networks:
       - fpl-vue
-  
+
   nginx:
     restart: always
     depends_on:
@@ -67,21 +66,38 @@ services:
       - "8080:80"
     networks:
       - fpl-vue
-  
+
+  # flower:
+  #   build:
+  #     context: .
+  #     dockerfile: ./docker/local/django/Dockerfile
+  #   command: /start-flower
+  #   volumes:
+  #     - .:/app
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "5557:5555"
+  #   depends_on:
+  #     - redis
+  #     - postgres-db
+  #   networks:
+  #     - fpl-vue
+
   celery_worker:
     build:
-        context: .
-        dockerfile: ./docker/local/django/Dockerfile
+      context: .
+      dockerfile: ./docker/local/django/Dockerfile
     command: /start-celeryworker
     volumes:
-        - .:/app
+      - .:/app
     env_file:
-        - .env
+      - .env
     depends_on:
-        - redis
-        - postgres-db
+      - redis
+      - postgres-db
     networks:
-        - fpl-vue
+      - fpl-vue
 
 networks:
   fpl-vue:

@@ -1,6 +1,7 @@
 amqp==5.2.0
 argh==0.31.3
 asgiref==3.8.1
+beautifulsoup4==4.12.3
 billiard==4.2.1
 black==24.8.0
 celery==5.4.0
@@ -26,6 +27,7 @@ djangorestframework-simplejwt==5.3.1
 djoser==2.2.3
 flake8==7.1.1
 flower==2.0.1
+html5lib==1.1
 humanize==4.10.0
 idna==3.10
 isort==5.13.2
@@ -56,6 +58,7 @@ requests-oauthlib==2.0.0
 six==1.16.0
 social-auth-app-django==5.4.2
 social-auth-core==4.5.4
+soupsieve==2.6
 sqlparse==0.5.1
 tornado==6.4.1
 typing_extensions==4.12.2
@@ -64,3 +67,4 @@ urllib3==2.2.3
 vine==5.1.0
 watchdog==5.0.2
 wcwidth==0.2.13
+webencodings==0.5.1

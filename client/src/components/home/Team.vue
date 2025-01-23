@@ -1,64 +1,79 @@
 <template>
-    <div class="flex flex-col bg-white rounded-md justify-between p-6 md:p-10 mt-4 main">
-        <!-- Title Section -->
-        <div class="flex flex-col md:flex-row title">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
-                <!-- Title and Links -->
-                <div class="flex flex-col md:flex-row">
-                    <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Black Stone</h2>
-                </div>
-                <!-- Hidden on small devices -->
-                <div class="flex mt-4 md:mt-0 hidden md:flex">
-                    <p class="mx-1 md:mx-3 text-sm">Total Points</p>
-                    <p class="mx-1 md:mx-3 text-sm">Rank</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Captain Section -->
-        <div class="flex flex-col md:flex-row mt-4 captain">
-            <div class="flex flex-col md:flex-row justify-between w-full">
-                <!-- Captain Details -->
-                <div class="flex flex-col md:flex-row">
-                    <div class="mt-1 md:mt-0 flex items-center">
-                        <span class="text-xs md:text-base text-gray-800">Captain - Engineer Olunga</span>
-                        <font-awesome-icon class="text-xs mx-3 cursor-pointer text-blue-600" icon="fa-solid fa-pen" />
+    <div class="min-h-screen flex items-center shadow-2xl justify-center">
+        <div class="w-full bg-white overflow-hidden">
+            <!-- Team Header -->
+            <div class="p-6 md:p-8 text-gray-700">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div>
+                        <h1 class="text-2xl font-bold mb-2">Black Stone FC</h1>
+                        <p class="text-sm opacity-80">Fantasy Football Team</p>
                     </div>
-                </div>
-                <!-- Hidden on small devices -->
-                <div class="flex mt-4 md:mt-0 hidden md:flex">
-                    <p class="mx-1 md:mx-3 text-sm font-semibold">980</p>
-                    <p class="mx-1 md:mx-3 text-sm font-semibold">200/2956</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Players Section -->
-        <div class="flex flex-wrap mt-4 players">
-            <div v-for="player in players" :key="player.name" class="player relative mx-1 mb-6 md:mx-3">
-                <!-- Captain Badge -->
-                <div v-if="player.captain"
-                    class="absolute top-2 right-2 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-md">
-                    C
-                </div>
-
-                <div class="image rounded-2xl bg-gray-200 px-4 py-2">
-                    <!-- Player Image -->
-                    <img :src="player.image" alt="Player Image"
-                        class="w-16 h-20 md:w-28 md:h-40 rounded-sm object-cover" />
-                    <!-- Player Info -->
-                    <div class="p-2 md:p-4 text-center">
-                        <h3 class="text-xs md:text-sm font-semibold text-gray-800 mb-1">
-                            {{ player.name }}
-                        </h3>
-                        <span class="text-xs md:text-sm text-gray-600 font-medium">
-                            {{ player.team }}
-                        </span>
+                    <div class="flex items-center space-x-6 mt-4 md:mt-0">
+                        <div class="text-center">
+                            <div class="text-1xl font-bold">980</div>
+                            <div class="text-xs opacity-75">Total Points</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-1xl font-bold">200/2956</div>
+                            <div class="text-xs opacity-75">Global Rank</div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
+            <!-- Captain and Team Management -->
+            <div class="p-6 md:p-8 bg-gray-50">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center">
+                            <span class="text-lg  text-gray-800 mr-3">
+                                Captain: Engineer Olunga
+                            </span>
+                            <button class="text-indigo-600 hover:text-indigo-800 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="bg-transparent text-blue-500 px-4 py-2 rounded-lg hover:text-indigo-700 transition">
+                        Make Transfer 
+                    </button>
+                </div>
+
+                <!-- Players Grid -->
+                <div class="grid grid-cols-3 md:grid-cols-6 gap-4">
+                    <div 
+                        v-for="player in players" 
+                        :key="player.name" 
+                        class="relative group transform transition hover:scale-105"
+                    >
+                        <!-- Captain Badge -->
+                        <div 
+                            v-if="player.captain" 
+                            class="absolute top-2 right-2 bg-yellow-400 text-gray-900 text-xs font-bold px-2 py-1 rounded-full z-10"
+                        >
+                            C
+                        </div>
+
+                        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                            <div class="relative">
+                                <img 
+                                    :src="player.image" 
+                                    :alt="player.name" 
+                                    class="w-full h-40 md:h-56 object-cover"
+                                />
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition"></div>
+                            </div>
+                            <div class="p-3 text-center">
+                                <h3 class="font-semibold text-gray-800">{{ player.name }}</h3>
+                                <p class="text-xs text-gray-500">{{ player.team }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -70,7 +85,6 @@ import player2 from "@/assets/images/player2.png";
 import player3 from "@/assets/images/player3.png";
 import user from "@/assets/images/shadow.png";
 
-// Player Data
 const players = ref([
     {
         name: "E. Olunga",
@@ -94,31 +108,14 @@ const players = ref([
         image: player3,
     },
     {
+        name: "E. Nderitu",
+        team: "Tusker FC",
+        image: player3,
+    },
+    {
         name: "+",
         team: "Add player",
         image: user,
     },
 ]);
 </script>
-
-<style>
-/* Responsive Design Tweaks */
-@media (max-width: 768px) {
-    .title .hidden {
-        display: none;
-    }
-
-    .captain .hidden {
-        display: none;
-    }
-
-    h1 {
-        font-size: 1rem;
-    }
-
-    .main {
-        font-size: 0.875rem;
-        /* Smaller base font size for small devices */
-    }
-}
-</style>

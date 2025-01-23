@@ -1,8 +1,8 @@
 <template>
   <div class="bg-gray-50 p-6  rounded-xl">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:justify-between items-start mb-6">
-      <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Upcoming Matches</h2>
+    <div class="flex flex-col md:flex-row md:justify-between items-start">
+      <h2 class="text-2xl font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Upcoming Matches</h2>
       <div class="flex items-center gap-4 justify-start">
         <a href="#" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"

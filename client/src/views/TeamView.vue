@@ -5,59 +5,121 @@
         <div class="max-w-7xl mt-4 mx-auto">
             <!-- Header Stats -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
-                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Gameweek Points</h3>
-                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ totalPoints }}</p>
+                <div
+                    class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+                >
+                    <h3
+                        class="text-xs md:text-sm text-gray-600 mb-2 font-medium"
+                    >
+                        Gameweek Points
+                    </h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-800">
+                        {{ totalPoints }}
+                    </p>
                 </div>
-                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
-                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Average Points</h3>
-                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ averagePoints }}</p>
+                <div
+                    class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+                >
+                    <h3
+                        class="text-xs md:text-sm text-gray-600 mb-2 font-medium"
+                    >
+                        Average Points
+                    </h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-800">
+                        {{ averagePoints }}
+                    </p>
                 </div>
-                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
-                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Highest Score</h3>
-                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ highestPoints }}</p>
+                <div
+                    class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+                >
+                    <h3
+                        class="text-xs md:text-sm text-gray-600 mb-2 font-medium"
+                    >
+                        Highest Score
+                    </h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-800">
+                        {{ highestPoints }}
+                    </p>
                 </div>
-                <div class="bg-white rounded-xl p-6 shadow-md border border-gray-200">
-                    <h3 class="text-xs md:text-sm text-gray-500 mb-2">Overall Rank</h3>
-                    <p class="text-xl md:text-3xl font-extrabold text-gray-700">{{ overallRank }}</p>
+                <div
+                    class="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
+                >
+                    <h3
+                        class="text-xs md:text-sm text-gray-600 mb-2 font-medium"
+                    >
+                        Overall Rank
+                    </h3>
+                    <p class="text-xl md:text-3xl font-extrabold text-gray-800">
+                        {{ overallRank }}
+                    </p>
                 </div>
             </div>
 
             <!-- Main Content -->
-            <div class="bg-white rounded-xl shadow-md p-2">
+            <div class="bg-white rounded-xl shadow-lg p-4">
                 <!-- Pitch Background -->
-                <div class="relative mx-auto bg-green-700 rounded-lg overflow-hidden">
+                <div
+                    class="relative mx-auto bg-green-700 rounded-lg overflow-hidden"
+                >
                     <div
-                        class="absolute inset-0 bg-[url('https://fantasy.premierleague.com/static/media/pitch-default.dab51b01.svg')] bg-cover bg-center opacity-90">
-                    </div>
+                        class="absolute inset-0 bg-[url('https://fantasy.premierleague.com/static/media/pitch-default.dab51b01.svg')] bg-cover bg-center opacity-90"
+                    ></div>
 
                     <!-- Players Layout -->
-                    <div class="relative min-h-[500px] md:min-h-[600px] p-4 md:p-8">
+                    <div
+                        class="relative min-h-[500px] md:min-h-[600px] p-4 md:p-8"
+                    >
                         <!-- Goalkeeper -->
                         <div
-                            class="absolute bottom-[83%] left-1/2 transform -translate-x-1/2 w-full max-w-[80px] md:max-w-[90px]">
-                            <div :class="getStartingPlayerClass(goalkeeper)" @click="handlePlayerClick(goalkeeper)">
-                                <PlayerCard :player="goalkeeper" :is-active="switchSource?.id === goalkeeper.id" />
+                            class="absolute bottom-[83%] left-1/2 transform -translate-x-1/2 w-full max-w-[80px] md:max-w-[90px]"
+                        >
+                            <div
+                                :class="getStartingPlayerClass(goalkeeper)"
+                                @click="handlePlayerClick(goalkeeper)"
+                            >
+                                <PlayerCard
+                                    :player="goalkeeper"
+                                    :is-active="
+                                        switchSource?.id === goalkeeper.id
+                                    "
+                                />
                             </div>
                         </div>
 
-
                         <!-- Defenders -->
                         <div class="absolute top-[20%] left-0 right-0">
-                            <div class="flex justify-center gap-2">
-                                <div v-for="player in defenders" :key="player.id"
-                                    :class="getStartingPlayerClass(player)" @click="handlePlayerClick(player)">
-                                    <PlayerCard :player="player" :is-active="switchSource?.id === player.id" />
+                            <div class="flex justify-center gap-4">
+                                <div
+                                    v-for="player in defenders"
+                                    :key="player.id"
+                                    :class="getStartingPlayerClass(player)"
+                                    @click="handlePlayerClick(player)"
+                                >
+                                    <PlayerCard
+                                        :player="player"
+                                        :is-active="
+                                            switchSource?.id === player.id
+                                        "
+                                    />
                                 </div>
                             </div>
                         </div>
 
                         <!-- Midfielders -->
                         <div class="absolute top-[45%] left-0 right-0">
-                            <div class="flex justify-center gap-2">
-                                <div v-for="player in midfielders" :key="player.id"
-                                    :class="getStartingPlayerClass(player)" @click="handlePlayerClick(player)">
-                                    <PlayerCard :player="player" :is-active="switchSource?.id === player.id" />
+                            <div class="flex justify-center gap-4">
+                                <div
+                                    v-for="player in midfielders"
+                                    :key="player.id"
+                                    :class="getStartingPlayerClass(player)"
+                                    @click="handlePlayerClick(player)"
+                                >
+                                    <PlayerCard
+                                        :player="player"
+                                        :is-active="
+                                            switchSource?.id === player.id
+                                        "
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -65,20 +127,37 @@
                         <!-- Forwards -->
                         <div class="absolute top-[70%] left-0 right-0">
                             <div class="flex justify-center gap-8">
-                                <div v-for="player in forwards" :key="player.id" :class="getStartingPlayerClass(player)"
-                                    @click="handlePlayerClick(player)">
-                                    <PlayerCard :player="player" :is-active="switchSource?.id === player.id" />
+                                <div
+                                    v-for="player in forwards"
+                                    :key="player.id"
+                                    :class="getStartingPlayerClass(player)"
+                                    @click="handlePlayerClick(player)"
+                                >
+                                    <PlayerCard
+                                        :player="player"
+                                        :is-active="
+                                            switchSource?.id === player.id
+                                        "
+                                    />
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- Bench -->
-                    <div class="bg-white rounded-lg mt-4">
-                        <div class="grid grid-cols-4 gap-2 p-2">
-                            <div v-for="player in benchPlayers" :key="player.id" :class="getBenchPlayerClass(player)"
-                                @click="handlePlayerClick(player, true)">
-                                <PlayerCard :player="player" :is-active="switchSource?.id === player.id" isBench />
+                    <div class="bg-white rounded-lg mt-4 p-4 shadow-inner">
+                        <div class="grid grid-cols-4 gap-2">
+                            <div
+                                v-for="player in benchPlayers"
+                                :key="player.id"
+                                :class="getBenchPlayerClass(player)"
+                                @click="handlePlayerClick(player, true)"
+                            >
+                                <PlayerCard
+                                    :player="player"
+                                    :is-active="switchSource?.id === player.id"
+                                    isBench
+                                />
                             </div>
                         </div>
                     </div>
@@ -86,27 +165,54 @@
             </div>
 
             <!-- Player Management Modal -->
-            <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-                <div class="bg-white rounded-lg p-6 shadow-lg max-w-md w-full m-4">
+            <div
+                v-if="showModal"
+                class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            >
+                <div
+                    class="bg-white rounded-lg p-6 shadow-2xl max-w-md w-full m-4"
+                >
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-sm font-bold text-gray-900">
+                        <h3 class="text-lg font-bold text-gray-900">
                             Manage {{ selectedPlayer?.name }}
                         </h3>
-                        <button @click="closeModal" class="text-red-500 font-bold hover:text-gray-800">
-                            X
+                        <button
+                            @click="closeModal"
+                            class="text-gray-500 hover:text-gray-800 transition-colors"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-6 w-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"
+                                />
+                            </svg>
                         </button>
                     </div>
                     <div class="space-y-4">
-                        <button @click="initiateSwitch"
-                            class="w-full bg-gray-100 py-2 text-gray-800 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                        <button
+                            @click="initiateSwitch"
+                            class="w-full bg-blue-100 py-3 text-blue-800 hover:bg-blue-200 rounded-lg text-sm font-semibold transition-all duration-300"
+                        >
                             Switch
                         </button>
-                        <button @click="makeCaptain"
-                            class="w-full bg-gray-100 py-2 text-gray-800 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                        <button
+                            @click="makeCaptain"
+                            class="w-full bg-green-100 py-3 text-green-800 hover:bg-green-200 rounded-lg text-sm font-semibold transition-all duration-300"
+                        >
                             Make Captain
                         </button>
-                        <button @click="makeViceCaptain"
-                            class="w-full bg-gray-100 py-2 text-gray-800 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                        <button
+                            @click="makeViceCaptain"
+                            class="w-full bg-yellow-100 py-3 text-yellow-800 hover:bg-yellow-200 rounded-lg text-sm font-semibold transition-all duration-300"
+                        >
                             Make Vice-Captain
                         </button>
                     </div>
@@ -149,12 +255,11 @@ const startingEleven = ref({
         nextFixture: "MUN (H)",
         chanceOfPlaying: 10,
         selectedBy: "34.5%",
-        pointsPerGame: 4.2
+        pointsPerGame: 4.2,
     },
 
     // Defenders (4)
     defenders: [
-
         {
             id: 2,
             name: "Arnold",
@@ -166,7 +271,7 @@ const startingEleven = ref({
             nextFixture: "MUN (H)",
             chanceOfPlaying: 100,
             selectedBy: "28.9%",
-            pointsPerGame: 5.3
+            pointsPerGame: 5.3,
         },
         {
             id: 3,
@@ -179,7 +284,7 @@ const startingEleven = ref({
             nextFixture: "BUR (H)",
             chanceOfPlaying: 100,
             selectedBy: "15.2%",
-            pointsPerGame: 3.8
+            pointsPerGame: 3.8,
         },
         {
             id: 4,
@@ -192,7 +297,7 @@ const startingEleven = ref({
             nextFixture: "NEW (A)",
             chanceOfPlaying: 100,
             selectedBy: "22.1%",
-            pointsPerGame: 4.5
+            pointsPerGame: 4.5,
         },
         {
             id: 5,
@@ -205,8 +310,8 @@ const startingEleven = ref({
             nextFixture: "TOT (H)",
             chanceOfPlaying: 100,
             selectedBy: "18.4%",
-            pointsPerGame: 4.2
-        }
+            pointsPerGame: 4.2,
+        },
     ],
 
     // Midfielders (3)
@@ -222,7 +327,7 @@ const startingEleven = ref({
             nextFixture: "MUN (H)",
             chanceOfPlaying: 100,
             selectedBy: "45.6%",
-            pointsPerGame: 7.8
+            pointsPerGame: 7.8,
         },
         {
             id: 7,
@@ -235,7 +340,7 @@ const startingEleven = ref({
             nextFixture: "ARS (A)",
             chanceOfPlaying: 100,
             selectedBy: "32.4%",
-            pointsPerGame: 6.5
+            pointsPerGame: 6.5,
         },
         {
             id: 8,
@@ -248,8 +353,8 @@ const startingEleven = ref({
             nextFixture: "TOT (H)",
             chanceOfPlaying: 100,
             selectedBy: "38.9%",
-            pointsPerGame: 6.2
-        }
+            pointsPerGame: 6.2,
+        },
     ],
 
     // Forwards (3)
@@ -265,7 +370,7 @@ const startingEleven = ref({
             nextFixture: "NEW (A)",
             chanceOfPlaying: 100,
             selectedBy: "82.3%",
-            pointsPerGame: 8.5
+            pointsPerGame: 8.5,
         },
         {
             id: 10,
@@ -279,7 +384,7 @@ const startingEleven = ref({
             nextFixture: "MUN (H)",
             chanceOfPlaying: 100,
             selectedBy: "24.7%",
-            pointsPerGame: 5.1
+            pointsPerGame: 5.1,
         },
         {
             id: 11,
@@ -293,9 +398,9 @@ const startingEleven = ref({
             nextFixture: "WOL (H)",
             chanceOfPlaying: 100,
             selectedBy: "28.3%",
-            pointsPerGame: 5.8
-        }
-    ]
+            pointsPerGame: 5.8,
+        },
+    ],
 });
 
 // Bench Players (4)
@@ -311,7 +416,7 @@ const benchPlayers = ref([
         nextFixture: "TOT (H)",
         chanceOfPlaying: 100,
         selectedBy: "12.4%",
-        pointsPerGame: 3.8
+        pointsPerGame: 3.8,
     },
     {
         id: 13,
@@ -324,7 +429,7 @@ const benchPlayers = ref([
         nextFixture: "TOT (H)",
         chanceOfPlaying: 100,
         selectedBy: "15.7%",
-        pointsPerGame: 4.2
+        pointsPerGame: 4.2,
     },
     {
         id: 14,
@@ -337,7 +442,7 @@ const benchPlayers = ref([
         nextFixture: "MCI (H)",
         chanceOfPlaying: 100,
         selectedBy: "8.9%",
-        pointsPerGame: 4.5
+        pointsPerGame: 4.5,
     },
     {
         id: 15,
@@ -350,21 +455,20 @@ const benchPlayers = ref([
         nextFixture: "WOL (H)",
         chanceOfPlaying: 100,
         selectedBy: "5.2%",
-        pointsPerGame: 2.8
-    }
+        pointsPerGame: 2.8,
+    },
 ]);
-
-
 
 // Modify the initiateSwitch function
 const initiateSwitch = () => {
     switchSource.value = selectedPlayer.value;
     switchActive.value = true;
     // Set isBenchSwitch based on whether the selected player is from bench
-    isBenchSwitch.value = benchPlayers.value.some(p => p.id === selectedPlayer.value.id);
+    isBenchSwitch.value = benchPlayers.value.some(
+        (p) => p.id === selectedPlayer.value.id,
+    );
     showModal.value = false;
 };
-
 
 const goalkeeper = computed(() => startingEleven.value.goalkeeper);
 const defenders = computed(() => startingEleven.value.defenders);
@@ -377,7 +481,6 @@ const openPlayerModal = (player) => {
     showModal.value = true;
 };
 
-
 const closeModal = () => {
     showModal.value = false;
     selectedPlayer.value = null;
@@ -387,7 +490,7 @@ const isPlayerDisabled = (player, isBench = false) => {
     if (!switchActive.value || !switchSource.value) return false;
 
     // If it's a goalkeeper, only allow switching with other goalkeepers
-    if (switchSource.value.position === 'GK' || player.position === 'GK') {
+    if (switchSource.value.position === "GK" || player.position === "GK") {
         return switchSource.value.position !== player.position;
     }
 
@@ -417,7 +520,7 @@ const performSwitch = (targetPlayer, isBench) => {
         return {
             DEF: startingEleven.value.defenders.length,
             MID: startingEleven.value.midfielders.length,
-            FWD: startingEleven.value.forwards.length
+            FWD: startingEleven.value.forwards.length,
         };
     };
 
@@ -427,7 +530,7 @@ const performSwitch = (targetPlayer, isBench) => {
     };
 
     const isValidFormationChange = (sourcePos, targetPos) => {
-        if (sourcePos === 'GK' || targetPos === 'GK') {
+        if (sourcePos === "GK" || targetPos === "GK") {
             return false; // Goalkeepers can only switch with goalkeepers
         }
 
@@ -449,21 +552,25 @@ const performSwitch = (targetPlayer, isBench) => {
         const constraints = {
             DEF: { min: 3, max: 5 },
             MID: { min: 3, max: 5 },
-            FWD: { min: 1, max: 3 }
+            FWD: { min: 1, max: 3 },
         };
 
         return Object.entries(newCounts).every(([pos, count]) => {
-            return count >= constraints[pos].min && count <= constraints[pos].max;
+            return (
+                count >= constraints[pos].min && count <= constraints[pos].max
+            );
         });
     };
 
     // Perform the switch based on positions
     if (isBenchSwitch.value) {
         // Switching from bench to starting 11
-        const benchIndex = benchPlayers.value.findIndex(p => p.id === sourcePlayer.id);
+        const benchIndex = benchPlayers.value.findIndex(
+            (p) => p.id === sourcePlayer.id,
+        );
 
         if (targetPlayer.position === sourcePlayer.position) {
-            if (targetPlayer.position === 'GK') {
+            if (targetPlayer.position === "GK") {
                 // Switch goalkeepers
                 const tempGK = startingEleven.value.goalkeeper;
                 startingEleven.value.goalkeeper = sourcePlayer;
@@ -471,7 +578,9 @@ const performSwitch = (targetPlayer, isBench) => {
             } else {
                 // Switch same positions
                 const positionArray = getPositionArray(targetPlayer.position);
-                const fieldIndex = positionArray.findIndex(p => p.id === targetPlayer.id);
+                const fieldIndex = positionArray.findIndex(
+                    (p) => p.id === targetPlayer.id,
+                );
 
                 if (fieldIndex !== -1) {
                     const tempPlayer = positionArray[fieldIndex];
@@ -481,14 +590,23 @@ const performSwitch = (targetPlayer, isBench) => {
             }
         } else {
             // Different positions - check if valid formation change
-            if (!isValidFormationChange(sourcePlayer.position, targetPlayer.position)) {
-                console.warn("Invalid formation change. Must maintain valid formation constraints.");
+            if (
+                !isValidFormationChange(
+                    sourcePlayer.position,
+                    targetPlayer.position,
+                )
+            ) {
+                console.warn(
+                    "Invalid formation change. Must maintain valid formation constraints.",
+                );
                 return;
             }
 
             // Remove target player from their position array
             const targetPosArray = getPositionArray(targetPlayer.position);
-            const fieldIndex = targetPosArray.findIndex(p => p.id === targetPlayer.id);
+            const fieldIndex = targetPosArray.findIndex(
+                (p) => p.id === targetPlayer.id,
+            );
 
             if (fieldIndex !== -1) {
                 // Remove target player
@@ -504,10 +622,12 @@ const performSwitch = (targetPlayer, isBench) => {
         }
     } else {
         // Switching from starting 11 to bench
-        const benchIndex = benchPlayers.value.findIndex(p => p.id === targetPlayer.id);
+        const benchIndex = benchPlayers.value.findIndex(
+            (p) => p.id === targetPlayer.id,
+        );
 
         if (sourcePlayer.position === targetPlayer.position) {
-            if (sourcePlayer.position === 'GK') {
+            if (sourcePlayer.position === "GK") {
                 // Switch goalkeepers
                 const tempGK = startingEleven.value.goalkeeper;
                 startingEleven.value.goalkeeper = targetPlayer;
@@ -515,7 +635,9 @@ const performSwitch = (targetPlayer, isBench) => {
             } else {
                 // Switch same positions
                 const positionArray = getPositionArray(sourcePlayer.position);
-                const fieldIndex = positionArray.findIndex(p => p.id === sourcePlayer.id);
+                const fieldIndex = positionArray.findIndex(
+                    (p) => p.id === sourcePlayer.id,
+                );
 
                 if (fieldIndex !== -1) {
                     const tempPlayer = positionArray[fieldIndex];
@@ -525,14 +647,23 @@ const performSwitch = (targetPlayer, isBench) => {
             }
         } else {
             // Different positions - check if valid formation change
-            if (!isValidFormationChange(sourcePlayer.position, targetPlayer.position)) {
-                console.warn("Invalid formation change. Must maintain valid formation constraints.");
+            if (
+                !isValidFormationChange(
+                    sourcePlayer.position,
+                    targetPlayer.position,
+                )
+            ) {
+                console.warn(
+                    "Invalid formation change. Must maintain valid formation constraints.",
+                );
                 return;
             }
 
             // Remove source player from their position array
             const sourcePosArray = getPositionArray(sourcePlayer.position);
-            const fieldIndex = sourcePosArray.findIndex(p => p.id === sourcePlayer.id);
+            const fieldIndex = sourcePosArray.findIndex(
+                (p) => p.id === sourcePlayer.id,
+            );
 
             if (fieldIndex !== -1) {
                 // Remove source player
@@ -562,11 +693,11 @@ const performSwitch = (targetPlayer, isBench) => {
 
 const getPositionArray = (position) => {
     switch (position) {
-        case 'DEF':
+        case "DEF":
             return startingEleven.value.defenders;
-        case 'MID':
+        case "MID":
             return startingEleven.value.midfielders;
-        case 'FWD':
+        case "FWD":
             return startingEleven.value.forwards;
         default:
             return null;
@@ -582,16 +713,16 @@ const isPlayerInStartingEleven = (player) => {
     }
 
     // Check other positions
-    return ['defenders', 'midfielders', 'forwards'].some(position => {
-        return startingEleven.value[position].some(p => p.id === player.id);
+    return ["defenders", "midfielders", "forwards"].some((position) => {
+        return startingEleven.value[position].some((p) => p.id === player.id);
     });
 };
 
 const findCurrentCaptain = () => {
     // Check all positions for current captain
-    const positions = ['defenders', 'midfielders', 'forwards'];
+    const positions = ["defenders", "midfielders", "forwards"];
     for (const position of positions) {
-        const player = startingEleven.value[position].find(p => p.isCaptain);
+        const player = startingEleven.value[position].find((p) => p.isCaptain);
         if (player) return player;
     }
     // Check goalkeeper
@@ -603,9 +734,11 @@ const findCurrentCaptain = () => {
 
 const findCurrentViceCaptain = () => {
     // Check all positions for current vice captain
-    const positions = ['defenders', 'midfielders', 'forwards'];
+    const positions = ["defenders", "midfielders", "forwards"];
     for (const position of positions) {
-        const player = startingEleven.value[position].find(p => p.isViceCaptain);
+        const player = startingEleven.value[position].find(
+            (p) => p.isViceCaptain,
+        );
         if (player) return player;
     }
     // Check goalkeeper
@@ -623,8 +756,8 @@ const clearCaptaincy = () => {
     }
 
     // Clear all positions
-    ['defenders', 'midfielders', 'forwards'].forEach(position => {
-        startingEleven.value[position].forEach(player => {
+    ["defenders", "midfielders", "forwards"].forEach((position) => {
+        startingEleven.value[position].forEach((player) => {
             player.isCaptain = false;
             player.isViceCaptain = false;
         });
@@ -692,28 +825,34 @@ const makeViceCaptain = () => {
 // Template helper computed properties
 const getStartingPlayerClass = (player) => {
     return {
-        'opacity-50 pointer-events-none': switchActive.value && isPlayerDisabled(player),
-        'cursor-pointer': true
+        "opacity-50 pointer-events-none":
+            switchActive.value && isPlayerDisabled(player),
+        "cursor-pointer": true,
     };
 };
 
 const getBenchPlayerClass = (player) => {
     return {
-        'opacity-50 pointer-events-none': switchActive.value && isPlayerDisabled(player, true),
-        'cursor-pointer': true
+        "opacity-50 pointer-events-none":
+            switchActive.value && isPlayerDisabled(player, true),
+        "cursor-pointer": true,
     };
 };
 </script>
 
-
 <style scoped>
-.aspect-video {
-    aspect-ratio: 16 / 9;
+.transition-all {
+    transition-property: all;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
 }
 
-@media (max-width: 768px) {
-    .aspect-video {
-        aspect-ratio: 4 / 3;
-    }
+.bg-green-700 {
+    background-color: #2e7d32;
+}
+
+/* Add a subtle glow effect on hover for player cards */
+.player-card:hover {
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
 }
 </style>

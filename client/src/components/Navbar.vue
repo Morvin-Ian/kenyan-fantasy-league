@@ -40,6 +40,7 @@
               </button>
 
               <div v-if="isAccountOpen"
+              style="z-index:500"
                 class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
                 <div class="py-1">
                   <button v-for="item in accountItems" :key="item.name" @click="item.action"
