@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen flex items-center shadow-2xl justify-center">
+    <div class=" flex items-center shadow-2xl justify-center">
         <div class="w-full bg-white overflow-hidden">
             <!-- Team Header -->
             <div class="p-6 md:p-8 text-gray-700">

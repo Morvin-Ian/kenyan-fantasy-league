@@ -440,7 +440,6 @@ onMounted(() => {
     line-height: 1.5;
 }
 
-/* Error Alert */
 .error-alert {
     background: #fee2e2;
     color: #b91c1c;

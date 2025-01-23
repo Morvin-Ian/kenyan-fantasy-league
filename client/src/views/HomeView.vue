@@ -4,7 +4,7 @@
     <UpcomingGames />
     <Team />
     <SearchPlayer />
-    <!-- <Performance /> -->
+    <Performance />
     <div class=" md:block">
       <Footer />
     </div>

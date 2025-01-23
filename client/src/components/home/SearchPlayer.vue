@@ -1,6 +1,6 @@
 <template>
-    <div class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen p-4 sm:p-8">
-        <div class="container mx-auto max-w-7xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div class="bg-gradient-to-br  from-blue-50 to-blue-100 min-h-screen">
+        <div class="p-6 bg-white overflow-hidden">
             <div class=" p-6">
                 <h1 class="text-2xl mt-6 font-bold text-gray-600 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-4" viewBox="0 0 20 20" fill="currentColor">
@@ -40,7 +40,7 @@
                         <option value="Barcelona">Barcelona</option>
                     </select>
 
-                    <button @click="clearFilters" class="w-48  hover:text-red-900 text-red-500 rounded-lg transition flex items-center justify-center">
+                    <button @click="clearFilters" class="hover:text-red-900 text-red-500 rounded-lg transition flex items-center justify-center">
                         Clear Filters
                     </button>
                 </div>
@@ -105,19 +105,19 @@
                     <button 
                         @click="currentPage = currentPage - 1" 
                         :disabled="currentPage === 1"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-4 py-2 text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Previous
+                        << Previous 
                     </button>
-                    <span class="px-4 py-2 bg-blue-100 rounded-lg">
+                    <span class="px-4 text-sm">
                         Page {{ currentPage }} of {{ totalPages }}
                     </span>
                     <button 
                         @click="currentPage = currentPage + 1" 
                         :disabled="currentPage === totalPages"
-                        class="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        class="px-4 py-2 text-blue-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Next
+                        Next >>
                     </button>
                 </div>
             </div>

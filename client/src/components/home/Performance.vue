@@ -1,116 +1,93 @@
 <template>
-  <div class="mt-3 space-y-8">
-    <!-- Featured Players Section -->
-    <div class="bg-gray-50 p-4 md:p-6 rounded-xl">
-      <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
-        <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Featured Players</h2>
-        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
-          View all players
-        </button>
-      </div>
+  <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 min-h-screen p-6 md:p-10">
+    <div class="max-w-10xl mx-auto space-y-5">
+      <!-- Featured Players Section -->
+      <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Top Performers</h2>
+          <button class="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition transform hover:scale-105">
+            Explore All Players
+          </button>
+        </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div v-for="player in featuredPlayers" :key="player.id"
-          class="bg-white rounded-xl p-4 border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <div class="flex items-center gap-4">
-            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gray-200 overflow-hidden">
-              <img :src="player.image" :alt="player.name" class="w-full h-full object-cover" />
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div 
+            v-for="player in featuredPlayers"
+            :key="player.id"
+            class="bg-white rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all group"
+          >
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-indigo-100 group-hover:border-indigo-200 transition">
+                <img :src="player.image" :alt="player.name" class="w-full h-full object-cover" />
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold text-indigo-900">{{ player.name }}</h3>
+                <p class="text-sm text-gray-500">{{ player.team }}</p>
+              </div>
             </div>
-            <div>
-              <h3 class="font-semibold text-gray-900 text-sm sm:text-base">
-                {{ player.name }}
-              </h3>
-              <p class="text-xs sm:text-sm text-gray-600">{{ player.team }}</p>
-            </div>
-          </div>
 
-          <div class="mt-4 grid grid-cols-3 gap-2">
-            <div class="text-center p-2 bg-gray-50 rounded-lg">
-              <p class="text-xs text-gray-600">Goals</p>
-              <p class="font-semibold text-gray-900 text-sm">
-                {{ player.stats.goals }}
-              </p>
-            </div>
-            <div class="text-center p-2 bg-gray-50 rounded-lg">
-              <p class="text-xs text-gray-600">Assists</p>
-              <p class="font-semibold text-gray-900 text-sm">
-                {{ player.stats.assists }}
-              </p>
-            </div>
-            <div class="text-center p-2 bg-gray-50 rounded-lg">
-              <p class="text-xs text-gray-600">Rating</p>
-              <p class="font-semibold text-gray-900 text-sm">
-                {{ player.stats.rating }}/10
-              </p>
+            <div class="grid grid-cols-3 gap-3">
+              <div 
+                v-for="stat in [
+                  { label: 'Goals', value: player.stats.goals },
+                  { label: 'Assists', value: player.stats.assists },
+                  { label: 'Rating', value: `${player.stats.rating}/10` }
+                ]"
+                :key="stat.label"
+                class="bg-indigo-50 rounded-xl p-3 text-center"
+              >
+                <p class="text-xs text-gray-600 mb-1">{{ stat.label }}</p>
+                <p class="font-bold text-indigo-800">{{ stat.value }}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Featured Goals Section -->
-    <div class="bg-gray-50 p-4 md:p-6 rounded-xl">
-      <div class="flex flex-wrap justify-between items-center mb-6 gap-2">
-        
-        <h2 class="text-lg font-semibold text-gray-900 md:mr-4 mb-2 md:mb-0 text-left">Featured Goals</h2>
-        <button class="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors">
-          View all goals
-        </button>
-      </div>
+      <!-- Featured Goals Section -->
+      <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-2xl font-bold text-gray-800 tracking-tight">Spectacular Goals</h2>
+          <button class="bg-blue-500 text-white px-4 py-2 rounded-full hover:bg-blue-600 transition transform hover:scale-105">
+            Watch All Highlights
+          </button>
+        </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div v-for="goal in featuredGoals" :key="goal.id"
-          class="bg-white rounded-xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-          <div class="aspect-video bg-gray-200">
-            <!-- Placeholder for video thumbnail -->
-            <div class="absolute inset-0 flex items-center justify-center relative">
-              <iframe width="853" height="480" src="https://www.youtube.com/embed/_q1KiLWGY_o"
-                title="The Money Test You Need To Take." frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin" allowfullscreen
-                class="w-full h-[200px] sm:h-[300px] md:h-[350px] transition-all"></iframe>
-            </div>
-          </div>
-
-          <div class="p-4">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-sm font-medium text-gray-900">
-                {{ goal.minute }}'
-              </span>
-              <span class="px-2 py-1 bg-gray-100 rounded-full text-xs font-medium text-gray-600">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div 
+            v-for="goal in featuredGoals"
+            :key="goal.id"
+            class="bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all group"
+          >
+            <div class="relative">
+              <iframe 
+                :src="`https://www.youtube.com/embed/${goal.videoId}`"
+                :title="`${goal.scorer} Goal`"
+                class="w-full aspect-video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              />
+              <div class="absolute top-3 right-3 bg-emerald-500/80 text-white px-3 py-1 rounded-full text-sm">
                 {{ goal.matchType }}
-              </span>
+              </div>
             </div>
 
-            <h3 class="font-medium text-gray-900 mb-1 text-sm sm:text-base">
-              {{ goal.scorer }}
-            </h3>
-            <p class="text-xs sm:text-sm text-gray-600 mb-2">
-              {{ goal.match }}
-            </p>
-
-            <div class="flex items-center gap-3">
-              <div class="flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2">
-                  <path
-                    d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3">
-                  </path>
-                </svg>
-                <span class="text-xs sm:text-sm text-gray-600">
-                  {{ goal.likes }}
-                </span>
+            <div class="p-5">
+              <div class="flex justify-between items-center mb-3">
+                <span class="text-lg font-bold text-gray-800">{{ goal.scorer }}</span>
+                <span class="text-sm text-gray-600">{{ goal.minute }}' Minute</span>
               </div>
-              <div class="flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" viewBox="0 0 24 24" fill="none"
-                  stroke="currentColor" stroke-width="2">
-                  <path
-                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
-                  </path>
-                </svg>
-                <span class="text-xs sm:text-sm text-gray-600">
-                  {{ goal.comments }}
-                </span>
+              <p class="text-gray-600 mb-4">{{ goal.match }}</p>
+
+              <div class="flex space-x-4">
+                <div class="flex items-center space-x-2">
+                  <HeartIcon class="w-5 h-5 text-red-400" />
+                  <span class="text-sm text-gray-600">{{ goal.likes }}</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <MessageCircleIcon class="w-5 h-5 text-blue-400" />
+                  <span class="text-sm text-gray-600">{{ goal.comments }}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -120,8 +97,8 @@
   </div>
 </template>
 
-
 <script setup>
+import { HeartIcon, MessageCircleIcon } from 'lucide-vue-next';
 import player3 from "@/assets/images/player3.png";
 import player2 from "@/assets/images/player2.png";
 import player1 from "@/assets/images/player1.png";
@@ -160,26 +137,33 @@ const featuredPlayers = [
       rating: 8.9
     }
   }
-]
+];
 
 const featuredGoals = [
   {
     id: 1,
     scorer: "Jude Bellingham",
-    match: "Real Madrid vs Barcelona",
+    match: "El Clásico: Real Madrid vs Barcelona",
     minute: "78",
     matchType: "La Liga",
     likes: "15.2K",
-    comments: "1.2K"
+    comments: "1.2K",
+    videoId: "Zc_vFPdHU48"
   },
   {
     id: 2,
     scorer: "Marcus Rashford",
-    match: "Manchester United vs Arsenal",
+    match: "Manchester Derby: United vs City",
     minute: "34",
     matchType: "Premier League",
     likes: "12.8K",
-    comments: "986"
+    comments: "986",
+    videoId: "f7ENx8tWEHo"
   }
-]
+];
+
 </script>
+
+<style scoped>
+/* Add custom styles if needed */
+</style>
