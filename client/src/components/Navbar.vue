@@ -94,7 +94,7 @@ const authStore = useAuthStore()
 // Simplified navigation items
 const navItems = ref([
   { name: 'Home', href: '/',  current: false },
-  { name: 'Leagues', href: '/leagues', current: true },
+  { name: 'Leagues', href: '/leagues', current: false },
   { name: 'Team', href: '/fkl_team', current: false },
   { name: 'Fixtures', href: '/fixtures', current: false },
   { name: 'Standings', href: '/standings', current: false },

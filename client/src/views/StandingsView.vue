@@ -6,15 +6,15 @@
     <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 md:p-10">
         <div class=" mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <!-- Animated Header -->
-            <div class="bg-green-800 p-6 text-center relative">
-                <h1 class="text-3xl font-extrabold text-white tracking-wide flex items-center justify-center space-x-4">
+            <div class="bg-white p-6 text-center relative">
+                <h1 class="text-3xl font-extrabold text-gray-700 tracking-wide flex items-center justify-center space-x-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clip-rule="evenodd" />
                         <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
                     </svg>
                     <span>Kenyan Premier League Standings</span>
                 </h1>
-                <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-700 animate-pulse"></div>
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-600 animate-pulse"></div>
             </div>
 
             <!-- Standings Table -->

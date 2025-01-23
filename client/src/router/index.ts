@@ -6,6 +6,7 @@ import Activate from '@/views/auth/Activate.vue'
 import TeamView from '@/views/TeamView.vue'
 import FixturesView from '@/views/FixturesView.vue'
 import StandingsView from '@/views/StandingsView.vue'
+import LeaguesView from '@/views/LeaguesView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -44,6 +45,11 @@ const router = createRouter({
       path: '/fixtures',
       name: 'fixtures',
       component: FixturesView
+    },
+    {
+      path: '/leagues',
+      name: 'leagues',
+      component: LeaguesView
     }
   ]
 })

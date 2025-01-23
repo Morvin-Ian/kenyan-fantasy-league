@@ -6,15 +6,17 @@
           <!-- Header Section -->
           <div class="bg-white text-gray-800 p-6 flex flex-col md:flex-row justify-between items-center">
             <div class="flex items-center mb-4 md:mb-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mr-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mr-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <h1 class="text-3xl font-bold">Football Fixtures</h1>
+              <h1 class="text-3xl font-extrabold tracking-wide text-gray-600">
+                Football Fixtures
+              </h1>
             </div>
             <div class="flex items-center space-x-4">
               <select 
                 v-model="selectedLeague" 
-                class="bg-white text-gray-600 px-4 py-2 rounded-lg"
+                class="bg-white text-gray-600 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option v-for="league in leagues" :key="league.id" :value="league.id">
                   {{ league.name }}
@@ -23,7 +25,7 @@
               <input 
                 v-model="dateFilter" 
                 type="date" 
-                class="bg-white text-gray-600 px-4 py-2 rounded-lg"
+                class="bg-white text-gray-600 px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -32,7 +34,7 @@
           <div class="p-6 border-b border-gray-200 flex justify-between items-center">
             <button 
               @click="previousGameweek" 
-              class="text-blue-700 px-4 py-2 rounded-lg font-bold transition flex items-center"
+              class="text-blue-600 px-4 py-2 rounded-lg font-semibold transition flex items-center hover:bg-blue-50"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -42,7 +44,7 @@
             <span class="font-semibold text-gray-700">Gameweek {{ currentGameweek }}</span>
             <button 
               @click="nextGameweek" 
-              class="text-blue-700 font-bold px-4 py-2 rounded-lg transition flex items-center"
+              class="text-blue-600 font-semibold px-4 py-2 rounded-lg transition flex items-center hover:bg-blue-50"
             >
               Next
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
@@ -66,7 +68,7 @@
                   <div class="flex items-center space-x-6 w-full md:w-auto">
                     <div class="flex items-center space-x-4">
                       <img src="/logo.png" :alt="fixture.homeTeam.name" class="h-12 w-12">
-                      <span class="font-semibold text-gray-900">{{ fixture.homeTeam.name }}</span>
+                      <span class="font-semibold text-gray-500">{{ fixture.homeTeam.name }}</span>
                     </div>
                     <div class="text-center">
                       <span class="text-gray-500 text-sm">{{ fixture.time }}</span>
@@ -76,7 +78,7 @@
                     </div>
                     <div class="flex items-center space-x-4">
                       <img src="/logo.png" :alt="fixture.awayTeam.name" class="h-12 w-12">
-                      <span class="font-semibold text-gray-900">{{ fixture.awayTeam.name }}</span>
+                      <span class="font-semibold text-gray-500">{{ fixture.awayTeam.name }}</span>
                     </div>
                   </div>
                   <div class="flex items-center space-x-4 mt-4 md:mt-0">
@@ -91,7 +93,7 @@
                       {{ fixture.status }}
                     </span>
                     <button 
-                      class="text-blue-700 font-semibold px-4 py-2 hover:text-blue-600 transition"
+                      class="text-blue-600 font-semibold px-4 py-2 hover:text-blue-700 transition"
                     >
                       Details
                     </button>
@@ -113,7 +115,7 @@
                 <div class="flex items-center space-x-6 w-full md:w-auto">
                   <div class="flex items-center space-x-4">
                     <img src="/logo.png" :alt="result.homeTeam.name" class="h-12 w-12">
-                    <span class="font-semibold text-gray-900">{{ result.homeTeam.name }}</span>
+                    <span class="font-semibold text-gray-500">{{ result.homeTeam.name }}</span>
                   </div>
                   <div class="text-center">
                     <span class="text-gray-500 text-sm">{{ result.time }}</span>
@@ -123,7 +125,7 @@
                   </div>
                   <div class="flex items-center space-x-4">
                     <img src="/logo.png" :alt="result.awayTeam.name" class="h-12 w-12">
-                    <span class="font-semibold text-gray-900">{{ result.awayTeam.name }}</span>
+                    <span class="font-semibold text-gray-500">{{ result.awayTeam.name }}</span>
                   </div>
                 </div>
                 <div class="flex items-center space-x-4 mt-4 md:mt-0">
@@ -131,7 +133,7 @@
                     COMPLETED
                   </span>
                   <button 
-                  class="text-blue-700 font-semibold px-4 py-2 hover:text-blue-600 transition"
+                    class="text-blue-600 font-semibold px-4 py-2 hover:text-blue-700 transition"
                   >
                     Details
                   </button>
@@ -237,3 +239,7 @@
     currentGameweek.value++;
   };
   </script>
+  
+  <style scoped>
+  /* Add custom styles if needed */
+  </style>
