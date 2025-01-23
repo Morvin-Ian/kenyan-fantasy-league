@@ -4,7 +4,7 @@
     <div class="flex flex-col md:flex-row md:justify-between items-start">
       <h2 class="text-2xl font-semibold text-gray-900 md:mr-4 mb-2 md:mb-6 text-left">Upcoming Matches</h2>
       <div class="flex items-center gap-4 justify-start">
-        <a href="#" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
+        <a href="/fixtures" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
