@@ -77,7 +77,14 @@
                     <span v-else>Sign In</span>
                 </button>
 
-                <p class="register-link">
+                <!-- Forgot Password Link -->
+                <p class="forgot-password-link">
+                    <router-link to="/password/reset/request"
+                        ><small>Forgot Password?</small></router-link
+                    >
+                </p>
+
+                <p class="register-link text-end">
                     Don't have an account?
                     <router-link to="/sign-up">Create one</router-link>
                 </p>

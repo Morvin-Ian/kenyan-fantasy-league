@@ -1,30 +1,39 @@
-import axios from 'axios';
-import type { AxiosResponse, AxiosError, InternalAxiosRequestConfig, AxiosRequestHeaders } from 'axios';
+import axios from "axios";
+import type {
+  AxiosResponse,
+  AxiosError,
+  InternalAxiosRequestConfig,
+  AxiosRequestHeaders,
+} from "axios";
 
 const apiClient = axios.create({
-  baseURL: '/api/v1',
-  timeout: 10000
+  baseURL: "/api/v1",
+  timeout: 10000,
 });
 
-export const loginUrl = `/auth/jwt/create/`
-export const registerUrl = `/auth/users/`
-export const activationUrl = `/auth/users/activation/`
+export const loginUrl = `/auth/jwt/create/`;
+export const registerUrl = `/auth/users/`;
+export const activationUrl = `/auth/users/activation/`;
+export const resetPasswordUrl = `/auth/users/reset_password/`;
+export const resetPasswordConfirmUrl = `/auth/users/reset_password_confirm/`;
 
 // Add token to requests except for login and register
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('token');
-    const isAuthEndpoint = config.url?.includes('/jwt/create') || config.url?.includes('/auth/users/');
+    const token = localStorage.getItem("token");
+    const isAuthEndpoint =
+      config.url?.includes("/jwt/create") ||
+      config.url?.includes("/auth/users/");
 
     if (token && !isAuthEndpoint) {
       config.headers = {
         ...config.headers,
-        Authorization: `Bearer ${token}`
-      } as AxiosRequestHeaders;  
+        Authorization: `Bearer ${token}`,
+      } as AxiosRequestHeaders;
     }
     return config;
   },
-  (error: AxiosError) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error),
 );
 
 // Handle token expiration and other response errors

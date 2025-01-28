@@ -14,7 +14,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = [
+        fields = (
             "username",
             "first_name",
             "last_name",
@@ -26,7 +26,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gender",
             "country",
             "city",
-        ]
+        )
 
     def get_full_name(self, obj):
         first_name = obj.user.first_name.title()
@@ -39,4 +39,4 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Profile
-        fields = ["phone_number", "profile_photo", "gender", "country", "city"]
+        fields = ("phone_number", "profile_photo", "gender", "country", "city")
