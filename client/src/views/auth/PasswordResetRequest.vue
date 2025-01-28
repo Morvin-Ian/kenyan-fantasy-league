@@ -5,6 +5,10 @@
                 <div class="logo">Fantasy Kenyan League</div>
             </div>
 
+            <div v-if="success" class="success-alert">
+                <p class="success-text">{{ success }}</p>
+            </div>
+
             <div v-if="error" class="error-alert">
                 <AlertCircle class="alert-icon" />
                 <p class="error-text">{{ error }}</p>
@@ -70,6 +74,7 @@ const v$ = useVuelidate(rules, form);
 
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const success = ref<string | null>(null);
 
 const handleResetRequest = async () => {
     const isValid = await v$.value.$validate();
@@ -83,7 +88,7 @@ const handleResetRequest = async () => {
 
     try {
         await authStore.resetPassword(form.value.email);
-        alert("Password reset link sent to your email.");
+        success.value = "Password reset link sent to your email.";
     } catch (err: any) {
         error.value = err.message || "Failed to send reset link.";
     } finally {
@@ -159,6 +164,26 @@ input {
 .error-text {
     font-size: 0.8rem;
     color: #ef4444;
+    margin-top: 0.5rem;
+    display: block;
+    animation: fadeIn 0.2s ease;
+}
+
+.success-alert {
+    background: lightgreen;
+    color: green;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: slideIn 0.3s ease;
+}
+
+.success-text {
+    font-size: 0.8rem;
+    color: green;
     margin-top: 0.5rem;
     display: block;
     animation: fadeIn 0.2s ease;
