@@ -171,7 +171,7 @@ export const useAuthStore = defineStore("auth", {
         );
         this.setUser(data.profile);
       } catch (error: any) {
-        if (error.response?.status === 401) await this.logout();
+        await this.logout();
         throw error;
       } finally {
         this.setLoading(false);
