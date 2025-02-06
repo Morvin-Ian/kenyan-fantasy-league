@@ -13,33 +13,17 @@
                 <p>{{ authStore.error }}</p>
             </div>
 
-            <form
-                @submit.prevent="handleSubmit"
-                class="register-form"
-                novalidate
-            >
+            <form @submit.prevent="handleSubmit" class="register-form" novalidate>
                 <!-- First Name field -->
                 <div class="form-group">
                     <label for="firstName">First Name</label>
                     <div class="input-wrapper">
-                        <input
-                            id="firstName"
-                            v-model="form.firstName"
-                            type="text"
-                            required
-                            placeholder="Enter your first name"
-                            :class="{ error: v$.firstName.$error }"
-                            @blur="v$.firstName.$touch"
-                        />
+                        <input id="firstName" v-model="form.firstName" type="text" required
+                            placeholder="Enter your first name" :class="{ error: v$.firstName.$error }"
+                            @blur="v$.firstName.$touch" />
                         <div class="input-icon" v-if="form.firstName">
-                            <CheckCircle
-                                v-if="!v$.firstName.$error"
-                                class="valid-icon h-4"
-                            />
-                            <XCircle
-                                v-else
-                                class="invalid-icon h-4 text-red-400"
-                            />
+                            <CheckCircle v-if="!v$.firstName.$error" class="valid-icon h-4" />
+                            <XCircle v-else class="invalid-icon h-4 text-red-400" />
                         </div>
                     </div>
                     <span v-if="v$.firstName.$error" class="error-text">
@@ -51,24 +35,12 @@
                 <div class="form-group">
                     <label for="lastName">Last Name</label>
                     <div class="input-wrapper">
-                        <input
-                            id="lastName"
-                            v-model="form.lastName"
-                            type="text"
-                            required
-                            placeholder="Enter your last name"
-                            :class="{ error: v$.lastName.$error }"
-                            @blur="v$.lastName.$touch"
-                        />
+                        <input id="lastName" v-model="form.lastName" type="text" required
+                            placeholder="Enter your last name" :class="{ error: v$.lastName.$error }"
+                            @blur="v$.lastName.$touch" />
                         <div class="input-icon" v-if="form.lastName">
-                            <CheckCircle
-                                v-if="!v$.lastName.$error"
-                                class="valid-icon h4"
-                            />
-                            <XCircle
-                                v-else
-                                class="invalid-icon h-4 text-red-400"
-                            />
+                            <CheckCircle v-if="!v$.lastName.$error" class="valid-icon h4" />
+                            <XCircle v-else class="invalid-icon h-4 text-red-400" />
                         </div>
                     </div>
                     <span v-if="v$.lastName.$error" class="error-text">
@@ -79,24 +51,11 @@
                 <div class="form-group">
                     <label for="email">Email address</label>
                     <div class="input-wrapper">
-                        <input
-                            id="email"
-                            v-model="form.email"
-                            type="email"
-                            required
-                            placeholder="Enter your email"
-                            :class="{ error: v$.email.$error }"
-                            @blur="v$.email.$touch"
-                        />
+                        <input id="email" v-model="form.email" type="email" required placeholder="Enter your email"
+                            :class="{ error: v$.email.$error }" @blur="v$.email.$touch" />
                         <div class="input-icon" v-if="form.email">
-                            <CheckCircle
-                                v-if="!v$.email.$error"
-                                class="valid-icon h-4"
-                            />
-                            <XCircle
-                                v-else
-                                class="invalid-icon h-4 text-red-400"
-                            />
+                            <CheckCircle v-if="!v$.email.$error" class="valid-icon h-4" />
+                            <XCircle v-else class="invalid-icon h-4 text-red-400" />
                         </div>
                     </div>
                     <span v-if="v$.email.$error" class="error-text">
@@ -108,20 +67,10 @@
                     <div class="form-group">
                         <label for="password">Password</label>
                         <div class="input-wrapper">
-                            <input
-                                id="password"
-                                v-model="form.password"
-                                :type="showPassword ? 'text' : 'password'"
-                                required
-                                placeholder="Create a password"
-                                :class="{ error: v$.password.$error }"
-                                @blur="v$.password.$touch"
-                            />
-                            <button
-                                type="button"
-                                class="toggle-password"
-                                @click="showPassword = !showPassword"
-                            >
+                            <input id="password" v-model="form.password" :type="showPassword ? 'text' : 'password'"
+                                required placeholder="Create a password" :class="{ error: v$.password.$error }"
+                                @blur="v$.password.$touch" />
+                            <button type="button" class="toggle-password" @click="showPassword = !showPassword">
                                 <Eye v-if="!showPassword" />
                                 <EyeOff v-else />
                             </button>
@@ -133,11 +82,8 @@
 
                     <div class="password-strength" v-if="form.password">
                         <div class="strength-meter">
-                            <div
-                                class="strength-bar"
-                                :style="{ width: `${passwordStrength}%` }"
-                                :class="strengthClass"
-                            ></div>
+                            <div class="strength-bar" :style="{ width: `${passwordStrength}%` }" :class="strengthClass">
+                            </div>
                         </div>
                         <span class="strength-text" :class="strengthClass">
                             {{ passwordStrengthText }}
@@ -167,20 +113,12 @@
                 <div class="form-group">
                     <label for="confirmPassword">Confirm Password</label>
                     <div class="input-wrapper">
-                        <input
-                            id="confirmPassword"
-                            v-model="form.confirmPassword"
-                            :type="showConfirmPassword ? 'text' : 'password'"
-                            required
-                            placeholder="Confirm your password"
-                            :class="{ error: v$.confirmPassword.$error }"
-                            @blur="v$.confirmPassword.$touch"
-                        />
-                        <button
-                            type="button"
-                            class="toggle-password"
-                            @click="showConfirmPassword = !showConfirmPassword"
-                        >
+                        <input id="confirmPassword" v-model="form.confirmPassword"
+                            :type="showConfirmPassword ? 'text' : 'password'" required
+                            placeholder="Confirm your password" :class="{ error: v$.confirmPassword.$error }"
+                            @blur="v$.confirmPassword.$touch" />
+                        <button type="button" class="toggle-password"
+                            @click="showConfirmPassword = !showConfirmPassword">
                             <Eye v-if="!showConfirmPassword" />
                             <EyeOff v-else />
                         </button>
@@ -192,21 +130,12 @@
 
                 <div class="terms-section">
                     <label class="terms-checkbox">
-                        <input
-                            v-model="form.acceptTerms"
-                            type="checkbox"
-                            required
-                            @blur="v$.acceptTerms.$touch"
-                        />
+                        <input v-model="form.acceptTerms" type="checkbox" required @blur="v$.acceptTerms.$touch" />
                         <span class="checkbox-text">
                             I agree to the
-                            <a href="/terms" class="terms-link"
-                                >Terms of Service</a
-                            >
+                            <a href="/terms" class="terms-link">Terms of Service</a>
                             and
-                            <a href="/privacy" class="terms-link"
-                                >Privacy Policy</a
-                            >
+                            <a href="/privacy" class="terms-link">Privacy Policy</a>
                         </span>
                     </label>
                     <span v-if="v$.acceptTerms.$error" class="error-text">
@@ -214,15 +143,8 @@
                     </span>
                 </div>
 
-                <button
-                    type="submit"
-                    :disabled="authStore.isLoading || !formIsValid"
-                    class="submit-button"
-                >
-                    <span
-                        v-if="authStore.isLoading"
-                        class="loading-spinner"
-                    ></span>
+                <button type="submit" :disabled="authStore.isLoading || !formIsValid" class="submit-button">
+                    <span v-if="authStore.isLoading" class="loading-spinner"></span>
                     <span v-else>Create Account</span>
                 </button>
 
@@ -367,7 +289,7 @@ const handleSubmit = async () => {
         });
 
         toast.success(
-            "🎉 Activation email sent! Please check your inbox to complete your registration",
+            "Activation email sent! Please check complete your registration",
             {
                 timeout: 10000,
             },

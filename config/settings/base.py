@@ -12,7 +12,10 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
-
+import logging
+import logging.config
+from datetime import timedelta
+from django.utils.log import DEFAULT_LOGGING
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -153,7 +156,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-from datetime import timedelta
 
 SIMPLE_JWT = {
     "AUTH_HEADERS_TYPES": ("Bearer", "JWT"),
@@ -185,10 +187,7 @@ DJOSER = {
     },
 }
 
-import logging
-import logging.config
 
-from django.utils.log import DEFAULT_LOGGING
 
 logger = logging.getLogger(__name__)
 

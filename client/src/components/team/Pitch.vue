@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import PlayerCard from "@/components/team/PlayerCard.vue";
-import { Player } from "@/types/team";
+import type { Player } from "@/types/team";
 
 const props = defineProps<{
     goalkeeper: Player;

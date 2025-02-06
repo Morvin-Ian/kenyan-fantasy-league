@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { Player } from "@/types/team";
+import type { Player } from "@/types/team";
 
 const props = defineProps<{
     showModal: boolean;
@@ -61,19 +61,15 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-    (event: "close-modal"): void;
-    (event: "initiate-switch"): void;
-    (event: "make-captain"): void;
-    (event: "make-vice-captain"): void;
+  (event: "close-modal"): void;
+  (event: "initiate-switch"): void;
+  (event: "make-captain"): void;
+  (event: "make-vice-captain"): void;
 }>();
 
-const emitAction = (
-    action:
-        | "close-modal"
-        | "initiate-switch"
-        | "make-captain"
-        | "make-vice-captain",
-) => {
-    emit(action);
+
+const emitAction = (action: "close-modal" | "initiate-switch" | "make-captain" | "make-vice-captain") => {
+  emit(action as any);
 };
+
 </script>

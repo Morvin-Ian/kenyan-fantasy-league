@@ -94,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { Fixture, Result, Performer } from "@/types/team";
+import type { Fixture, Result, Performer } from "@/types/team";
 
 const props = defineProps<{
     totalPoints: number;
