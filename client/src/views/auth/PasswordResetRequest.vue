@@ -221,7 +221,9 @@ input {
 }
 
 .signin-link a {
-    color: #007bff;
+    color: #1a472a;
+    font-weight: bold;
     text-decoration: none;
+    transition: color 0.2s ease;
 }
 </style>

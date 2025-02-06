@@ -18,4 +18,17 @@ import Team from "@/components/home/Team.vue";
 import SearchPlayer from "@/components/home/SearchPlayer.vue";
 import UpcomingGames from "@/components/home/UpcomingGames.vue";
 import Performance from "@/components/home/Performance.vue";
+import { onMounted } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router";
+
+const authStore = useAuthStore();
+const router = useRouter();
+
+onMounted(async () => {
+    await authStore.initialize();
+    if (!authStore.isAuthenticated) {
+        router.push("/sign-in");
+    }
+});
 </script>

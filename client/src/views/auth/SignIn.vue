@@ -78,9 +78,9 @@
                 </button>
 
                 <!-- Forgot Password Link -->
-                <p class="forgot-password-link">
+                <p class="forgot-password-link text-end mt-3 text-sm">
                     <router-link to="/password/reset/request"
-                        ><small>Forgot Password?</small></router-link
+                        >Forgot Password?</router-link
                     >
                 </p>
 

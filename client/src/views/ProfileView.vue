@@ -40,7 +40,7 @@
                             @click="editProfilePhoto"
                             class="mt-6 px-6 py-3 bg-white text-sky-600 rounded-xl shadow-lg hover:bg-sky-50 transform hover:scale-105 transition duration-300 font-semibold flex items-center gap-2"
                         >
-                            <span class="material-icons">photo_camera</span>
+                            <font-awesome-icon icon="fa-solid fa-camera" />
                             Update Photo
                         </button>
 
@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import default_profile from "../assets/images/user.jpeg";
 import Navbar from "@/components/Navbar.vue";
@@ -189,6 +189,13 @@ const editProfilePhoto = () => {
         user.profilePhoto = newPhoto;
     }
 };
+
+onMounted(async () => {
+    await authStore.initialize();
+    if (!authStore.isAuthenticated) {
+        router.push("/sign-in");
+    }
+});
 </script>
 
 <style scoped>
