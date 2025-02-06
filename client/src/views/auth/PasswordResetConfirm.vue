@@ -138,7 +138,7 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 
-const formIsValid = computed(() => !v$.$invalid);
+const formIsValid = computed(() => !v$.value.$invalid);
 
 const handleResetConfirm = async () => {
     isLoading.value = true;

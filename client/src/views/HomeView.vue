@@ -12,11 +12,8 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
 import Navbar from "@/components/Navbar.vue";
 import Footer from "@/components/Footer.vue";
-import { useAuthStore } from "@/stores/auth";
-import { useRouter } from "vue-router";
 import Team from "@/components/home/Team.vue";
 import SearchPlayer from "@/components/home/SearchPlayer.vue";
 import UpcomingGames from "@/components/home/UpcomingGames.vue";

@@ -141,7 +141,20 @@
 import { ref } from "vue";
 import Navbar from "@/components/Navbar.vue";
 
-const tableHeaders = [
+interface TeamStanding {
+    position: number;
+    team: string;
+    played: number;
+    won: number;
+    drawn: number;
+    lost: number;
+    goalsFor: number;
+    goalsAgainst: number;
+    points: number;
+    form: ("W" | "D" | "L")[];
+}
+
+const tableHeaders: string[] = [
     "Pos",
     "Team",
     "P",
@@ -155,7 +168,7 @@ const tableHeaders = [
     "Form",
 ];
 
-const standings = ref([
+const standings = ref<TeamStanding[]>([
     {
         position: 1,
         team: "Gor Mahia",
@@ -194,7 +207,7 @@ const standings = ref([
     },
 ]);
 
-function getFormBadgeColor(result) {
+function getFormBadgeColor(result: "W" | "D" | "L"): string {
     switch (result) {
         case "W":
             return "bg-green-500";
@@ -207,7 +220,7 @@ function getFormBadgeColor(result) {
     }
 }
 
-function getPositionClass(position) {
+function getPositionClass(position: number): string {
     if (position === 1) return "bg-green-500 text-white";
     if (position === 2) return "bg-blue-500 text-white";
     if (position === 3) return "bg-yellow-500 text-white";

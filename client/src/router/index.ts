@@ -1,4 +1,15 @@
 import { createRouter, createWebHistory } from "vue-router";
+import HomeView from "../views/HomeView.vue";
+import SignIn from "@/views/auth/SignIn.vue";
+import SignUp from "@/views/auth/SignUp.vue";
+import Activate from "@/views/auth/Activate.vue";
+import TeamView from "@/views/TeamView.vue";
+import StandingsView from "@/views/StandingsView.vue";
+import FixturesView from "@/views/FixturesView.vue";
+import LeaguesView from "@/views/LeaguesView.vue";
+import ProfileView from "@/views/ProfileView.vue";
+import PasswordResetConfirm from "@/views/auth/PasswordResetConfirm.vue";
+import PasswordResetRequest from "@/views/auth/PasswordResetRequest.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -6,57 +17,57 @@ const router = createRouter({
     {
       path: "/",
       name: "home",
-      component: () => import("../views/HomeView.vue"),
+      component: HomeView,
     },
     {
       path: "/sign-in",
       name: "sign-in",
-      component: () => import("@/views/auth/SignIn.vue"),
+      component: SignIn,
     },
     {
       path: "/sign-up",
       name: "sign-up",
-      component: () => import("@/views/auth/SignUp.vue"),
+      component: SignUp,
     },
     {
       path: "/activate/:uid/:token",
       name: "activation",
-      component: () => import("@/views/auth/Activate.vue"),
+      component: Activate,
     },
     {
       path: "/fkl_team",
       name: "team",
-      component: () => import("@/views/TeamView.vue"),
+      component: TeamView,
     },
     {
       path: "/standings",
       name: "standings",
-      component: () => import("@/views/StandingsView.vue"),
+      component: StandingsView,
     },
     {
       path: "/fixtures",
       name: "fixtures",
-      component: () => import("@/views/FixturesView.vue"),
+      component: FixturesView,
     },
     {
       path: "/leagues",
       name: "leagues",
-      component: () => import("@/views/LeaguesView.vue"),
+      component: LeaguesView,
     },
     {
       path: "/profile",
       name: "profile",
-      component: () => import("@/views/ProfileView.vue"),
+      component: ProfileView,
     },
     {
       path: "/password/reset/confirm/:uid/:token",
       name: "reset-password",
-      component: () => import("@/views/auth/PasswordResetConfirm.vue"),
+      component: PasswordResetConfirm,
     },
     {
       path: "/password/reset/request",
       name: "reset-password-request",
-      component: () => import("@/views/auth/PasswordResetRequest.vue"),
+      component: PasswordResetRequest,
     },
   ],
 });

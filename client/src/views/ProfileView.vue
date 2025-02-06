@@ -30,8 +30,8 @@
                                 class="absolute -inset-0.5 bg-gradient-to-r from-sky-300 to-pink-300 rounded-full opacity-75 group-hover:opacity-100 blur transition duration-500"
                             ></div>
                             <img
-                                :src="user.profilePhoto"
-                                :alt="user.firstName"
+                                :src="getProfilePhotoUrl()"
+                                :alt="user.first_name"
                                 class="relative w-48 h-48 rounded-full object-cover border-4 border-white shadow-xl transform transition duration-500"
                             />
                         </div>
@@ -46,7 +46,7 @@
 
                         <div class="mt-4 text-center">
                             <h2 class="text-2xl font-bold text-gray-800">
-                                {{ user.firstName }} {{ user.lastName }}
+                                {{ user.firstName }} {{ user.last_name }}
                             </h2>
                             <p class="text-gray-600">@{{ user.username }}</p>
                         </div>
@@ -105,9 +105,6 @@
                                 class="px-8 py-3 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 font-semibold"
                             >
                                 <span class="flex items-center gap-2">
-                                    <span class="material-icons">{{
-                                        isEditing ? "save" : "edit"
-                                    }}</span>
                                     {{
                                         isEditing
                                             ? "Save Changes"
@@ -132,27 +129,47 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, computed } from "vue";
+import { useAuthStore } from "@/stores/auth";
+import default_profile from "../assets/images/user.jpeg";
 import Navbar from "@/components/Navbar.vue";
 
+const authStore = useAuthStore();
 const isEditing = ref(false);
-const user = reactive({
-    username: "Admin",
-    firstName: "Ian",
-    lastName: "Morvin",
-    email: "admin@gmail.com",
-    profilePhoto:
-        "https://images.pexels.com/photos/29946756/pexels-photo-29946756/free-photo-of-stylish-woman-relaxing-outdoors-in-autumn-fashion.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1",
-    gender: "Other",
-    country: "Kenya",
-    city: "Nairobi",
-});
+const user = computed(
+    () =>
+        authStore.user ?? {
+            username: "",
+            first_name: "",
+            last_name: "",
+            email: "",
+            gender: "",
+            country: "",
+            city: "",
+        },
+);
+
+const getProfilePhotoUrl = () => {
+    const profilePhoto = authStore.user?.profile_photo;
+
+    if (!profilePhoto) {
+        return default_profile;
+    }
+
+    if (profilePhoto.endsWith("default.png")) {
+        return default_profile;
+    }
+
+    const image = profilePhoto.split("/");
+    const image_name = image[image.length - 1];
+    return `/mediafiles/${image_name}`;
+};
 
 const userFields = {
     username: { label: "Username", type: "text" },
     email: { label: "Email Address", type: "email" },
-    firstName: { label: "First Name", type: "text" },
-    lastName: { label: "Last Name", type: "text" },
+    first_name: { label: "First Name", type: "text" },
+    last_name: { label: "Last Name", type: "text" },
     gender: { label: "Gender", type: "text" },
     country: { label: "Country", type: "text" },
     city: { label: "City", type: "text" },

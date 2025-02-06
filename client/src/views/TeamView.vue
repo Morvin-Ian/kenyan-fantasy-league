@@ -1,3 +1,4 @@
+
 <template>
   <Navbar />
 
@@ -249,15 +250,16 @@
   import { ref, computed } from "vue";
   import Navbar from "@/components/Navbar.vue";
   import PlayerCard from "@/components/team/PlayerCard.vue";
+  import {startingEleven, benchPlayers } from "@/data";
 
   const overallRank = ref("234,567");
 
   // Modal State
   const showModal = ref(false);
-  const selectedPlayer = ref(null);
+  const selectedPlayer = ref<Player | null>(null);
   const switchActive = ref(false);
-  const switchSource = ref(null);
-  const switchTarget = ref(null);
+  const switchSource = ref<Player | null>(null);
+  const switchTarget = ref<Player | null>(null);
   const isBenchSwitch = ref(false);
 
   // Stats
@@ -265,224 +267,52 @@
   const averagePoints = ref(52);
   const highestPoints = ref(121);
 
-  const startingEleven = ref({
-      // Goalkeeper (1)
-      goalkeeper: {
-          id: 1,
-          name: "Alisson",
-          team: "GOR",
-          position: "GK",
-          points: 6,
-          form: "6.7",
-          price: 5.5,
-          nextFixture: "MUN (H)",
-          chanceOfPlaying: 10,
-          selectedBy: "34.5%",
-          pointsPerGame: 4.2,
-      },
+  const startingElevenRef = ref(startingEleven);
+  const benchPlayersRef = ref(benchPlayers);
 
-      // Defenders (4)
-      defenders: [
-          {
-              id: 2,
-              name: "Arnold",
-              team: "AFC",
-              position: "DEF",
-              points: 12,
-              form: "7.2",
-              price: 7.8,
-              nextFixture: "MUN (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "28.9%",
-              pointsPerGame: 5.3,
-          },
-          {
-              id: 3,
-              name: "Chilwell",
-              team: "AFC",
-              position: "DEF",
-              points: 2,
-              form: "5.4",
-              price: 5.4,
-              nextFixture: "BUR (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "15.2%",
-              pointsPerGame: 3.8,
-          },
-          {
-              id: 4,
-              name: "Dias",
-              team: "ULINZI",
-              position: "DEF",
-              points: 6,
-              form: "6.1",
-              price: 6.2,
-              nextFixture: "NEW (A)",
-              chanceOfPlaying: 100,
-              selectedBy: "22.1%",
-              pointsPerGame: 4.5,
-          },
-          {
-              id: 5,
-              name: "Gabriel",
-              team: "ULINZI",
-              position: "DEF",
-              points: 8,
-              form: "6.8",
-              price: 5.2,
-              nextFixture: "TOT (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "18.4%",
-              pointsPerGame: 4.2,
-          },
-      ],
+  const goalkeeper = computed(() => startingElevenRef.value.goalkeeper);
+  const defenders = computed(() => startingElevenRef.value.defenders);
+  const midfielders = computed(() => startingElevenRef.value.midfielders);
+  const forwards = computed(() => startingElevenRef.value.forwards);
 
-      // Midfielders (3)
-      midfielders: [
-          {
-              id: 6,
-              name: "Salah",
-              team: "TUSKER",
-              position: "MID",
-              points: 15,
-              form: "8.3",
-              price: 12.8,
-              nextFixture: "MUN (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "45.6%",
-              pointsPerGame: 7.8,
-          },
-          {
-              id: 7,
-              name: "Son",
-              team: "TUSKER",
-              position: "MID",
-              points: 8,
-              form: "7.1",
-              price: 9.3,
-              nextFixture: "ARS (A)",
-              chanceOfPlaying: 100,
-              selectedBy: "32.4%",
-              pointsPerGame: 6.5,
-          },
-          {
-              id: 8,
-              name: "Saka",
-              team: "ULINZI",
-              position: "MID",
-              points: 7,
-              form: "7.4",
-              price: 8.7,
-              nextFixture: "TOT (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "38.9%",
-              pointsPerGame: 6.2,
-          },
-      ],
+  const openPlayerModal = (player: Player) => {
+    selectedPlayer.value = player;
+    showModal.value = true;
+  };
 
-      // Forwards (3)
-      forwards: [
-          {
-              id: 9,
-              name: "Haaland",
-              team: "GOR",
-              position: "FWD",
-              points: 13,
-              form: "8.9",
-              price: 14.2,
-              nextFixture: "NEW (A)",
-              chanceOfPlaying: 100,
-              selectedBy: "82.3%",
-              pointsPerGame: 8.5,
-          },
-          {
-              id: 10,
-              name: "Darwin",
-              team: "AFC",
-              position: "FWD",
-              points: 6,
-              form: "6.8",
-              price: 7.8,
-              isCaptain: true,
-              nextFixture: "MUN (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "24.7%",
-              pointsPerGame: 5.1,
-          },
-          {
-              id: 11,
-              name: "Watkins",
-              team: "AFC",
-              position: "FWD",
-              points: 8,
-              form: "7.2",
-              isViceCaptain: true,
-              price: 8.5,
-              nextFixture: "WOL (H)",
-              chanceOfPlaying: 100,
-              selectedBy: "28.3%",
-              pointsPerGame: 5.8,
-          },
-      ],
-  });
+  const closeModal = () => {
+    showModal.value = false;
+    selectedPlayer.value = null;
+  };
 
-  // Bench Players (4)
-  const benchPlayers = ref([
-      {
-          id: 12,
-          name: "Raya",
-          team: "AFC",
-          position: "GK",
-          points: 0,
-          form: "6.2",
-          price: 4.8,
-          nextFixture: "TOT (H)",
-          chanceOfPlaying: 100,
-          selectedBy: "12.4%",
-          pointsPerGame: 3.8,
-      },
-      {
-          id: 13,
-          name: "White",
-          team: "GOR",
-          position: "DEF",
-          points: 0,
-          form: "6.5",
-          price: 5.1,
-          nextFixture: "TOT (H)",
-          chanceOfPlaying: 100,
-          selectedBy: "15.7%",
-          pointsPerGame: 4.2,
-      },
-      {
-          id: 14,
-          name: "Gordon",
-          team: "TUSKER",
-          position: "MID",
-          points: 0,
-          form: "6.8",
-          price: 6.2,
-          nextFixture: "MCI (H)",
-          chanceOfPlaying: 100,
-          selectedBy: "8.9%",
-          pointsPerGame: 4.5,
-      },
-      {
-          id: 15,
-          name: "Archer",
-          team: "ULINZI",
-          position: "FWD",
-          points: 0,
-          form: "5.4",
-          price: 4.5,
-          nextFixture: "WOL (H)",
-          chanceOfPlaying: 100,
-          selectedBy: "5.2%",
-          pointsPerGame: 2.8,
-      },
-  ]);
 
-  // Modify the initiateSwitch function
+
+  const isPlayerDisabled = (player: Player, isBench = false) => {
+    if (!switchActive.value || !switchSource.value) return false;
+
+    // If it's a goalkeeper, only allow switching with other goalkeepers
+    if (switchSource.value.position === "GK" || player.position === "GK") {
+      return switchSource.value.position !== player.position;
+    }
+
+    // Allow switching only between bench and field players
+    return isBenchSwitch.value === isBench;
+  };
+
+
+
+  const handlePlayerClick = (player: Player, isBench = false) => {
+    if (switchActive.value) {
+      // Handle second click (target selection)
+      performSwitch(player, isBench);
+    } else {
+      // Handle first click (normal modal opening)
+      openPlayerModal(player);
+    }
+  };
+
+
+    // Modify the initiateSwitch function
   const initiateSwitch = () => {
       switchSource.value = selectedPlayer.value;
       switchActive.value = true;
@@ -493,283 +323,246 @@
       showModal.value = false;
   };
 
-  const goalkeeper = computed(() => startingEleven.value.goalkeeper);
-  const defenders = computed(() => startingEleven.value.defenders);
-  const midfielders = computed(() => startingEleven.value.midfielders);
-  const forwards = computed(() => startingEleven.value.forwards);
 
-  // Modal Functions
-  const openPlayerModal = (player) => {
-      selectedPlayer.value = player;
-      showModal.value = true;
-  };
 
-  const closeModal = () => {
-      showModal.value = false;
-      selectedPlayer.value = null;
-  };
 
-  const isPlayerDisabled = (player, isBench = false) => {
-      if (!switchActive.value || !switchSource.value) return false;
+  const performSwitch = (targetPlayer: Player, isBench: boolean) => {
+    const sourcePlayer = switchSource.value;
 
-      // If it's a goalkeeper, only allow switching with other goalkeepers
-      if (switchSource.value.position === "GK" || player.position === "GK") {
-          return switchSource.value.position !== player.position;
+    if (!sourcePlayer) return;
+
+    // Only allow switches between bench and starting 11
+    if (isBenchSwitch.value === isBench) {
+      return;
+    }
+
+    const getFormationCounts = () => {
+      return {
+        DEF: startingElevenRef.value.defenders.length,
+        MID: startingElevenRef.value.midfielders.length,
+        FWD: startingElevenRef.value.forwards.length,
+      };
+    };
+
+    const getTotalFieldPlayers = () => {
+      const counts = getFormationCounts();
+      return counts.DEF + counts.MID + counts.FWD + 1; // +1 for goalkeeper
+    };
+
+    const isValidFormationChange = (sourcePos: string, targetPos: string) => {
+      if (sourcePos === "GK" || targetPos === "GK") {
+        return false; // Goalkeepers can only switch with goalkeepers
       }
 
-      // Allow switching only between bench and field players
-      return isBenchSwitch.value === isBench;
-  };
+      const currentCounts = getFormationCounts();
+      const newCounts = { ...currentCounts };
 
-  const handlePlayerClick = (player, isBench = false) => {
-      if (switchActive.value) {
-          // Handle second click (target selection)
-          performSwitch(player, isBench);
-      } else {
-          // Handle first click (normal modal opening)
-          openPlayerModal(player);
-      }
-  };
-
-  const performSwitch = (targetPlayer, isBench) => {
-      const sourcePlayer = switchSource.value;
-
-      // Only allow switches between bench and starting 11
-      if (isBenchSwitch.value === isBench) {
-          return;
-      }
-
-      const getFormationCounts = () => {
-          return {
-              DEF: startingEleven.value.defenders.length,
-              MID: startingEleven.value.midfielders.length,
-              FWD: startingEleven.value.forwards.length,
-          };
-      };
-
-      const getTotalFieldPlayers = () => {
-          const counts = getFormationCounts();
-          return counts.DEF + counts.MID + counts.FWD + 1; // +1 for goalkeeper
-      };
-
-      const isValidFormationChange = (sourcePos, targetPos) => {
-          if (sourcePos === "GK" || targetPos === "GK") {
-              return false; // Goalkeepers can only switch with goalkeepers
-          }
-
-          const currentCounts = getFormationCounts();
-          const newCounts = { ...currentCounts };
-
-          // Calculate new formation numbers
-          if (isBenchSwitch.value) {
-              // Player coming from bench to replace targetPos
-              newCounts[targetPos]--;
-              newCounts[sourcePos]++;
-          } else {
-              // Player from field going to bench, being replaced by targetPos
-              newCounts[sourcePos]--;
-              newCounts[targetPos]++;
-          }
-
-          // Check formation constraints
-          const constraints = {
-              DEF: { min: 3, max: 5 },
-              MID: { min: 3, max: 5 },
-              FWD: { min: 1, max: 3 },
-          };
-
-          return Object.entries(newCounts).every(([pos, count]) => {
-              return (
-                  count >= constraints[pos].min && count <= constraints[pos].max
-              );
-          });
-      };
-
-      // Perform the switch based on positions
+      // Calculate new formation numbers
       if (isBenchSwitch.value) {
-          // Switching from bench to starting 11
-          const benchIndex = benchPlayers.value.findIndex(
-              (p) => p.id === sourcePlayer.id,
-          );
-
-          if (targetPlayer.position === sourcePlayer.position) {
-              if (targetPlayer.position === "GK") {
-                  // Switch goalkeepers
-                  const tempGK = startingEleven.value.goalkeeper;
-                  startingEleven.value.goalkeeper = sourcePlayer;
-                  benchPlayers.value[benchIndex] = tempGK;
-              } else {
-                  // Switch same positions
-                  const positionArray = getPositionArray(targetPlayer.position);
-                  const fieldIndex = positionArray.findIndex(
-                      (p) => p.id === targetPlayer.id,
-                  );
-
-                  if (fieldIndex !== -1) {
-                      const tempPlayer = positionArray[fieldIndex];
-                      positionArray[fieldIndex] = sourcePlayer;
-                      benchPlayers.value[benchIndex] = tempPlayer;
-                  }
-              }
-          } else {
-              // Different positions - check if valid formation change
-              if (
-                  !isValidFormationChange(
-                      sourcePlayer.position,
-                      targetPlayer.position,
-                  )
-              ) {
-                  console.warn(
-                      "Invalid formation change. Must maintain valid formation constraints.",
-                  );
-                  return;
-              }
-
-              // Remove target player from their position array
-              const targetPosArray = getPositionArray(targetPlayer.position);
-              const fieldIndex = targetPosArray.findIndex(
-                  (p) => p.id === targetPlayer.id,
-              );
-
-              if (fieldIndex !== -1) {
-                  // Remove target player
-                  targetPosArray.splice(fieldIndex, 1);
-
-                  // Add source player to their new position array
-                  const sourcePosArray = getPositionArray(sourcePlayer.position);
-                  sourcePosArray.push(sourcePlayer);
-
-                  // Update bench
-                  benchPlayers.value[benchIndex] = targetPlayer;
-              }
-          }
+        // Player coming from bench to replace targetPos
+        newCounts[targetPos]--;
+        newCounts[sourcePos]++;
       } else {
-          // Switching from starting 11 to bench
-          const benchIndex = benchPlayers.value.findIndex(
-              (p) => p.id === targetPlayer.id,
+        // Player from field going to bench, being replaced by targetPos
+        newCounts[sourcePos]--;
+        newCounts[targetPos]++;
+      }
+
+      // Check formation constraints
+      const constraints = {
+        DEF: { min: 3, max: 5 },
+        MID: { min: 3, max: 5 },
+        FWD: { min: 1, max: 3 },
+      };
+
+      return Object.entries(newCounts).every(([pos, count]) => {
+        return count >= constraints[pos].min && count <= constraints[pos].max;
+      });
+    };
+
+    // Perform the switch based on positions
+    if (isBenchSwitch.value) {
+      // Switching from bench to starting 11
+      const benchIndex = benchPlayersRef.value.findIndex(
+        (p) => p.id === sourcePlayer.id
+      );
+
+      if (targetPlayer.position === sourcePlayer.position) {
+        if (targetPlayer.position === "GK") {
+          // Switch goalkeepers
+          const tempGK = startingElevenRef.value.goalkeeper;
+          startingElevenRef.value.goalkeeper = sourcePlayer;
+          benchPlayersRef.value[benchIndex] = tempGK;
+        } else {
+          // Switch same positions
+          const positionArray = getPositionArray(targetPlayer.position);
+          const fieldIndex = positionArray.findIndex(
+            (p) => p.id === targetPlayer.id
           );
 
-          if (sourcePlayer.position === targetPlayer.position) {
-              if (sourcePlayer.position === "GK") {
-                  // Switch goalkeepers
-                  const tempGK = startingEleven.value.goalkeeper;
-                  startingEleven.value.goalkeeper = targetPlayer;
-                  benchPlayers.value[benchIndex] = tempGK;
-              } else {
-                  // Switch same positions
-                  const positionArray = getPositionArray(sourcePlayer.position);
-                  const fieldIndex = positionArray.findIndex(
-                      (p) => p.id === sourcePlayer.id,
-                  );
-
-                  if (fieldIndex !== -1) {
-                      const tempPlayer = positionArray[fieldIndex];
-                      positionArray[fieldIndex] = targetPlayer;
-                      benchPlayers.value[benchIndex] = tempPlayer;
-                  }
-              }
-          } else {
-              // Different positions - check if valid formation change
-              if (
-                  !isValidFormationChange(
-                      sourcePlayer.position,
-                      targetPlayer.position,
-                  )
-              ) {
-                  console.warn(
-                      "Invalid formation change. Must maintain valid formation constraints.",
-                  );
-                  return;
-              }
-
-              // Remove source player from their position array
-              const sourcePosArray = getPositionArray(sourcePlayer.position);
-              const fieldIndex = sourcePosArray.findIndex(
-                  (p) => p.id === sourcePlayer.id,
-              );
-
-              if (fieldIndex !== -1) {
-                  // Remove source player
-                  sourcePosArray.splice(fieldIndex, 1);
-
-                  // Add target player to their new position array
-                  const targetPosArray = getPositionArray(targetPlayer.position);
-                  targetPosArray.push(targetPlayer);
-
-                  // Update bench
-                  benchPlayers.value[benchIndex] = sourcePlayer;
-              }
+          if (fieldIndex !== -1) {
+            const tempPlayer = positionArray[fieldIndex];
+            positionArray[fieldIndex] = sourcePlayer;
+            benchPlayersRef.value[benchIndex] = tempPlayer;
           }
-      }
-
-      // Validate total players is still 11
-      if (getTotalFieldPlayers() !== 11) {
-          console.error("Invalid total number of players");
+        }
+      } else {
+        // Different positions - check if valid formation change
+        if (
+          !isValidFormationChange(sourcePlayer.position, targetPlayer.position)
+        ) {
+          console.warn(
+            "Invalid formation change. Must maintain valid formation constraints."
+          );
           return;
-      }
+        }
 
-      // Reset switch state
-      switchActive.value = false;
-      switchSource.value = null;
-      isBenchSwitch.value = false;
+        // Remove target player from their position array
+        const targetPosArray = getPositionArray(targetPlayer.position);
+        const fieldIndex = targetPosArray.findIndex(
+          (p) => p.id === targetPlayer.id
+        );
+
+        if (fieldIndex !== -1) {
+          // Remove target player
+          targetPosArray.splice(fieldIndex, 1);
+
+          // Add source player to their new position array
+          const sourcePosArray = getPositionArray(sourcePlayer.position);
+          sourcePosArray.push(sourcePlayer);
+
+          // Update bench
+          benchPlayersRef.value[benchIndex] = targetPlayer;
+        }
+      }
+    } else {
+      // Switching from starting 11 to bench
+      const benchIndex = benchPlayersRef.value.findIndex(
+        (p) => p.id === targetPlayer.id
+      );
+
+      if (sourcePlayer.position === targetPlayer.position) {
+        if (sourcePlayer.position === "GK") {
+          // Switch goalkeepers
+          const tempGK = startingElevenRef.value.goalkeeper;
+          startingElevenRef.value.goalkeeper = targetPlayer;
+          benchPlayersRef.value[benchIndex] = tempGK;
+        } else {
+          // Switch same positions
+          const positionArray = getPositionArray(sourcePlayer.position);
+          const fieldIndex = positionArray.findIndex(
+            (p) => p.id === sourcePlayer.id
+          );
+
+          if (fieldIndex !== -1) {
+            const tempPlayer = positionArray[fieldIndex];
+            positionArray[fieldIndex] = targetPlayer;
+            benchPlayersRef.value[benchIndex] = tempPlayer;
+          }
+        }
+      } else {
+        // Different positions - check if valid formation change
+        if (
+          !isValidFormationChange(sourcePlayer.position, targetPlayer.position)
+        ) {
+          console.warn(
+            "Invalid formation change. Must maintain valid formation constraints."
+          );
+          return;
+        }
+
+        // Remove source player from their position array
+        const sourcePosArray = getPositionArray(sourcePlayer.position);
+        const fieldIndex = sourcePosArray.findIndex(
+          (p) => p.id === sourcePlayer.id
+        );
+
+        if (fieldIndex !== -1) {
+          // Remove source player
+          sourcePosArray.splice(fieldIndex, 1);
+
+          // Add target player to their new position array
+          const targetPosArray = getPositionArray(targetPlayer.position);
+          targetPosArray.push(targetPlayer);
+
+          // Update bench
+          benchPlayersRef.value[benchIndex] = sourcePlayer;
+        }
+      }
+    }
+
+    // Validate total players is still 11
+    if (getTotalFieldPlayers() !== 11) {
+      console.error("Invalid total number of players");
+      return;
+    }
+
+    // Reset switch state
+    switchActive.value = false;
+    switchSource.value = null;
+    isBenchSwitch.value = false;
   };
 
-  const getPositionArray = (position) => {
-      switch (position) {
-          case "DEF":
-              return startingEleven.value.defenders;
-          case "MID":
-              return startingEleven.value.midfielders;
-          case "FWD":
-              return startingEleven.value.forwards;
-          default:
-              return null;
-      }
+
+ const getPositionArray = (position: string) => {
+    switch (position) {
+      case "DEF":
+        return startingElevenRef.value.defenders;
+      case "MID":
+        return startingElevenRef.value.midfielders;
+      case "FWD":
+        return startingElevenRef.value.forwards;
+      default:
+        return [];
+    }
   };
 
-  const isPlayerInStartingEleven = (player) => {
-      if (!player) return false;
 
-      // Check goalkeeper
-      if (startingEleven.value.goalkeeper.id === player.id) {
-          return true;
-      }
+  const isPlayerInStartingEleven = (player: Player) => {
+    if (!player) return false;
 
-      // Check other positions
-      return ["defenders", "midfielders", "forwards"].some((position) => {
-          return startingEleven.value[position].some((p) => p.id === player.id);
-      });
+    // Check goalkeeper
+    if (startingElevenRef.value.goalkeeper.id === player.id) {
+      return true;
+    }
+
+    // Check other positions
+    return ["defenders", "midfielders", "forwards"].some((position) => {
+      return startingElevenRef.value[position].some((p:Player) => p.id === player.id);
+    });
   };
+
 
   const findCurrentCaptain = () => {
-      // Check all positions for current captain
-      const positions = ["defenders", "midfielders", "forwards"];
-      for (const position of positions) {
-          const player = startingEleven.value[position].find((p) => p.isCaptain);
-          if (player) return player;
-      }
-      // Check goalkeeper
-      if (startingEleven.value.goalkeeper.isCaptain) {
-          return startingEleven.value.goalkeeper;
-      }
-      return null;
+    // Check all positions for current captain
+    const positions = ["defenders", "midfielders", "forwards"];
+    for (const position of positions) {
+      const player = startingElevenRef.value[position].find((p) => p.isCaptain);
+      if (player) return player;
+    }
+    // Check goalkeeper
+    if (startingElevenRef.value.goalkeeper.isCaptain) {
+      return startingElevenRef.value.goalkeeper;
+    }
+    return null;
   };
 
   const findCurrentViceCaptain = () => {
-      // Check all positions for current vice captain
-      const positions = ["defenders", "midfielders", "forwards"];
-      for (const position of positions) {
-          const player = startingEleven.value[position].find(
-              (p) => p.isViceCaptain,
-          );
-          if (player) return player;
-      }
-      // Check goalkeeper
-      if (startingEleven.value.goalkeeper.isViceCaptain) {
-          return startingEleven.value.goalkeeper;
-      }
-      return null;
+    // Check all positions for current vice captain
+    const positions = ["defenders", "midfielders", "forwards"];
+    for (const position of positions) {
+      const player = startingElevenRef.value[position].find(
+        (p) => p.isViceCaptain
+      );
+      if (player) return player;
+    }
+    // Check goalkeeper
+    if (startingElevenRef.value.goalkeeper.isViceCaptain) {
+      return startingElevenRef.value.goalkeeper;
+    }
+    return null;
   };
+
 
   const clearCaptaincy = () => {
       // Clear goalkeeper

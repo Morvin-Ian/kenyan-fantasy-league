@@ -186,7 +186,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
-const scrollContainer = ref(null);
+const scrollContainer = ref<HTMLElement | null>(null);
 
 const games = [
     {
@@ -245,14 +245,16 @@ const games = [
     },
 ];
 
-const scroll = (direction: string) => {
-    if (scrollContainer.value) {
-        const scrollAmount = 280; // Width of card + gap
-        scrollContainer.value.scrollBy({
-            left: direction === "left" ? -scrollAmount : scrollAmount,
-            behavior: "smooth",
-        });
-    }
+const scroll = (direction: "left" | "right") => {
+    if (!scrollContainer.value) return;
+
+    const scrollAmount = 280;
+    const isLeft = direction === "left";
+
+    scrollContainer.value.scrollBy({
+        left: isLeft ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+    });
 };
 
 const formatDate = (dateStr: string) => {
