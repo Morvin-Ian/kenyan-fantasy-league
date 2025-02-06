@@ -1,6 +1,6 @@
 <template>
-    <div class="flex items-center shadow-2xl justify-center">
-        <div class="w-full bg-white overflow-hidden">
+    <div class="flex items-center justify-center p-4 bg-gray-50">
+        <div class="w-full max-w-9xl bg-white rounded-2xl overflow-hidden">
             <!-- Team Header -->
             <div class="p-6 md:p-8 text-gray-700">
                 <div

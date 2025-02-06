@@ -1,4 +1,4 @@
-# East African Fantasy League (EAFL)
+# Kenyan Fantasy League (KFL)
 
 <div align="center">
   <img src="https://ssl.gstatic.com/onebox/media/sports/logos/-1Niwpcf1ltBk_KrB1iMQw_64x64.png" alt="EAFL Logo" width="150" />
@@ -13,7 +13,7 @@ The KFL is a fantasy sports platform designed specifically for Kenyan sports fan
 ---
 
 ### **How to Get Started**
-1. **Sign Up**: Create your EAFL account.
+1. **Sign Up**: Create your account.
 2. **Build Your Team**: Choose your favorite players and create your dream team.
 3. **Compete**: Join leagues and compete for the top spot.
 
