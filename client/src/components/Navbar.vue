@@ -204,7 +204,6 @@ const getProfilePhotoUrl = () => {
     return `/mediafiles/${image_name}`;
 };
 
-// Function to check if the current route matches the navigation item
 const isActive = (href: string) => {
     return route.path === href;
 };
