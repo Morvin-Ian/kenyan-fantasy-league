@@ -1,15 +1,15 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
-import SignIn from "@/views/auth/SignIn.vue";
-import SignUp from "@/views/auth/SignUp.vue";
-import Activate from "@/views/auth/Activate.vue";
+import SignIn from "@/views/Auth/SignIn.vue";
+import SignUp from "@/views/Auth/SignUp.vue";
+import Activate from "@/views/Auth/Activate.vue";
 import TeamView from "@/views/TeamView.vue";
 import StandingsView from "@/views/StandingsView.vue";
 import FixturesView from "@/views/FixturesView.vue";
 import LeaguesView from "@/views/LeaguesView.vue";
 import ProfileView from "@/views/ProfileView.vue";
-import PasswordResetConfirm from "@/views/auth/PasswordResetConfirm.vue";
-import PasswordResetRequest from "@/views/auth/PasswordResetRequest.vue";
+import PasswordResetConfirm from "@/views/Auth/PasswordResetConfirm.vue";
+import PasswordResetRequest from "@/views/Auth/PasswordResetRequest.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),

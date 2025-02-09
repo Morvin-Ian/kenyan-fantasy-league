@@ -1,7 +1,4 @@
 <template>
-    <div>
-        <Navbar />
-    </div>
     <div
         class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 md:p-10"
     >
@@ -139,7 +136,6 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-import Navbar from "@/components/Navbar.vue";
 
 interface TeamStanding {
     position: number;

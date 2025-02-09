@@ -1,6 +1,4 @@
 <template>
-    <Navbar />
-
     <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
         <div class="max-w-7xl mt-4 mx-auto flex flex-col lg:flex-row gap-6">
             <!-- Main Content (Field) -->
@@ -49,13 +47,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import Navbar from "@/components/Navbar.vue";
-import Pitch from "@/components/team/Pitch.vue";
-import Bench from "@/components/team/Bench.vue";
-import Sidebar from "@/components/team/SideBar.vue";
-import PlayerModal from "@/components/team/PlayerModal.vue";
-import { startingEleven, benchPlayers } from "@/data";
-import { Player, Fixture, Result, Performer } from "@/types/team";
+import Pitch from "@/components/Team/Pitch.vue";
+import Bench from "@/components/Team/Bench.vue";
+import Sidebar from "@/components/Team/SideBar.vue";
+import PlayerModal from "@/components/Team/PlayerModal.vue";
+import { startingEleven, benchPlayers } from "@/helpers/data";
+import { Player, Fixture, Result, Performer } from "@/helpers/types/team";
 
 // State
 const showModal = ref(false);

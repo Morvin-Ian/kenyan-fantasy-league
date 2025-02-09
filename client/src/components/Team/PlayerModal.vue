@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Player } from "@/types/team";
+import type { Player } from "@/helpers/types/team";
 
 const props = defineProps<{
     showModal: boolean;

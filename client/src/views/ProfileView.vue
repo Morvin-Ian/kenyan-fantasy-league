@@ -2,8 +2,6 @@
     <div
         class="min-h-screen bg-gradient-to-br from-sky-100 via-pink-100 to-violet-100"
     >
-        <Navbar />
-
         <div class="max-w-5xl mx-auto p-8">
             <!-- Profile Header -->
             <div class="text-center mb-12 animate-fade-in-down">
@@ -132,7 +130,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import default_profile from "../assets/images/user.jpeg";
-import Navbar from "@/components/Navbar.vue";
 
 const authStore = useAuthStore();
 const isEditing = ref(false);

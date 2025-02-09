@@ -1,7 +1,4 @@
 <template>
-    <div>
-        <Navbar/>
-    </div>
     <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-6">
       <div class="max-w-7xl mx-auto space-y-8">
         <!-- Elegant Header -->
@@ -117,7 +114,6 @@
   </template>
   
   <script setup>
-  import Navbar from '@/components/Navbar.vue';
   
   const globalLeagues = [
     { name: "Challenge", current: 985724, previous: 985747 },

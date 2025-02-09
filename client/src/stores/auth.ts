@@ -7,14 +7,9 @@ import type {
   AuthResponse,
   ActivationResponse,
   PasswordResetData,
-} from "@/types/auth";
-import apiClient, {
-  activationUrl,
-  loginUrl,
-  registerUrl,
-  resetPasswordConfirmUrl,
-  resetPasswordUrl,
-} from "@/api/axios";
+} from "@/helpers/types/auth";
+import apiClient from "@/axios-interceptor";
+
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
@@ -61,7 +56,7 @@ export const useAuthStore = defineStore("auth", {
 
       try {
         const { data } = await apiClient.post<AuthResponse>(
-          loginUrl,
+          "/auth/jwt/create/",
           credentials,
         );
         this.setToken(data.access);
@@ -85,7 +80,7 @@ export const useAuthStore = defineStore("auth", {
       this.setLoading(true);
       this.setError(null);
       try {
-        const data = await apiClient.post<User>(registerUrl, registerData);
+        const data = await apiClient.post<User>("/auth/users/", registerData);
       } catch (error: any) {
         const errorMessage =
           error.response?.data?.detail ||
@@ -106,7 +101,7 @@ export const useAuthStore = defineStore("auth", {
 
       try {
         const response = await apiClient.post<ActivationResponse>(
-          activationUrl,
+          "/auth/users/activation/",
           { uid, token },
         );
         if (response.status === 204) {
@@ -134,7 +129,7 @@ export const useAuthStore = defineStore("auth", {
       this.setLoading(true);
       this.setError(null);
       try {
-        const response = await apiClient.post(resetPasswordUrl, { email });
+        const response = await apiClient.post("/auth/users/reset_password/", { email });
         console.log(response);
       } catch (error: any) {
         const errorMessage =
@@ -150,7 +145,7 @@ export const useAuthStore = defineStore("auth", {
       this.setLoading(true);
       this.setError(null);
       try {
-        const response = await apiClient.post(resetPasswordConfirmUrl, data);
+        const response = await apiClient.post("/auth/users/reset_password_confirm/", data);
         console.log(response);
       } catch (error: any) {
         const errorMessage =

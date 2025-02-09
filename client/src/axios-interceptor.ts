@@ -1,4 +1,6 @@
 import axios from "axios";
+import { useAuthStore } from "./stores/auth";
+import router from "@/router"; 
 import type {
   AxiosResponse,
   AxiosError,
@@ -11,13 +13,8 @@ const apiClient = axios.create({
   timeout: 10000,
 });
 
-export const loginUrl = `/auth/jwt/create/`;
-export const registerUrl = `/auth/users/`;
-export const activationUrl = `/auth/users/activation/`;
-export const resetPasswordUrl = `/auth/users/reset_password/`;
-export const resetPasswordConfirmUrl = `/auth/users/reset_password_confirm/`;
 
-// Add token to requests except for login and register
+// token to requests except for login and register
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
@@ -36,16 +33,17 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error),
 );
 
-// Handle token expiration and other response errors
-// apiClient.interceptors.response.use(
-//   (response: AxiosResponse): AxiosResponse => response,
-//   async (error: AxiosError) => {
-//     if (error.response?.status === 401) {
-//       localStorage.removeItem('token');
-//       window.location.href = '/sign-in';
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+apiClient.interceptors.response.use(
+  (response: AxiosResponse): AxiosResponse => response,
+  async (error: AxiosError) => {
+    const authStore = useAuthStore();
 
+    if (error.response?.status === 401) {
+        authStore.logout();
+        router.push("/sign-in"); 
+    }
+
+    return Promise.reject(error); 
+  }
+);
 export default apiClient;

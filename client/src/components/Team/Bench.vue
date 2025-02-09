@@ -18,8 +18,8 @@
 </template>
 
 <script setup lang="ts">
-import PlayerCard from "@/components/team/PlayerCard.vue";
-import type { Player } from "@/types/team";
+import PlayerCard from "@/components/Team/PlayerCard.vue";
+import type { Player } from "@/helpers/types/team";
 
 const props = defineProps<{
     benchPlayers: Player[];

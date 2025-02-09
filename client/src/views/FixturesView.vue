@@ -1,6 +1,5 @@
 <template>
     <div>
-      <Navbar />
       <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-6">
         <div class="bg-white w-full overflow-hidden rounded-2xl shadow-lg">
           <!-- Header Section -->
@@ -148,7 +147,6 @@
   
   <script setup>
   import { ref, computed } from 'vue';
-  import Navbar from '@/components/Navbar.vue';
   
   const leagues = [
     { id: 1, name: 'Premier League' },
