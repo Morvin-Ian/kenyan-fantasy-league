@@ -1,6 +1,6 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div class="max-w-7xl mt-4 mx-auto flex flex-col lg:flex-row gap-6">
+    <div class="p-4">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
             <!-- Main Content (Field) -->
             <div class="w-full lg:w-2/3 bg-white rounded-xl shadow-lg">
                 <Pitch

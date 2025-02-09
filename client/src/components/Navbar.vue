@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- Desktop Navigation -->
-        <nav class="bg-white shadow-sm">
+        <nav class="w-full bg-white shadow-sm">
             <div class="md:hidden fixed inset-x-0 top-0 bg-white flex justify-center py-1">
                 <router-link to="/">
                     <img src="/logo.png" alt="Logo" class="h-14 w-auto" />
@@ -66,7 +66,7 @@
         </nav>
 
         <!-- Mobile Bottom Navigation (Fixed to Bottom) -->
-        <nav class="md:hidden fixed inset-x-0 bottom-0 bg-white rounded-2xl border-t border-gray-300 shadow-lg">
+        <nav class="md:hidden fixed inset-x-0 bottom-0 bg-white rounded-t-2xl border-t border-gray-300 shadow-lg">
             <div class="grid grid-cols-5 h-16">
                 <router-link v-for="item in mobileNavItems" :key="item.name" :to="item.href"
                     class="flex flex-col items-center justify-center transition-colors duration-200" :class="[
@@ -79,6 +79,8 @@
                 </router-link>
             </div>
         </nav>
+
+    
     </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
-    <div class="flex items-center justify-center p-4 bg-gray-50">
-        <div class="w-full max-w-9xl bg-white rounded-2xl overflow-hidden shadow-lg transition duration-300 hover:scale-105">
+    <div class="flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-2xl mx-4 shadow-lg mb-8">
+        <div class="w-full max-w-9xl bg-white rounded-2xl overflow-hidden">
             <!-- Team Header -->
             <div class="p-6 md:p-8 text-gray-700">
                 <div

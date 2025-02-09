@@ -1,20 +1,10 @@
 <template>
-    <div class="bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen p-8">
+    <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-2xl mx-4 shadow-lg mb-8">
         <div
-            class="bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl"
+            class="bg-white rounded-2xl shadow-2xl overflow-hidden "
         >
             <div class="p-8">
-                <h1 class="text-3xl font-bold text-gray-800 flex items-center">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        class="h-10 w-10 mr-4 text-blue-600"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                    >
-                        <path
-                            d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.5 17c0-2.757-2.243-5-5-5s-5 2.243-5 5h10zm3 0a8 8 0 10-16 0h16z"
-                        />
-                    </svg>
+                <h1 class="text-2xl font-bold text-gray-700 bg-clip-text flex items-center">
                     Fantasy Player Search
                 </h1>
             </div>
@@ -241,7 +231,7 @@ const players = reactive([
 ]);
 
 const currentPage = ref(1);
-const playersPerPage = ref(4);
+const playersPerPage = ref(3);
 
 const filteredPlayers = computed(() => {
     return players.filter((player) => {

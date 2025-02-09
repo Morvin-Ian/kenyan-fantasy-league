@@ -1,7 +1,7 @@
 <template>
-    <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-2xl shadow-lg">
+    <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-2xl mx-4 shadow-lg mb-8">
         <!-- Header -->
-        <div class="flex flex-col md:flex-row md:justify-between items-start mb-8">
+        <div class="flex flex-col md:flex-row md:justify-between items-start">
             <div class="animate-fade-in">
                 <h2 class="text-2xl font-bold text-gray-700 bg-clip-text">
                     Upcoming Matches

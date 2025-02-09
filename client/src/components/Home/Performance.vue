@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gradient-to-br from-indigo-50 via-white to-blue-50 min-h-screen p-6 md:p-10">
+  <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-2xl mx-4 shadow-lg mb-8 p-6 md:p-10">
     <div class="max-w-10xl mx-auto space-y-5">
       <!-- Featured Players Section -->
       <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-100">

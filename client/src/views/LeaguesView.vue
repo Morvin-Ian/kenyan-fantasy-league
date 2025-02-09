@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-6">
+    <div class="p-4">
       <div class="max-w-7xl mx-auto space-y-8">
         <!-- Elegant Header -->
         <div class="text-center bg-white/80 backdrop-blur-sm  p-8">
