@@ -1,21 +1,9 @@
 #!/bin/bash
 
 set -o errexit
-
 set -o nounset
 
-
-worker_ready(){
-    celery -A config inspect ping
-}
-
-until worker_ready; do
-    >&2 echo 'Celery workers not available :-('
-    sleep 1
-
-done
->&2 echo 'Celery workers are available and ready!...:-)'
-
-flower \
-    --app=real_estate \
-    --broker="${CELERY_BROKER}"
+watchmedo auto-restart -d config/ -p "*.py" -- \
+  celery -A config.celery flower \
+  --broker="redis://redis:6379/0" \
+  --port=5555

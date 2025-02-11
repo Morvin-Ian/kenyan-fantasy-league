@@ -56,7 +56,9 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "djoser",
     "rest_framework_simplejwt",
-    "djcelery_email"
+    "djcelery_email",
+    "django_celery_beat",
+    "django_celery_results"
 ]
 
 LOCAL_APPS = [

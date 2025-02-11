@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+# Remove the old Celery Beat PID file if it exists
+rm -f './celerybeat.pid'
+
+watchmedo auto-restart -d config/ -p "*.py" -- \
+  celery -A config.celery beat \
+  --loglevel=info \
+  --pidfile=./celerybeat.pid

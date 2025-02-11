@@ -1,30 +1,7 @@
-// data.ts
-export interface Player {
-  id: number;
-  name: string;
-  team: string;
-  position: string;
-  points: number;
-  form: string;
-  price: number;
-  nextFixture: string;
-  chanceOfPlaying: number;
-  selectedBy: string;
-  pointsPerGame: number;
-  isCaptain?: boolean;
-  isViceCaptain?: boolean;
-}
-
-export const overallRank = "234,567";
-
-export const totalPoints = 57;
-export const averagePoints = 52;
-export const highestPoints = 121;
-
 export const startingEleven = {
   // Goalkeeper (1)
   goalkeeper: {
-    id: 1,
+    id: "1",
     name: "Alisson",
     team: "GOR",
     position: "GK",
@@ -40,7 +17,7 @@ export const startingEleven = {
   // Defenders (4)
   defenders: [
     {
-      id: 2,
+      id: "2",
       name: "Arnold",
       team: "AFC",
       position: "DEF",
@@ -53,7 +30,7 @@ export const startingEleven = {
       pointsPerGame: 5.3,
     },
     {
-      id: 3,
+      id: "3",
       name: "Chilwell",
       team: "AFC",
       position: "DEF",
@@ -66,7 +43,7 @@ export const startingEleven = {
       pointsPerGame: 3.8,
     },
     {
-      id: 4,
+      id: "4",
       name: "Dias",
       team: "ULINZI",
       position: "DEF",
@@ -79,7 +56,7 @@ export const startingEleven = {
       pointsPerGame: 4.5,
     },
     {
-      id: 5,
+      id: "5",
       name: "Gabriel",
       team: "ULINZI",
       position: "DEF",
@@ -96,7 +73,7 @@ export const startingEleven = {
   // Midfielders (3)
   midfielders: [
     {
-      id: 6,
+      id: "6",
       name: "Salah",
       team: "TUSKER",
       position: "MID",
@@ -109,7 +86,7 @@ export const startingEleven = {
       pointsPerGame: 7.8,
     },
     {
-      id: 7,
+      id: "7",
       name: "Son",
       team: "TUSKER",
       position: "MID",
@@ -122,7 +99,7 @@ export const startingEleven = {
       pointsPerGame: 6.5,
     },
     {
-      id: 8,
+      id: "8",
       name: "Saka",
       team: "ULINZI",
       position: "MID",
@@ -139,7 +116,7 @@ export const startingEleven = {
   // Forwards (3)
   forwards: [
     {
-      id: 9,
+      id: "9",
       name: "Haaland",
       team: "GOR",
       position: "FWD",
@@ -152,7 +129,7 @@ export const startingEleven = {
       pointsPerGame: 8.5,
     },
     {
-      id: 10,
+      id: "10",
       name: "Darwin",
       team: "AFC",
       position: "FWD",
@@ -166,7 +143,7 @@ export const startingEleven = {
       pointsPerGame: 5.1,
     },
     {
-      id: 11,
+      id: "11",
       name: "Watkins",
       team: "AFC",
       position: "FWD",
@@ -185,7 +162,7 @@ export const startingEleven = {
 // Bench Players (4)
 export const benchPlayers = [
   {
-    id: 12,
+    id: "12",
     name: "Raya",
     team: "AFC",
     position: "GK",
@@ -198,7 +175,7 @@ export const benchPlayers = [
     pointsPerGame: 3.8,
   },
   {
-    id: 13,
+    id: "13",
     name: "White",
     team: "GOR",
     position: "DEF",
@@ -211,7 +188,7 @@ export const benchPlayers = [
     pointsPerGame: 4.2,
   },
   {
-    id: 14,
+    id: "14",
     name: "Gordon",
     team: "TUSKER",
     position: "MID",
@@ -224,7 +201,7 @@ export const benchPlayers = [
     pointsPerGame: 4.5,
   },
   {
-    id: 15,
+    id: "15",
     name: "Archer",
     team: "ULINZI",
     position: "FWD",
