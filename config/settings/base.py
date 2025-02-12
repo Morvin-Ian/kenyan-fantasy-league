@@ -58,7 +58,7 @@ THIRD_PARTY_APPS = [
     "rest_framework_simplejwt",
     "djcelery_email",
     "django_celery_beat",
-    "django_celery_results"
+    # "django_celery_results"
 ]
 
 LOCAL_APPS = [
