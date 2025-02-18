@@ -7,7 +7,7 @@ from apps.profiles.models import Profile
 from .renderers import ProfileJSONRenderer
 from .serializers import ProfileSerializer, UpdateProfileSerializer
 
-from apps.data.tasks.fixtures import my_task
+from apps.data.tasks.standings import get_kpl_table
 
 
 class GetProfileAPIView(APIView):
@@ -16,7 +16,7 @@ class GetProfileAPIView(APIView):
 
     def get(self, request):
         user = self.request.user
-        result = my_task.delay(3, 5)
+        result = get_kpl_table.delay()
         print(result)
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context={"request": request})

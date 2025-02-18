@@ -29,6 +29,15 @@ superuser:
 collectstatic:
 	docker compose exec api python3 manage.py collectstatic --no-input --clear
 
+startapp:
+ifndef name
+	@echo "Error: Please provide an app name using 'make startapp name=your_app_name'"
+	@exit 1
+endif
+	docker compose exec api python3 manage.py startapp $(name)
+	@echo "Created new app: $(name) in apps/$(name)"
+	@echo "Don't forget to add 'apps.$(name)' to INSTALLED_APPS in settings.py"
+
 down-v:
 	docker compose down -v
 

@@ -64,7 +64,9 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.accounts",
     "apps.profiles",
-    "apps.data"
+    "apps.data",
+    "apps.kpl",
+    "apps.fantasy",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -195,6 +197,10 @@ logger = logging.getLogger(__name__)
 
 LOG_LEVEL = "INFO"
 
+import os
+
+os.makedirs('logs', exist_ok=True)
+
 logging.config.dictConfig(
     {
         "version": 1,
@@ -213,9 +219,11 @@ logging.config.dictConfig(
             },
             "file": {
                 "level": "INFO",
-                "class": "logging.FileHandler",
+                "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "file",
-                "filename": "logs/fantasy_league.log",
+                "filename": os.path.join("logs", "fantasy_league.log"),
+                "maxBytes": 10485760, 
+                "backupCount": 5,
             },
             "django.server": DEFAULT_LOGGING["handlers"]["django.server"],
         },
