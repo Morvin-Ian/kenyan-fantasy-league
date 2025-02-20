@@ -23,6 +23,9 @@ migrate:
 makemigrations:
 	docker compose exec api python3 manage.py makemigrations
 
+manage-db:
+	docker exec -it postgres-db psql -U ${PG_USER} -d ${POSTGRES_DB}
+
 superuser:
 	docker compose exec api python3 manage.py createsuperuser
 

@@ -14,7 +14,6 @@ def extract_data(headers) -> str:
         kpl_table = soup.find('tbody')
         teams = kpl_table.find_all('tr')
 
-        Team.objects.all().delete()
         Standing.objects.all().delete()
 
         for team in teams:
