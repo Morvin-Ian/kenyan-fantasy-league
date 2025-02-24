@@ -1,9 +1,4 @@
 # Kenyan Fantasy League (KFL)
-
-<div align="center">
-  <img src="https://ssl.gstatic.com/onebox/media/sports/logos/-1Niwpcf1ltBk_KrB1iMQw_64x64.png" alt="EAFL Logo" width="150" />
-</div>
-
 Welcome to the **Kenyan Fantasy League (KFL)**, the premier platform for fantasy sports enthusiasts in Kenya! Whether you're passionate about football or other popular sports, KFL lets you create and manage your own fantasy teams.
 Compete with friends, family, and other Kenyan sports fans as you test your knowledge and strategic skills. Join the KFL community today and experience the excitement of fantasy sports like never before!
 

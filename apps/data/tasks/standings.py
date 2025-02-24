@@ -5,7 +5,7 @@ from .utils import headers
 from apps.kpl.models import Standing, Team
 
 
-def extract_data(headers) -> str:
+def extract_table_standings_data(headers) -> str:
 
     web_content = requests.get('https://footballkenya.org/competitions/fkf-premier-league/standings/', headers=headers, verify=False)
 
@@ -55,5 +55,5 @@ def extract_data(headers) -> str:
 
 @shared_task
 def get_kpl_table():
-    response = extract_data(headers)
+    response = extract_table_standings_data(headers)
     return response
