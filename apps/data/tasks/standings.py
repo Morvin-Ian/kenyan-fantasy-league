@@ -14,8 +14,8 @@ def extract_table_standings_data(headers) -> str:
         kpl_table = soup.find('tbody')
         teams = kpl_table.find_all('tr')
 
-        Standing.objects.all().delete()
-
+        Team.objects.all().delete()
+        
         for team in teams:
             rank = team.find('td', class_='data-rank').text
             name = team.find('td', class_='data-name').text

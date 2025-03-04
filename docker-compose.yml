@@ -96,7 +96,7 @@ services:
       context: .
       dockerfile: ./docker/local/django/Dockerfile
     command: /start-celeryworker
-    container_name: worker
+    container_name: worker 
     volumes:
       - .:/app
     env_file:
