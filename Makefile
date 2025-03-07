@@ -48,7 +48,7 @@ volume:
 	docker volume inspect kpl-fantasy-league_postgres_data
 
 fpl-db:
-	docker compose exec postgres-db psql --username=postgres --dbname=fpl
+	docker compose exec postgres-db psql --username=root --dbname=fpl
 
 test:
 	docker compose exec api pytest -p no:warnings --cov=.
