@@ -88,7 +88,9 @@ def edit_team_logo(headers) -> str:
             logo = team.find('img')['src'] if team.find('img') else ''
 
             if full_name:
-                first_word = full_name.split()[0]  # Get the first word of the team name
+                first_word = full_name.split()[0]  
+                if full_name.startswith('FC') or full_name.startswith('Kenya'):
+                    first_word = full_name.split()[1]
                 team_obj = Team.objects.filter(name__istartswith=first_word).first()
 
                 if team_obj and logo:

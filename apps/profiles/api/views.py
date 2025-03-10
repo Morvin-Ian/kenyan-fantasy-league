@@ -7,8 +7,6 @@ from apps.profiles.models import Profile
 from .renderers import ProfileJSONRenderer
 from .serializers import ProfileSerializer, UpdateProfileSerializer
 
-from apps.data.tasks.standings import get_kpl_table
-
 
 class GetProfileAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -16,7 +14,6 @@ class GetProfileAPIView(APIView):
 
     def get(self, request):
         user = self.request.user
-        result = get_kpl_table.delay()
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
