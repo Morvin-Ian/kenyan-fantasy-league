@@ -21,7 +21,7 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     isAuthenticated(): boolean {
-      return Boolean(this.token) && this.user !== null;
+      return Boolean(this.token);
     },    
     authToken(): string | null {
       return this.token;

@@ -142,6 +142,96 @@
           </div>
         </div>
       </div>
+
+      <!-- Table Standings Section (Updated with scrollable for mobile) -->
+      <div class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 overflow-hidden relative">
+        <div class="absolute top-0 left-0 w-full h-48 pointer-events-none"></div>
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8 gap-3">
+          <h2 class="text-xl md:text-3xl font-bold text-gray-800 tracking-tight flex items-center">
+            <span class="mr-2 md:mr-3">📊</span> League Standings
+          </h2>
+          <div class="flex space-x-2">
+            <button class="bg-indigo-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-full font-medium text-xs md:text-sm">FKF League</button>
+            <button class="bg-gray-100 text-gray-700 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-medium text-xs md:text-sm hover:bg-gray-200 transition-colors">Super League</button>
+          </div>
+        </div>
+        
+        <!-- Mobile and Desktop Table View (Scrollable on small screens) -->
+        <div class="overflow-x-auto relative">
+          <table class="w-full min-w-full table-auto">
+            <thead>
+              <tr class="border-b border-gray-100">
+                <th class="py-3 px-4 text-left text-gray-600 font-medium">#</th>
+                <th class="py-3 px-4 text-left text-gray-600 font-medium">Team</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">MP</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">W</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">D</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">L</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">GF</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">GA</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">GD</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">PTS</th>
+                <th class="py-3 px-4 text-center text-gray-600 font-medium">Form</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr 
+                v-for="(team, index) in standings" 
+                :key="team.id"
+                class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                :class="{'bg-indigo-50/50': index < 4}"
+              >
+                <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-sm" :class="{'text-indigo-600': index < 4, 'text-red-500': index > 16}">{{ index + 1 }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4">
+                  <div class="flex items-center space-x-2 md:space-x-3">
+                    <img :src="team.logo" alt="Team logo" class="w-5 h-5 md:w-6 md:h-6" />
+                    <span class="font-medium text-gray-900 text-sm">{{ team.name }}</span>
+                  </div>
+                </td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.played }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.won }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.drawn }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.lost }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.goalsFor }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.goalsAgainst }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center font-medium text-sm" :class="{'text-green-500': team.goalDifference > 0, 'text-red-500': team.goalDifference < 0}">{{ team.goalDifference }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-sm">{{ team.points }}</td>
+                <td class="py-3 md:py-4 px-2 md:px-4">
+                  <div class="flex justify-center space-x-1">
+                    <span 
+                      v-for="result in team.form" 
+                      :key="result"
+                      class="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-xs text-white font-medium"
+                      :class="{
+                        'bg-green-500': result === 'W',
+                        'bg-gray-400': result === 'D',
+                        'bg-red-500': result === 'L'
+                      }"
+                    >
+                      {{ result }}
+                    </span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Visual indicator that table scrolls horizontally (mobile only) -->
+        <div class="flex justify-center mt-3 md:hidden">
+          <div class="flex space-x-1 items-center text-xs text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span>Swipe right to see more</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </div>
+      </div>
+      
     </div>
   </template>
   
@@ -225,6 +315,81 @@
     },
   ];
   
+
+
+const standings = [
+  {
+    id: 1,
+    name: "Manchester City",
+    logo: "/api/placeholder/64/64",
+    played: 27,
+    won: 19,
+    drawn: 6,
+    lost: 2,
+    goalsFor: 67,
+    goalsAgainst: 24,
+    goalDifference: 43,
+    points: 63,
+    form: ["W", "W", "D", "W", "W"]
+  },
+  {
+    id: 2,
+    name: "Arsenal",
+    logo: "/api/placeholder/64/64",
+    played: 27,
+    won: 18,
+    drawn: 4,
+    lost: 5,
+    goalsFor: 62,
+    goalsAgainst: 24,
+    goalDifference: 38,
+    points: 58,
+    form: ["W", "W", "W", "L", "W"]
+  },
+  {
+    id: 3,
+    name: "Liverpool",
+    logo: "/api/placeholder/64/64",
+    played: 27,
+    won: 17,
+    drawn: 7,
+    lost: 3,
+    goalsFor: 61,
+    goalsAgainst: 26,
+    goalDifference: 35,
+    points: 58,
+    form: ["L", "D", "W", "W", "W"]
+  },
+  {
+    id: 4,
+    name: "Aston Villa",
+    logo: "/api/placeholder/64/64",
+    played: 27,
+    won: 16,
+    drawn: 4,
+    lost: 7,
+    goalsFor: 55,
+    goalsAgainst: 37,
+    goalDifference: 18,
+    points: 52,
+    form: ["W", "W", "L", "W", "D"]
+  },
+  {
+    id: 5,
+    name: "Tottenham",
+    logo: "/api/placeholder/64/64",
+    played: 27,
+    won: 14,
+    drawn: 5,
+    lost: 8,
+    goalsFor: 53,
+    goalsAgainst: 41,
+    goalDifference: 12,
+    points: 47,
+    form: ["L", "L", "W", "W", "L"]
+  },
+];
+
   const scroll = (direction: "left" | "right") => {
     if (!scrollContainer.value) return;
   
