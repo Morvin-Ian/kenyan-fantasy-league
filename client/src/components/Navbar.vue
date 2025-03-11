@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- Desktop Navigation -->
-        <nav class="w-full bg-white shadow-sm">
+        <nav class="bg-white ">
             <div class="md:hidden fixed inset-x-0 top-0 bg-white flex justify-center py-1">
                 <router-link to="/">
                     <img src="/logo.png" alt="Logo" class="h-14 w-auto" />

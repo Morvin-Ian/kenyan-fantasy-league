@@ -13,7 +13,7 @@
               </div>
               <div>
                 <h1 class="text-3xl font-extrabold tracking-wide">
-                  Football Fixtures
+                  Match Center
                 </h1>
                 <p class="text-blue-100 mt-1">Stay updated with all matches</p>
               </div>
@@ -289,16 +289,7 @@
           </div>
         </div>
       </div>
-      
-      <!-- Footer -->
-      <div class="mt-6 text-center text-gray-500 text-sm">
-        <p>© 2025 Football Fixtures • All Rights Reserved</p>
-        <div class="flex justify-center space-x-4 mt-2">
-          <a href="#" class="hover:text-blue-600 transition">Terms</a>
-          <a href="#" class="hover:text-blue-600 transition">Privacy</a>
-          <a href="#" class="hover:text-blue-600 transition">Contact</a>
-        </div>
-      </div>
+    
     </div>
   </div>
 </template>

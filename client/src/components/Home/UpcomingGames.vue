@@ -143,26 +143,22 @@
         </div>
       </div>
 
-      <!-- Table Standings Section (Updated with scrollable for mobile) -->
-      <div class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 overflow-hidden relative">
-        <div class="absolute top-0 left-0 w-full h-48 pointer-events-none"></div>
-        
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8 gap-3">
-          <h2 class="text-xl md:text-3xl font-bold text-gray-800 tracking-tight flex items-center">
-            <span class="mr-2 md:mr-3">📊</span> League Standings
+      <div class="animate-fade-in mb-6">
+          <h2 class="text-xl sm:text-2xl font-bold text-gray-700 bg-clip-text">
+            League Standings
           </h2>
-          <div class="flex space-x-2">
-            <button class="bg-indigo-500 text-white px-3 md:px-4 py-1.5 md:py-2 rounded-full font-medium text-xs md:text-sm">FKF League</button>
-            <button class="bg-gray-100 text-gray-700 px-3 md:px-4 py-1.5 md:py-2 rounded-full font-medium text-xs md:text-sm hover:bg-gray-200 transition-colors">Super League</button>
-          </div>
+          <p class="text-sm sm:text-base text-gray-500 mt-1 sm:mt-2">
+            Stay updated with the latest standings
+          </p>
         </div>
+
+      <div class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 overflow-hidden relative">
         
-        <!-- Mobile and Desktop Table View (Scrollable on small screens) -->
         <div class="overflow-x-auto relative">
           <table class="w-full min-w-full table-auto">
             <thead>
               <tr class="border-b border-gray-100">
-                <th class="py-3 px-4 text-left text-gray-600 font-medium">#</th>
+                <th class="py-3 px-4 text-left text-gray-600 font-medium">Position</th>
                 <th class="py-3 px-4 text-left text-gray-600 font-medium">Team</th>
                 <th class="py-3 px-4 text-center text-gray-600 font-medium">MP</th>
                 <th class="py-3 px-4 text-center text-gray-600 font-medium">W</th>
@@ -179,13 +175,12 @@
               <tr 
                 v-for="(team, index) in standings" 
                 :key="team.id"
-                class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-                :class="{'bg-indigo-50/50': index < 4}"
+                class="border-b hover:bg-gray-50 transition-colors"
+                :class="{'bg-indigo-50/50': index < 5}"
               >
                 <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-sm" :class="{'text-indigo-600': index < 4, 'text-red-500': index > 16}">{{ index + 1 }}</td>
                 <td class="py-3 md:py-4 px-2 md:px-4">
                   <div class="flex items-center space-x-2 md:space-x-3">
-                    <img :src="team.logo" alt="Team logo" class="w-5 h-5 md:w-6 md:h-6" />
                     <span class="font-medium text-gray-900 text-sm">{{ team.name }}</span>
                   </div>
                 </td>
@@ -239,89 +234,69 @@
   import { ref } from "vue";
   
   const scrollContainer = ref<HTMLElement | null>(null);
-  
-  const games = [
-    {
-      id: 1,
-      homeTeam: "Manchester United",
-      awayTeam: "Arsenal",
-      date: "2024-12-28",
-      time: "20:00",
-      type: "Premier League",
-      status: "ENDED",
-    },
-    {
-      id: 2,
-      homeTeam: "Real Madrid",
-      awayTeam: "Barcelona",
-      date: "2024-12-30",
-      time: "21:00",
-      type: "Premier League",
-      status: "UPCOMING",
-    },
-    {
-      id: 3,
-      homeTeam: "Juventus",
-      awayTeam: "Napoli",
-      date: "2025-01-01",
-      time: "19:45",
-      type: "Premier League",
-      status: "POSTPONED",
-    },
-    {
-      id: 4,
-      homeTeam: "PSG",
-      awayTeam: "Marseille",
-      date: "2025-01-05",
-      time: "20:00",
-      type: "Premier League",
-      status: "POSTPONED",
-    },
-    {
-      id: 5,
-      homeTeam: "Liverpool",
-      awayTeam: "Chelsea",
-      date: "2025-01-05",
-      time: "20:00",
-      type: "Premier League",
-      status: "POSTPONED",
-    },
-    {
-      id: 6,
-      homeTeam: "Bayern Munich",
-      awayTeam: "Dortmund",
-      date: "2025-01-05",
-      time: "20:00",
-      type: "Premier League",
-      status: "POSTPONED",
-    },
-    {
-      id: 6,
-      homeTeam: "Bayern Munich",
-      awayTeam: "Dortmund",
-      date: "2025-01-05",
-      time: "20:00",
-      type: "Premier League",
-      status: "POSTPONED",
-    },
-    {
-      id: 6,
-      homeTeam: "Bayern Munich",
-      awayTeam: "Dortmund",
-      date: "2025-01-05",
-      time: "20:00",
-      type: "Premier League",
-      status: "POSTPONED",
-    },
-  ];
-  
+    const games = [
+  {
+    id: 1,
+    homeTeam: "Gor Mahia",
+    awayTeam: "AFC Leopards",
+    date: "2024-12-28",
+    time: "15:00",
+    type: "FKF Premier League",
+    status: "ENDED",
+  },
+  {
+    id: 2,
+    homeTeam: "Tusker FC",
+    awayTeam: "Bandari FC",
+    date: "2024-12-30",
+    time: "16:00",
+    type: "FKF Premier League",
+    status: "UPCOMING",
+  },
+  {
+    id: 3,
+    homeTeam: "KCB FC",
+    awayTeam: "Nzoia Sugar",
+    date: "2025-01-01",
+    time: "14:45",
+    type: "FKF Premier League",
+    status: "POSTPONED",
+  },
+  {
+    id: 4,
+    homeTeam: "Kariobangi Sharks",
+    awayTeam: "Sofapaka",
+    date: "2025-01-05",
+    time: "15:00",
+    type: "FKF Premier League",
+    status: "POSTPONED",
+  },
+  {
+    id: 5,
+    homeTeam: "Ulinzi Stars",
+    awayTeam: "Posta Rangers",
+    date: "2025-01-05",
+    time: "15:00",
+    type: "FKF Premier League",
+    status: "POSTPONED",
+  },
+  {
+    id: 6,
+    homeTeam: "Vihiga United",
+    awayTeam: "Wazito FC",
+    date: "2025-01-05",
+    time: "15:00",
+    type: "NSL (National Super League)",
+    status: "POSTPONED",
+  },
+];
+
 
 
 const standings = [
   {
     id: 1,
-    name: "Manchester City",
-    logo: "/api/placeholder/64/64",
+    name: "Gor Mahia",
     played: 27,
     won: 19,
     drawn: 6,
@@ -334,8 +309,7 @@ const standings = [
   },
   {
     id: 2,
-    name: "Arsenal",
-    logo: "/api/placeholder/64/64",
+    name: "AFC Leopards",
     played: 27,
     won: 18,
     drawn: 4,
@@ -348,8 +322,7 @@ const standings = [
   },
   {
     id: 3,
-    name: "Liverpool",
-    logo: "/api/placeholder/64/64",
+    name: "Ulinzi Stars",
     played: 27,
     won: 17,
     drawn: 7,
@@ -362,8 +335,7 @@ const standings = [
   },
   {
     id: 4,
-    name: "Aston Villa",
-    logo: "/api/placeholder/64/64",
+    name: "Shabana",
     played: 27,
     won: 16,
     drawn: 4,
@@ -376,8 +348,7 @@ const standings = [
   },
   {
     id: 5,
-    name: "Tottenham",
-    logo: "/api/placeholder/64/64",
+    name: "Murang'a Seals",
     played: 27,
     won: 14,
     drawn: 5,

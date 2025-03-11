@@ -1,10 +1,10 @@
 <template>
     <footer class="w-full bg-gray-900 text-white py-16">
-        <div class="max-w-7xl px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-10">
                 <!-- Brand Section -->
-                <div>
-                    <div class="flex items-center space-x-3 mb-4">
+                <div class="flex flex-col items-center text-center">
+                    <div class="flex flex-col items-center space-y-3 mb-4">
                         <img src="/logo.png" alt="Logo" class="h-16 w-auto" />
                         <h3 class="text-2xl font-bold">Fantasy KPL</h3>
                     </div>
@@ -35,7 +35,7 @@
                 </div>
 
                 <!-- Quick Links -->
-                <div>
+                <div class="flex flex-col items-center text-center">
                     <h3 class="text-lg font-semibold mb-4 text-red-400">
                         Quick Links
                     </h3>
@@ -64,7 +64,7 @@
                 </div>
 
                 <!-- Support -->
-                <div>
+                <div class="flex flex-col items-center text-center">
                     <h3 class="text-lg font-semibold mb-4 text-red-400">
                         Support
                     </h3>
@@ -93,14 +93,14 @@
                 </div>
 
                 <!-- Newsletter -->
-                <div>
+                <div class="flex flex-col items-center text-center">
                     <h3 class="text-lg font-semibold mb-4 text-red-400">
                         Stay Updated
                     </h3>
                     <p class="text-gray-400 mb-4">
                         Subscribe for the latest fantasy football updates.
                     </p>
-                    <div class="flex bg-gray-800 rounded-lg overflow-hidden">
+                    <div class="flex bg-gray-800 rounded-lg overflow-hidden max-w-xs w-full">
                         <input
                             type="email"
                             placeholder="Your email"

@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gradient-to-br from-gray-50 to-white p-3 md:p-8 min-h-screen">
+  <div class="bg-gradient-to-br from-gray-50 to-blue-50 mx-4 rounded-2xl p-3 md:p-8 ">
     <div class=" mx-auto">
       <!-- Header -->
       <div class="text-center mb-6 md:mb-10 pt-4 md:pt-6">

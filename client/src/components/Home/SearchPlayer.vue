@@ -69,8 +69,8 @@
               class="w-full py-3.5 pl-12 pr-4 rounded-xl border border-blue-200 focus:ring-2 focus:ring-blue-500 transition-all duration-300 shadow-sm group-hover:shadow-md appearance-none"
             >
               <option value="">All Teams</option>
-              <option value="Manchester United">Manchester United</option>
-              <option value="Real Madrid">Real Madrid</option>
+              <option value="Manchester United">Gor Mahia</option>
+              <option value="Real Madrid">Ulinzi Starts</option>
               <option value="Barcelona">Barcelona</option>
               <option value="Inter Miami">Inter Miami</option>
               <option value="Al-Nassr">Al-Nassr</option>
@@ -128,21 +128,6 @@
             >
               <td class="px-4 sm:px-8 py-4 sm:py-6">
                 <div class="flex items-center">
-                  <div class="relative h-12 w-12 sm:h-16 sm:w-16 mr-3 sm:mr-4 flex-shrink-0">
-                    <img
-                      :src="player.image"
-                      :alt="player.name"
-                      class="h-12 w-12 sm:h-16 sm:w-16 rounded-full object-cover shadow-lg transition-all duration-300 hover:scale-105 ring-2 ring-offset-2"
-                      :class="{
-                        'ring-yellow-400': player.uciRanking <= 3,
-                        'ring-blue-400': player.uciRanking > 3 && player.uciRanking <= 10,
-                        'ring-gray-300': player.uciRanking > 10
-                      }"
-                    />
-                    <div v-if="player.uciRanking <= 3" class="absolute -top-2 -right-2 bg-yellow-400 text-white rounded-full h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center text-xs font-bold shadow-md">
-                      {{ player.uciRanking }}
-                    </div>
-                  </div>
                   <div>
                     <div class="font-bold text-gray-900 text-sm sm:text-base">
                       {{ player.name }}
@@ -289,8 +274,6 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from "vue";
-import player3 from "@/assets/images/player3.png";
-import player2 from "@/assets/images/player2.png";
 
 const filters = reactive({
   name: "",
@@ -311,136 +294,78 @@ const showAnimation = ref(false);
 const players = reactive([
   {
     id: 1,
-    name: "Cristiano Ronaldo",
-    image: player3,
+    name: "Michael Olunga",
     position: "ST",
     uciRanking: 1,
     form: 14,
     fantasyPoints: 12000,
-    team: "Al-Nassr",
+    team: "Al-Duhail",
   },
   {
     id: 2,
-    name: "Lionel Messi",
-    image: player2,
+    name: "Victor Wanyama",
     position: "MID",
     uciRanking: 2,
     form: 15,
     fantasyPoints: 15000,
-    team: "Inter Miami",
+    team: "CF Montréal",
   },
   {
     id: 3,
-    name: "David de Gea",
-    image: player3,
+    name: "Patrick Matasi",
     position: "GKP",
     uciRanking: 10,
     form: 12,
     fantasyPoints: 5000,
-    team: "Manchester United",
+    team: "Kenya Police FC",
   },
   {
     id: 4,
-    name: "Kylian Mbappé",
-    image: player2,
+    name: "Ayub Timbe",
     position: "ST",
     uciRanking: 3,
     form: 13,
     fantasyPoints: 11500,
-    team: "Real Madrid",
+    team: "Vissel Kobe",
   },
   {
     id: 5,
-    name: "Erling Haaland",
-    image: player3,
+    name: "Elvis Rupia",
     position: "ST",
     uciRanking: 4,
     form: 14,
     fantasyPoints: 13000,
-    team: "Manchester United",
+    team: "Kenya Police FC",
   },
   {
     id: 6,
-    name: "Robert Lewandowski",
-    image: player2,
-    position: "ST",
+    name: "Eric Johana",
+    position: "MID",
     uciRanking: 5,
     form: 13,
     fantasyPoints: 10800,
-    team: "Barcelona",
+    team: "Muangthong United",
   },
   {
     id: 7,
-    name: "Luka Modric",
-    image: player3,
+    name: "Kenneth Muguna",
     position: "MID",
     uciRanking: 7,
     form: 12,
     fantasyPoints: 9500,
-    team: "Real Madrid",
+    team: "Gor Mahia",
   },
   {
     id: 8,
-    name: "Virgil van Dijk",
-    image: player2,
+    name: "Joash Onyango",
     position: "DEF",
     uciRanking: 8,
     form: 13,
     fantasyPoints: 8900,
-    team: "Manchester United",
-  },
-  ,
-  {
-    id: 8,
-    name: "Virgil van Dijk",
-    image: player2,
-    position: "DEF",
-    uciRanking: 8,
-    form: 13,
-    fantasyPoints: 8900,
-    team: "Manchester United",
-  },,
-  {
-    id: 8,
-    name: "Virgil van Dijk",
-    image: player2,
-    position: "DEF",
-    uciRanking: 8,
-    form: 13,
-    fantasyPoints: 8900,
-    team: "Manchester United",
-  },,
-  {
-    id: 8,
-    name: "Virgil van Dijk",
-    image: player2,
-    position: "DEF",
-    uciRanking: 8,
-    form: 13,
-    fantasyPoints: 8900,
-    team: "Manchester United",
-  },,
-  {
-    id: 8,
-    name: "Virgil van Dijk",
-    image: player2,
-    position: "DEF",
-    uciRanking: 8,
-    form: 13,
-    fantasyPoints: 8900,
-    team: "Manchester United",
-  },,
-  {
-    id: 8,
-    name: "Virgil van Dijk",
-    image: player2,
-    position: "DEF",
-    uciRanking: 8,
-    form: 13,
-    fantasyPoints: 8900,
-    team: "Manchester United",
+    team: "Simba SC",
   },
 ]);
+
 
 const currentPage = ref(1);
 const playersPerPage = ref(3);
