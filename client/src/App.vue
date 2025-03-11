@@ -7,7 +7,7 @@ import AppLayout from "@/layouts/AppLayout.vue";
 const authStore = useAuthStore();
 const route = useRoute();
 
-const excludedRoutes = ["sign-in", "sign-up", "activation", "reset-password", "reset-password-request"];
+const excludedRoutes = ["sign-in", "sign-up", "activation", "reset-password", "reset-password-request", "NotFound"];
 
 const isExcludedRoute = computed(() => excludedRoutes.includes(route.name as string));
 

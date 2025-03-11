@@ -10,6 +10,7 @@ import LeaguesView from "@/views/LeaguesView.vue";
 import ProfileView from "@/views/ProfileView.vue";
 import PasswordResetConfirm from "@/views/Auth/PasswordResetConfirm.vue";
 import PasswordResetRequest from "@/views/Auth/PasswordResetRequest.vue";
+import NotFound from "@/views/NotFound.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +69,11 @@ const router = createRouter({
       path: "/password/reset/request",
       name: "reset-password-request",
       component: PasswordResetRequest,
+    },
+    {
+      path: "/:pathMatch(.*)*", 
+      name: "NotFound",
+      component: NotFound,
     },
   ],
 });

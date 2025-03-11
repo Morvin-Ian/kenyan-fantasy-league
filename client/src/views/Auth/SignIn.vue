@@ -3,6 +3,7 @@
         <div class="signin-card">
             <div class="header">
                 <div class="logo">Fantasy Kenyan League</div>
+                <p class="tagline">Sign in to manage your team</p>
             </div>
 
             <div v-if="authStore.error" class="error-alert">
@@ -14,6 +15,7 @@
                 <div class="form-group">
                     <label for="email">Email address</label>
                     <div class="input-wrapper">
+                        <Mail class="input-icon-left" />
                         <input
                             id="email"
                             v-model="form.email"
@@ -23,14 +25,14 @@
                             :class="{ error: v$.email.$error }"
                             @blur="v$.email.$touch"
                         />
-                        <div class="input-icon" v-if="form.email">
+                        <div class="input-icon-right" v-if="form.email">
                             <CheckCircle
                                 v-if="!v$.email.$error"
-                                class="valid-icon h-4"
+                                class="valid-icon"
                             />
                             <XCircle
                                 v-else
-                                class="invalid-icon h-4 text-red-400"
+                                class="invalid-icon"
                             />
                         </div>
                     </div>
@@ -42,6 +44,7 @@
                 <div class="form-group">
                     <label for="password">Password</label>
                     <div class="input-wrapper">
+                        <Lock class="input-icon-left" />
                         <input
                             id="password"
                             v-model="form.password"
@@ -77,17 +80,16 @@
                     <span v-else>Sign In</span>
                 </button>
 
-                <!-- Forgot Password Link -->
-                <p class="forgot-password-link text-end mt-3 text-sm">
-                    <router-link to="/password/reset/request"
-                        >Forgot Password?</router-link
-                    >
-                </p>
-
-                <p class="register-link text-end">
-                    Don't have an account?
-                    <router-link to="/sign-up">Create one</router-link>
-                </p>
+                <div class="form-footer">
+                    <router-link to="/password/reset/request" class="forgot-password-link">
+                        Forgot Password?
+                    </router-link>
+                    
+                    <div class="register-wrapper">
+                        <span>Don't have an account?</span>
+                        <router-link to="/sign-up" class="register-link">Create one</router-link>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -102,6 +104,8 @@ import {
     XCircle,
     Eye,
     EyeOff,
+    Mail,
+    Lock
 } from "lucide-vue-next";
 import { useAuthStore } from "@/stores/auth";
 import useVuelidate from "@vuelidate/core";
@@ -139,8 +143,8 @@ const handleSubmit = async () => {
         console.error("Sign-in failed:", error);
     }
 };
+
 onMounted(() => {
-    console.log(authStore.isAuthenticated)
     if (authStore.isAuthenticated) {
         router.replace({ name: "home" });
     }
@@ -154,35 +158,33 @@ onMounted(() => {
     justify-content: center;
     align-items: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #f0f4f8, #ffffff);
-    font-family: "Inter", sans-serif;
+    background: linear-gradient(135deg, #f0f4f8, #e0f2f1);
+    font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .signin-card {
     background: #ffffff;
     padding: 2.5rem;
-    border-radius: 1.5rem;
+    border-radius: 1rem;
     width: 100%;
-    max-width: 450px;
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
     text-align: center;
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease;
-}
-
-.signin-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
 }
 
 /* Header */
 .logo {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     color: #1a472a;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
     letter-spacing: -0.5px;
+}
+
+.tagline {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
 }
 
 /* Form Group */
@@ -192,9 +194,9 @@ onMounted(() => {
 }
 
 .form-group label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
-    color: #374151;
+    color: #4b5563;
     margin-bottom: 0.5rem;
     display: block;
 }
@@ -205,14 +207,22 @@ onMounted(() => {
     align-items: center;
 }
 
+.input-icon-left {
+    position: absolute;
+    left: 1rem;
+    color: #9ca3af;
+    height: 1rem;
+    width: 1rem;
+}
+
 .input-wrapper input {
     width: 100%;
-    padding: 0.9rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 0.75rem;
+    padding: 0.8rem 1rem 0.8rem 2.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
     font-size: 0.95rem;
     transition: all 0.2s ease;
-    background: #f9fafb;
+    background: #ffffff;
 }
 
 .input-wrapper input:hover {
@@ -223,7 +233,6 @@ onMounted(() => {
     outline: none;
     border-color: #1a472a;
     box-shadow: 0 0 0 3px rgba(26, 71, 42, 0.1);
-    background: white;
 }
 
 .input-wrapper input.error {
@@ -231,66 +240,85 @@ onMounted(() => {
     background: #fef2f2;
 }
 
-.input-icon {
+.input-icon-right {
     position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
+    right: 2.5rem;
     color: #9ca3af;
 }
 
+.valid-icon {
+    color: #10b981;
+    height: 1rem;
+    width: 1rem;
+}
+
+.invalid-icon {
+    color: #ef4444;
+    height: 1rem;
+    width: 1rem;
+}
+
 .toggle-password {
+    position: absolute;
+    right: 1rem;
     background: none;
     border: none;
     color: #9ca3af;
     cursor: pointer;
-    padding: 0.5rem;
-    transition: color 0.2s ease;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .toggle-password:hover {
-    color: #1a472a;
+    color: #4b5563;
+}
+
+.toggle-password svg {
+    height: 1rem;
+    width: 1rem;
 }
 
 .error-text {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: #ef4444;
     margin-top: 0.5rem;
     display: block;
-    animation: fadeIn 0.2s ease;
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* Buttons */
 .submit-button {
     width: 100%;
-    padding: 0.9rem;
+    padding: 0.8rem;
     background: #1a472a;
     color: white;
-    font-weight: bold;
+    font-weight: 600;
     border: none;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 2.75rem;
 }
 
 .submit-button:hover {
     background: #164624;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button:active {
+    transform: translateY(0);
+    box-shadow: none;
 }
 
 .submit-button:disabled {
     background: #9ca3af;
     cursor: not-allowed;
     transform: none;
+    box-shadow: none;
 }
 
 .loading-spinner {
@@ -308,23 +336,48 @@ onMounted(() => {
     }
 }
 
-/* Register Link */
-.register-link {
+.form-footer {
     margin-top: 1.5rem;
-    font-size: 0.9rem;
-    color: #6b7280;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.register-link a {
+.forgot-password-link {
     color: #1a472a;
-    font-weight: bold;
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+    align-self: flex-end;
+}
+
+.forgot-password-link:hover {
+    color: #164624;
+    text-decoration: underline;
+}
+
+.register-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.register-wrapper span {
+    color: #6b7280;
+}
+
+.register-link {
+    color: #1a472a;
+    font-weight: 600;
     text-decoration: none;
     transition: color 0.2s ease;
 }
 
-.register-link a:hover {
-    color: #2d5a3f;
+.register-link:hover {
+    color: #164624;
     text-decoration: underline;
 }
 
@@ -332,24 +385,20 @@ onMounted(() => {
 .error-alert {
     background: #fee2e2;
     color: #b91c1c;
-    padding: 1rem;
-    border-radius: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
     margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    animation: slideIn 0.3s ease;
+    font-size: 0.85rem;
+    text-align: left;
 }
 
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.alert-icon {
+    flex-shrink: 0;
+    height: 1rem;
+    width: 1rem;
 }
 
 /* Responsive Design */
@@ -360,18 +409,6 @@ onMounted(() => {
 
     .signin-card {
         padding: 1.5rem;
-    }
-
-    .logo {
-        font-size: 1.75rem;
-    }
-
-    .input-wrapper input {
-        padding: 0.8rem;
-    }
-
-    .submit-button {
-        padding: 0.8rem;
     }
 }
 </style>
