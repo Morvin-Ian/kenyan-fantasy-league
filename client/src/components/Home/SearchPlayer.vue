@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-4 sm:p-8 rounded-3xl mx-auto shadow-2xl max-w-7xl mb-8">
+  <div class="bg-gradient-to-br from-gray-50 via-gray-100 to-gray-50 p-4 sm:p-8 rounded-3xl mx-4 shadow-2xl mb-8">
     <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-indigo-100">
       <!-- Header -->
       <div class="relative p-6 sm:p-8 bg-gradient-to-r from-blue-900 to-indigo-800 overflow-hidden">

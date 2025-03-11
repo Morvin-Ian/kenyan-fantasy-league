@@ -1,9 +1,7 @@
 <template>
-  <div class="flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-2 sm:p-4 md:p-8 min-h-screen">
+  <div class="flex items-center justify-center  p-2 sm:p-4 md:p-4">
     <div class="w-full bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-xl border border-gray-100">
-      <!-- Team Header with Stats - Now with white background -->
       <div class="relative overflow-hidden">
-        <!-- Background Pattern - Subtle gray dots instead -->
         <div class="absolute inset-0 bg-gray-500 opacity-5 pattern-dots"></div>
         
         <div class="relative p-4 sm:p-6 md:p-8 bg-white text-gray-800">

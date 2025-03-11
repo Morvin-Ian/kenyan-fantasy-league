@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-4 sm:p-6 md:p-8 rounded-2xl mx-2 sm:mx-4 shadow-lg mb-8">
+    <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-4 sm:p-6 md:p-8 rounded-2xl mx-2 sm:mx-4 shadow-lg mb-3">
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:justify-between items-start gap-4">
         <div class="animate-fade-in">
@@ -191,6 +191,24 @@
       id: 5,
       homeTeam: "Liverpool",
       awayTeam: "Chelsea",
+      date: "2025-01-05",
+      time: "20:00",
+      type: "Premier League",
+      status: "POSTPONED",
+    },
+    {
+      id: 6,
+      homeTeam: "Bayern Munich",
+      awayTeam: "Dortmund",
+      date: "2025-01-05",
+      time: "20:00",
+      type: "Premier League",
+      status: "POSTPONED",
+    },
+    {
+      id: 6,
+      homeTeam: "Bayern Munich",
+      awayTeam: "Dortmund",
       date: "2025-01-05",
       time: "20:00",
       type: "Premier League",

@@ -1,6 +1,6 @@
 <template>
   <div class="bg-gradient-to-br from-gray-50 to-white p-3 md:p-8 min-h-screen">
-    <div class="max-w-7xl mx-auto">
+    <div class=" mx-auto">
       <!-- Header -->
       <div class="text-center mb-6 md:mb-10 pt-4 md:pt-6">
         <h1 class="text-3xl md:text-5xl font-bold text-gray-900 tracking-tight mb-2 md:mb-4">
