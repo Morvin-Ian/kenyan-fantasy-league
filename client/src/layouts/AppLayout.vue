@@ -1,7 +1,7 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <div style="background: linear-gradient(135deg, #f0f4f8, #e0f2f1);" class="min-h-screen flex flex-col">
       <Navbar class="w-full top-0 left-0" />
-      <main class="flex-grow mt-20 md:mt-16 lg:mt-12 mb-16">
+      <main class="flex-grow mt-20 md:mt-16 lg:mt-6 mb-16">
         <RouterView />
       </main>
       <Footer class="w-full hidden sm:block" />

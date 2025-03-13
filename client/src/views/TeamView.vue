@@ -2,7 +2,7 @@
     <div class="p-4">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
             <!-- Main Content (Field) -->
-            <div class="w-full lg:w-2/3 bg-white rounded-xl shadow-lg">
+            <div class="w-full lg:w-2/3 rounded-xl shadow-lg">
                 <Pitch
                     :goalkeeper="goalkeeper"
                     :defenders="defenders"

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-gray-50 to-blue-50 p-4 md:p-8 font-sans">
+  <div class="min-h-screen p-4 md:p-8 font-sans">
     <div class="max-w-6xl mx-auto">
       <!-- Header Section with League Logo -->
       <div class="bg-white rounded-xl shadow-xl overflow-hidden mb-6">

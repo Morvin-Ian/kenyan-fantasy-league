@@ -1,5 +1,5 @@
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 md:p-10">
+    <div class="p-4 md:p-10">
         <div class="mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div class="bg-white p-4 sm:p-6 text-center relative">
                 <h1
