@@ -1,7 +1,5 @@
 from django.contrib import admin
-from .models import Team, Standing
-
-# Register your models here.
+from .models import Team, Standing, Player, Fixture
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -13,3 +11,15 @@ class StandingAdmin(admin.ModelAdmin):
     list_display = ('position', 'team', 'played', 'wins', 'draws', 'losses', 'goals_for', 'goals_against', 'goal_differential', 'points', 'period')
     list_filter = ('period', 'team')
     search_fields = ('team__name',)
+
+@admin.register(Player)
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ('name', 'team', 'position', 'jersey_number', 'age', 'created_at', 'updated_at')
+    list_filter = ('team', 'position')
+    search_fields = ('name', 'team__name')
+
+@admin.register(Fixture)
+class FixtureAdmin(admin.ModelAdmin):
+    list_display = ('home_team', 'away_team', 'match_date', 'venue', 'status', 'home_team_score', 'away_team_score', 'created_at', 'updated_at')
+    list_filter = ('status', 'match_date')
+    search_fields = ('home_team__name', 'away_team__name', 'venue')
