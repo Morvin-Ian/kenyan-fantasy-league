@@ -249,3 +249,10 @@ logging.config.dictConfig(
         },
     }
 )
+
+CELERY_BEAT_SCHEDULE = {
+    'update-kpl-standings': {
+        'task': 'apps.kpl.tasks.standings.get_kpl_table',
+        'schedule': 86400.0,  # Runs every 24 hours (86400 seconds)
+    },
+}

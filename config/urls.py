@@ -10,9 +10,12 @@ urlpatterns = [
     path("api/v1/profile/", include("apps.profiles.api.urls")),
 ]
 
-# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-# urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+handler404 = 'util.views.error_404'
+handler500 = 'util.views.error_500'
 
 admin.site.site_header = "Fantasy Kenyan League"
 admin.site.site_title = "Fantasy League Admin Portal"
 admin.site.index_title = "Welcome to The Realm"
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    

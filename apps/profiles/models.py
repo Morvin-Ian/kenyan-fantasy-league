@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django_countries.fields import CountryField
 from phonenumber_field.modelfields import PhoneNumberField
 
-from apps.utils import TimeStampedUUIDModel
+from util.models import TimeStampedUUIDModel
 
 User = get_user_model()
 

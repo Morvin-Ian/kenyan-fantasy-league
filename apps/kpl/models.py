@@ -1,5 +1,5 @@
 from django.db import models
-from apps.utils import TimeStampedUUIDModel
+from util.models import TimeStampedUUIDModel
 
 
 FIXTURE_STATUS = [

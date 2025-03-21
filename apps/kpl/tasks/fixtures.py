@@ -1,7 +1,7 @@
 from celery import shared_task
 import requests
 from bs4 import BeautifulSoup
-from .utils import headers 
+from util.views import headers 
 from apps.kpl.models import Standing, Team
 
 

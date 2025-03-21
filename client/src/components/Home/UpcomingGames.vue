@@ -176,7 +176,6 @@
                 v-for="(team, index) in standings" 
                 :key="team.id"
                 class="border-b hover:bg-gray-50 transition-colors"
-                :class="{'bg-indigo-50/50': index < 5}"
               >
                 <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-sm" :class="{'text-indigo-600': index < 4, 'text-red-500': index > 16}">{{ index + 1 }}</td>
                 <td class="py-3 md:py-4 px-2 md:px-4">

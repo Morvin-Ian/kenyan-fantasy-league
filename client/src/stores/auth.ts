@@ -53,7 +53,7 @@ export const useAuthStore = defineStore("auth", {
     async login(credentials: LoginCredentials): Promise<AuthResponse | void> {
       this.setLoading(true);
       this.setError(null);
-
+        
       try {
         const { data } = await apiClient.post<AuthResponse>(
           "/auth/jwt/create/",
@@ -62,13 +62,15 @@ export const useAuthStore = defineStore("auth", {
         this.setToken(data.access);
         await this.refreshUserProfile();
         await this.initialize();
-
+          
         if (credentials.rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
         return data;
       } catch (error: any) {
-        const errorMessage = error.response?.data?.detail || "Login failed";
+        const errorMessage = error.response?.data?.message || 
+                             error.response?.data?.detail || 
+                             "Login failed";
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
@@ -82,16 +84,16 @@ export const useAuthStore = defineStore("auth", {
       try {
         const data = await apiClient.post<User>("/auth/users/", registerData);
       } catch (error: any) {
-        const errorMessage =
-          error.response?.data?.detail ||
-          "Registration failed. Please try again.";
+        const errorMessage = error.response?.data?.message || 
+                             error.response?.data?.detail ||
+                             "Registration failed. Please try again.";
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
       }
     },
-
+    
     async activateAccount(
       uid: string | string[],
       token: string | string[],

@@ -1,7 +1,6 @@
 <template>
     <div class="">
         <div class="max-w-5xl mx-auto p-8">
-            <!-- Profile Header -->
             <div class="text-center mb-12 animate-fade-in-down">
                 <h1 class="text-4xl font-bold text-gray-800 mb-4">
                     Profile Dashboard
@@ -11,12 +10,9 @@
                 </p>
             </div>
 
-            <!-- Main Profile Card -->
             <div
                 class="bg-white/60 backdrop-blur-lg rounded-2xl shadow-lg overflow-hidden transform hover:scale-[1.01] transition-all duration-300">
-                <!-- Profile Content Grid -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- Profile Picture Section -->
                     <div
                         class="relative p-8 flex flex-col items-center justify-center bg-gradient-to-br from-sky-200 to-pink-200">
                         <div class="relative group">
@@ -60,10 +56,8 @@
                         </div>
                     </div>
 
-                    <!-- User Details Section -->
                     <div class="lg:col-span-2 p-8">
                         <div class="space-y-8">
-                            <!-- Personal Information -->
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <TransitionGroup enter-active-class="transition duration-500 ease-out"
                                     enter-from-class="transform -translate-y-4 opacity-0"
@@ -74,9 +68,19 @@
                                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                                 {{ field.label }}
                                             </label>
-                                            <input v-if="isEditing" v-model="user[key]" :type="field.type"
+
+                                            <select v-if="isEditing && key === 'gender'" v-model="user[key]"
+                                                class="w-full px-4 py-2 bg-white rounded-lg border-2 border-sky-100 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 transition-all duration-300">
+                                                <option v-for="option in field.options" :key="option" :value="option">
+                                                    {{ option }}
+                                                </option>
+                                            </select>
+
+                                            <input v-else-if="isEditing" v-model="user[key]" :type="field.type"
                                                 class="w-full px-4 py-2 bg-white rounded-lg border-2 border-sky-100 focus:border-sky-400 focus:ring-2 focus:ring-sky-400 transition-all duration-300"
                                                 :placeholder="`Enter your ${field.label.toLowerCase()}`" />
+
+                                            <!-- Display value when not editing -->
                                             <p v-else class="text-gray-800 text-lg font-medium">
                                                 {{ user[key] || `No ${field.label.toLowerCase()} provided` }}
                                             </p>
@@ -86,7 +90,6 @@
                             </div>
                         </div>
 
-                        <!-- Action Buttons -->
                         <div class="mt-8 flex justify-end space-x-4">
                             <button v-if="isEditing" @click="cancelEdit"
                                 class="px-8 py-3 bg-gray-200 text-gray-700 rounded-xl shadow hover:shadow-md transform hover:scale-105 transition-all duration-300 font-semibold">
@@ -98,7 +101,8 @@
                             <button @click="toggleEdit" :class="{
                                 'bg-gradient-to-r from-sky-400 to-blue-500': !isEditing,
                                 'bg-gradient-to-r from-emerald-400 to-teal-500': isEditing,
-                            }" class="px-8 py-3 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 font-semibold">
+                            }"
+                                class="px-8 py-3 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 font-semibold">
                                 <span class="flex items-center gap-2">
                                     <font-awesome-icon :icon="isEditing ? 'fa-solid fa-check' : 'fa-solid fa-pen'" />
                                     {{ isEditing ? "Save Changes" : "Edit Profile" }}
@@ -109,9 +113,8 @@
                 </div>
             </div>
 
-            <!-- Success Notification -->
             <div v-if="showNotification"
-                class="fixed bottom-6 right-6 bg-white/90 backdrop-blur-md px-6 py-4 rounded-xl shadow-lg transform transition-all duration-500 flex items-center gap-3"
+                class="fixed top-12 left-0 right-0 md:left-auto md:right-12 md:top-24 mx-auto md:mx-0 max-w-sm bg-white/90 backdrop-blur-md px-6 py-4 rounded-xl shadow-lg transform transition-all duration-500 flex items-center gap-3 z-50"
                 :class="{ 'translate-y-0 opacity-100': showNotification, 'translate-y-12 opacity-0': !showNotification }">
                 <div class="flex-shrink-0 w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
                     <font-awesome-icon icon="fa-solid fa-check" class="text-emerald-500" />
@@ -125,7 +128,6 @@
                 </button>
             </div>
 
-            <!-- Decorative Elements -->
             <div class="fixed top-0 right-0 -z-10 w-96 h-96 bg-pink-100 rounded-full blur-3xl opacity-50"></div>
             <div class="fixed bottom-0 left-0 -z-10 w-96 h-96 bg-sky-100 rounded-full blur-3xl opacity-50"></div>
         </div>
@@ -178,17 +180,16 @@ const userFields = {
     email: { label: "Email Address", type: "email" },
     first_name: { label: "First Name", type: "text" },
     last_name: { label: "Last Name", type: "text" },
-    gender: { label: "Gender", type: "select", options: ["Male", "Female", "Other", "Prefer not to say"] },
+    gender: { label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
+    phone_number: { label: "Phone", type: "number" },
     country: { label: "Country", type: "text" },
     city: { label: "City", type: "text" },
 };
 
 const toggleEdit = () => {
     if (isEditing.value) {
-        // Save changes (API calls can be added here)
         console.log("Updated User Data:", user.value);
 
-        // Show success notification
         showNotification.value = true;
         setTimeout(() => {
             showNotification.value = false;

@@ -4,23 +4,23 @@ import os
 from bs4 import BeautifulSoup
 from celery import shared_task
 
-from .utils import headers 
+from util.views import headers 
 from apps.kpl.models import Standing, Team
 
 
 def extract_table_standings_data(headers) -> str:
     url = os.getenv('TABLE_STANDINGS_URL')  
     web_content = requests.get(url, headers=headers)
+    Team.objects.all().delete()
 
     if web_content.status_code == 200:
+        Team.objects.all().delete()
         soup = BeautifulSoup(web_content.text, 'lxml')
         tables = soup.find_all('tbody', class_='Table__TBODY')
 
         if tables and len(tables) > 1:
             first_table = tables[0].find_all("tr")  
             second_table = tables[1].find_all("tr")  
-
-            Team.objects.all().delete()
 
             team_stats = []
             for row in second_table:
@@ -69,6 +69,7 @@ def extract_table_standings_data(headers) -> str:
             return "Table not found"
     
     return f"Failed to retrieve the web page. Status code: {web_content.status_code}"
+
 def edit_team_logo(headers) -> str:
     url = os.getenv('TEAM_LOGOS_URL')  
     web_content = requests.get(url, headers=headers, verify=False)
@@ -102,7 +103,6 @@ def edit_team_logo(headers) -> str:
 
     return f"Failed to retrieve the web page. Status code: {web_content.status_code}"
 
-
 @shared_task
 def get_kpl_table():
     try:
@@ -113,6 +113,6 @@ def get_kpl_table():
     try:
         second_response = edit_team_logo(headers)
     except Exception as e:
-        second_response = f"Error in editing team logos: {str(e)}"
+        second_response = f"Error in updating team logos: {str(e)}"
     
     return f"{first_response} - {second_response}"

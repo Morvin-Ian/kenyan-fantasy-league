@@ -1,6 +1,6 @@
 <template>
   <div class="flex items-center justify-center  p-2 sm:p-4 md:p-4">
-    <div class="w-full bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-xl border border-gray-100">
+    <div class="bg-gradient-to-br from-gray-50 to-blue-50 w-full bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-xl">
       <div class="relative overflow-hidden">
         <div class="absolute inset-0 bg-gray-500 opacity-5 pattern-dots"></div>
         

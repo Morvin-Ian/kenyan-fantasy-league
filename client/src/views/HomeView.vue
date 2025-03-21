@@ -5,7 +5,7 @@
       </div>
       <div v-else>
         <UpcomingGames />
-        <Team />
+        <!-- <Team /> -->
         <SearchPlayer />
         <Performance />
       </div>
