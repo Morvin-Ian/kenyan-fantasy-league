@@ -1,5 +1,6 @@
 import requests
 import os
+from datetime import datetime
 
 from bs4 import BeautifulSoup
 from celery import shared_task
@@ -11,6 +12,11 @@ from apps.kpl.models import Standing, Team
 def extract_table_standings_data(headers) -> str:
     url = os.getenv('TABLE_STANDINGS_URL')  
     web_content = requests.get(url, headers=headers)
+
+    current_year = datetime.now().year
+    previous_year = current_year - 1
+    period = f"{previous_year}-{current_year}"
+    
     Team.objects.all().delete()
 
     if web_content.status_code == 200:
@@ -60,7 +66,7 @@ def extract_table_standings_data(headers) -> str:
                         goals_against=int(stats[5]),
                         goal_differential=int(stats[6]),
                         points=int(stats[7]),
-                        period="2024-2025"
+                        period=period
                     )
 
             return "Successfully updated the table standings."

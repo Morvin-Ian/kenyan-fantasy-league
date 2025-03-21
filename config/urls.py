@@ -10,8 +10,6 @@ urlpatterns = [
     path("api/v1/profile/", include("apps.profiles.api.urls")),
 ]
 
-handler404 = 'util.views.error_404'
-handler500 = 'util.views.error_500'
 
 admin.site.site_header = "Fantasy Kenyan League"
 admin.site.site_title = "Fantasy League Admin Portal"
