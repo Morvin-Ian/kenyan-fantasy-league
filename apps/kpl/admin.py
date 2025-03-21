@@ -3,7 +3,7 @@ from .models import Team, Standing, Player, Fixture
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ('name', 'logo_url', 'created_at', 'updated_at')
+    list_display = ('name', 'logo_url')
     search_fields = ('name',)
 
 @admin.register(Standing)
@@ -14,12 +14,12 @@ class StandingAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ('name', 'team', 'position', 'jersey_number', 'age', 'created_at', 'updated_at')
+    list_display = ('name', 'team', 'position', 'jersey_number', 'age')
     list_filter = ('team', 'position')
     search_fields = ('name', 'team__name')
 
 @admin.register(Fixture)
 class FixtureAdmin(admin.ModelAdmin):
-    list_display = ('home_team', 'away_team', 'match_date', 'venue', 'status', 'home_team_score', 'away_team_score', 'created_at', 'updated_at')
+    list_display = ('home_team', 'away_team', 'match_date', 'venue', 'status', 'home_team_score', 'away_team_score')
     list_filter = ('status', 'match_date')
     search_fields = ('home_team__name', 'away_team__name', 'venue')

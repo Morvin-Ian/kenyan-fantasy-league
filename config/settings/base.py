@@ -250,9 +250,15 @@ logging.config.dictConfig(
     }
 )
 
+from datetime import timedelta
+
 CELERY_BEAT_SCHEDULE = {
     'update-kpl-standings': {
         'task': 'apps.kpl.tasks.standings.get_kpl_table',
-        'schedule': 86400.0,  # Runs every 24 hours (86400 seconds)
+        'schedule': timedelta(days=1).total_seconds(),  # Runs every 24 hours
+    },
+    'update-kpl-fixtures': {
+        'task': 'apps.kpl.tasks.fixtures.get_kpl_fixtures',
+        'schedule': timedelta(days=2).total_seconds(),  # Runs every 2 days
     },
 }

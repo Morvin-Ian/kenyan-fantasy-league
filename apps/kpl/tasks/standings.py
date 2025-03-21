@@ -76,6 +76,7 @@ def extract_table_standings_data(headers) -> str:
     
     return f"Failed to retrieve the web page. Status code: {web_content.status_code}"
 
+
 def edit_team_logo(headers) -> str:
     url = os.getenv('TEAM_LOGOS_URL')  
     web_content = requests.get(url, headers=headers, verify=False)
@@ -95,15 +96,23 @@ def edit_team_logo(headers) -> str:
             logo = team.find('img')['src'] if team.find('img') else ''
 
             if full_name:
-                first_word = full_name.split()[0]  
-                if full_name.startswith('FC') or full_name.startswith('Kenya'):
-                    first_word = full_name.split()[1]
-                team_obj = Team.objects.filter(name__istartswith=first_word).first()
+                # Split the full name into words and sort them by length (descending)
+                words = full_name.split()
+                words_sorted_by_length = sorted(words, key=len, reverse=True)
+
+                # Try each word (starting with the longest) to find a matching team
+                team_obj = None
+                for word in words_sorted_by_length:
+                    team_obj = Team.objects.filter(name__icontains=word).first()
+                    if team_obj:
+                        break  # Stop if a match is found
 
                 if team_obj and logo:
                     team_obj.logo_url = logo
                     team_obj.save()
                     updated_count += 1
+                else:
+                    print(f"No team found for any word in: {full_name}")
 
         return f"Successfully updated {updated_count} team logos."
 

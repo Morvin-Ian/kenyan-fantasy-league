@@ -33,10 +33,10 @@ class UserSerializer(serializers.ModelSerializer):
             "city",
         )
 
-    def get_first_name(self, obj):
+    def get_first_name(self, obj)->str:
         return obj.first_name.title()
 
-    def get_last_name(self, obj):
+    def get_last_name(self, obj)->str:
         return obj.last_name.title()
 
 

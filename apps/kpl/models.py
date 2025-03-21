@@ -69,7 +69,7 @@ class Fixture(TimeStampedUUIDModel):
     away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_fixtures')
     match_date = models.DateTimeField()
     venue = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=FIXTURE_STATUS, default=FIXTURE_STATUS[0][0])
+    status = models.CharField(max_length=20, choices=FIXTURE_STATUS, default=FIXTURE_STATUS[0][1])
     home_team_score = models.PositiveIntegerField(null=True, blank=True)
     away_team_score = models.PositiveIntegerField(null=True, blank=True)
 

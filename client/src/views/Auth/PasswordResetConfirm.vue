@@ -11,7 +11,7 @@
                 <AlertCircle class="alert-icon" />
                 <p>{{ error }}</p>
                 <button @click="clearError" class="dismiss-button">
-                    <XCircle size="18" />
+                    <XCircle :size="18" />
                 </button>
             </div>
 
@@ -49,8 +49,8 @@
                             class="toggle-password" 
                             @click="showPassword = !showPassword"
                         >
-                            <Eye v-if="!showPassword" size="18" />
-                            <EyeOff v-else size="18" />
+                            <Eye v-if="!showPassword" :size="18" />
+                            <EyeOff v-else :size="18" />
                         </button>
                     </div>
                     <span
@@ -82,8 +82,8 @@
                             class="toggle-password" 
                             @click="showConfirmPassword = !showConfirmPassword"
                         >
-                            <Eye v-if="!showConfirmPassword" size="18" />
-                            <EyeOff v-else size="18" />
+                            <Eye v-if="!showConfirmPassword" :size="18" />
+                            <EyeOff v-else :size="18" />
                         </button>
                     </div>
                     <span
