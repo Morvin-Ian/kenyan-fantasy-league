@@ -197,7 +197,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
 
 interface TeamStanding {
     position: number;
@@ -294,4 +299,12 @@ function getGDClass(goalDifference: number): string {
 function getHeaderClass(header: string): string {
     return header === "Team" ? "text-left" : "text-center";
 }
+
+onMounted(async () => {
+  await authStore.initialize();
+  if (!authStore.isAuthenticated) {
+    router.push("/sign-in");
+  }
+
+});
 </script>

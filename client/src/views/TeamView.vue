@@ -3,57 +3,39 @@
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
             <!-- Main Content (Field) -->
             <div class="w-full lg:w-2/3 rounded-xl shadow-lg">
-                <Pitch
-                    :goalkeeper="goalkeeper"
-                    :defenders="defenders"
-                    :midfielders="midfielders"
-                    :forwards="forwards"
-                    :switch-source="switchSource"
-                    :switch-active="switchActive"
-                    @player-click="handlePlayerClick"
-                />
+                <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
+                    :switch-source="switchSource" :switch-active="switchActive" @player-click="handlePlayerClick" />
 
-                <Bench
-                    :bench-players="benchPlayers"
-                    :switch-source="switchSource"
-                    :switch-active="switchActive"
-                    @player-click="handlePlayerClick"
-                />
+                <Bench :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
+                    @player-click="handlePlayerClick" />
             </div>
 
             <!-- Sidebar -->
-            <Sidebar
-                :total-points="totalPoints"
-                :average-points="averagePoints"
-                :highest-points="highestPoints"
-                :overall-rank="overallRank"
-                :upcoming-fixtures="upcomingFixtures"
-                :recent-results="recentResults"
-                :top-performers="topPerformers"
-            />
+            <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+                :overall-rank="overallRank" :upcoming-fixtures="upcomingFixtures" :recent-results="recentResults"
+                :top-performers="topPerformers" />
         </div>
 
         <!-- Player Management Modal -->
-        <PlayerModal
-            :show-modal="showModal"
-            :selected-player="selectedPlayer"
-            @close-modal="closeModal"
-            @initiate-switch="initiateSwitch"
-            @make-captain="makeCaptain"
-            @make-vice-captain="makeViceCaptain"
-        />
+        <PlayerModal :show-modal="showModal" :selected-player="selectedPlayer" @close-modal="closeModal"
+            @initiate-switch="initiateSwitch" @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
     </div>
 </template>
 
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import Pitch from "@/components/Team/Pitch.vue";
 import Bench from "@/components/Team/Bench.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import PlayerModal from "@/components/Team/PlayerModal.vue";
 import { startingEleven, benchPlayers } from "@/helpers/data";
 import type { Player, Fixture, Result, Performer } from "@/helpers/types/team";
+import { useAuthStore } from '@/stores/auth';
+import { useRouter } from 'vue-router';
+
+const authStore = useAuthStore();
+const router = useRouter();
 
 // State
 const showModal = ref(false);
@@ -211,4 +193,12 @@ const makeViceCaptain = () => {
     console.log(`${selectedPlayer.value.name} is now the vice-captain.`);
     closeModal();
 };
+
+onMounted(async () => {
+    await authStore.initialize();
+    if (!authStore.isAuthenticated) {
+        router.push("/sign-in");
+    }
+
+});
 </script>

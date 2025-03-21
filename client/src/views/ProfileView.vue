@@ -238,7 +238,6 @@ onMounted(async () => {
     if (!authStore.isAuthenticated) {
         router.push("/sign-in");
     } else {
-        // Initialize user data from auth store
         user.value = {
             ...user.value,
             ...authStore.user
