@@ -33,6 +33,8 @@
   onMounted(async () => {
     try {
       await authStore.initialize();
+      await kplStore.fetchAllData();
+
       if (!authStore.isAuthenticated) {
         router.push("/sign-in");
       }

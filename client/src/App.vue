@@ -16,7 +16,6 @@ const isExcludedRoute = computed(() => excludedRoutes.includes(route.name as str
 onMounted(async () => {
     await authStore.initialize();
     await kplStore.fetchAllData();
-
 });
 </script>
 
