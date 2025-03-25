@@ -32,7 +32,6 @@ class UpdateProfileAPIView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def patch(self, request, uuid):
-        print(request.data)
         try:
             profile = Profile.objects.filter(id=uuid).first()
     
@@ -43,6 +42,19 @@ class UpdateProfileAPIView(APIView):
             )
 
             data = request.data
+
+            user = profile.user  
+            user_updated = False
+
+            user_fields = ['username', 'email', 'last_name', 'first_name']
+            for field in user_fields:
+                if field in data:
+                    setattr(user, field, data[field])
+                    user_updated = True
+
+            if user_updated:
+                user.save()  
+
             serializer = ProfileSerializer(
                 instance=profile, 
                 data=data,

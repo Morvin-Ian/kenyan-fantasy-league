@@ -188,9 +188,7 @@ const userFields = {
 
 const toggleEdit = async () => {
     if (isEditing.value) {
-        try {
-            console.log("Updating Profile...", user.value);
-            
+        try {            
             const formData = new FormData();
             for (const key in user.value) {
                 if (key !== "profile_photo" && user.value[key]) {
