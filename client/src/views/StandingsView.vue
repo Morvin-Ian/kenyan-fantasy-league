@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 md:p-10">
+    <div class="p-10 md:p-10">
         <div class="mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden">
             <div class="bg-white p-4 sm:p-6 text-center relative">
                 <h1
@@ -17,52 +17,54 @@
                 <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-600 animate-pulse"></div>
             </div>
 
-            <!-- Scroll Indicator for Small Devices -->
-            <div class="md:hidden px-6 py-2 flex items-center text-sm text-gray-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-blue-500 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                </svg>
-                <span>Swipe left to view more stats</span>
-            </div>
-
-            <!-- Standings Table -->
             <div class="p-6 overflow-x-auto">
                 <table class="w-full text-sm">
                     <thead class="bg-green-100 text-green-800">
                         <tr>
-                            <th v-for="header in tableHeaders" :key="header" class="p-3 text-center font-semibold">
+                            <th v-for="header in tableHeaders" :key="header" class="p-3 font-semibold">
                                 {{ header }}
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="team in standings" :key="team.team"
-                            class="hover:bg-green-50 transition-all duration-300 transform hover:scale-[1.01]">
+                        <tr v-for="team in paginatedTeams" :key="team.team"
+                            :class="[
+                                'hover:bg-green-50 transition-all duration-300 transform hover:scale-[1.01]',
+                                {'bg-red-100': team.position >= 17}
+                            ]">
                             <td class="p-3 text-center">
                                 <span :class="getPositionClass(team.position)"
                                     class="inline-block w-8 h-8 rounded-full flex items-center justify-center font-bold">
                                     {{ team.position }}
                                 </span>
                             </td>
+                            <td class="p-3 text-center">
+                                <img 
+                                    v-if="team.team.logo_url" 
+                                    :src="team.team.logo_url" 
+                                    :alt="`${team.team.name} logo`" 
+                                    class="w-10 h-10 mx-auto object-contain"
+                                />
+                            </td>
                             <td class="p-3 font-semibold text-gray-800">
-                                {{ team.team }}
+                                {{ team.team.name }}
                             </td>
                             <td class="p-3 text-center">{{ team.played }}</td>
                             <td class="p-3 text-center text-green-600">
-                                {{ team.won }}
+                                {{ team.wins }}
                             </td>
                             <td class="p-3 text-center text-yellow-600">
-                                {{ team.drawn }}
+                                {{ team.draws }}
                             </td>
                             <td class="p-3 text-center text-red-600">
-                                {{ team.lost }}
+                                {{ team.losses }}
                             </td>
-                            <td class="p-3 text-center">{{ team.goalsFor }}</td>
+                            <td class="p-3 text-center">{{ team.goals_for }}</td>
                             <td class="p-3 text-center">
-                                {{ team.goalsAgainst }}
+                                {{ team.goals_against }}
                             </td>
                             <td class="p-3 text-center font-bold">
-                                {{ team.goalsFor - team.goalsAgainst }}
+                                {{ team.goal_differential }}
                             </td>
                             <td class="p-3 text-center font-bold text-green-700">
                                 {{ team.points }}
@@ -79,92 +81,57 @@
                         </tr>
                     </tbody>
                 </table>
+
+                <div class="flex justify-center items-center mt-6 space-x-4">
+                    <button 
+                        @click="prevPage" 
+                        :disabled="currentPage === 1"
+                        class="px-4 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 flex items-center"
+                    >
+                        
+                        <<
+                    </button>
+
+                    <div class="text-gray-700 font-medium">
+                        Page {{ currentPage }} of {{ totalPages }}
+                    </div>
+
+                    <button 
+                        @click="nextPage" 
+                        :disabled="currentPage === totalPages"
+                        class="px-4 py-2 bg-green-500 text-white rounded-lg shadow-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 flex items-center"
+                    >
+                    >>
+                    </button>
+                </div>
             </div>
 
-
-            <!-- Performance Insights Cards - More compact on mobile -->
-            <div class="bg-gray-50 p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                <div
-                    class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-5 shadow-md border border-green-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg">
+=            <div class="bg-gray-50 p-4 md:p-6 grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                <div v-for="(insight, index) in leagueInsights" :key="index"
+                    :class="insight.cardClasses">
                     <div class="flex items-center mb-2 md:mb-3">
-                        <div class="bg-green-600 p-1 md:p-2 rounded-lg mr-2 md:mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-6 md:w-6 text-white" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                            </svg>
+                        <div :class="insight.iconContainerClasses" class="p-1 md:p-2 rounded-lg mr-2 md:mr-3">
+                            <component :is="insight.icon" class="h-4 w-4 md:h-6 md:w-6 text-white" />
                         </div>
-                        <h3 class="text-base md:text-lg font-bold text-green-700">
-                            League Leader
+                        <h3 class="text-base md:text-lg font-bold" :class="insight.titleClasses">
+                            {{ insight.title }}
                         </h3>
                     </div>
                     <div class="flex items-center">
                         <div
-                            class="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-sm md:text-lg font-bold mr-2 md:mr-3 border-2 border-green-400">
-                            {{ standings[0].team.substring(0, 2) }}
+                            :class="insight.avatarClasses"
+                            class="w-8 h-8 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm md:text-lg font-bold mr-2 md:mr-3 border-2">
+                            {{ insight.team.team.name.substring(0, 2) }}
                         </div>
                         <div>
-                            <p class="text-sm md:text-base text-gray-700 font-medium">{{ standings[0].team }}</p>
-                            <p class="text-base md:text-xl text-green-800 font-bold">{{ standings[0].points }} points</p>
+                            <p class="text-sm md:text-base text-gray-700 font-medium">{{ insight.team.team.name }}</p>
+                            <p :class="insight.valueClasses" class="text-base md:text-xl font-bold">
+                                {{ insight.value }}
+                            </p>
                         </div>
                     </div>
-                    <div class="mt-1 md:mt-2 text-xs md:text-sm text-green-600">
-                        {{ standings[0].won }} wins, {{ standings[0].drawn }} draws, {{ standings[0].lost }} losses
-                    </div>
-                </div>
-
-                <div
-                    class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 md:p-5 shadow-md border border-blue-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                    <div class="flex items-center mb-2 md:mb-3">
-                        <div class="bg-blue-600 p-1 md:p-2 rounded-lg mr-2 md:mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-6 md:w-6 text-white" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-base md:text-lg font-bold text-blue-700">
-                            Top Scorer
-                        </h3>
-                    </div>
-                    <div class="flex items-center">
-                        <div
-                            class="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-sm md:text-lg font-bold mr-2 md:mr-3 border-2 border-blue-400">
-                            {{ standings[0].team.substring(0, 2) }}
-                        </div>
-                        <div>
-                            <p class="text-sm md:text-base text-gray-700 font-medium">{{ standings[0].team }}</p>
-                            <p class="text-base md:text-xl text-blue-800 font-bold">{{ standings[0].goalsFor }} goals</p>
-                        </div>
-                    </div>
-                    <div class="mt-1 md:mt-2 text-xs md:text-sm text-blue-600">
-                        {{ (standings[0].goalsFor / standings[0].played).toFixed(1) }} goals per game
-                    </div>
-                </div>
-
-                <div
-                    class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-3 md:p-5 shadow-md border border-amber-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg">
-                    <div class="flex items-center mb-2 md:mb-3">
-                        <div class="bg-amber-600 p-1 md:p-2 rounded-lg mr-2 md:mr-3">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-6 md:w-6 text-white" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-base md:text-lg font-bold text-amber-700">
-                            Best Defense
-                        </h3>
-                    </div>
-                    <div class="flex items-center">
-                        <div
-                            class="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center text-sm md:text-lg font-bold mr-2 md:mr-3 border-2 border-amber-400">
-                            {{ standings[0].team.substring(0, 2) }}
-                        </div>
-                        <div>
-                            <p class="text-sm md:text-base text-gray-700 font-medium">{{ standings[0].team }}</p>
-                            <p class="text-base md:text-xl text-amber-800 font-bold">{{ standings[0].goalsAgainst }} conceded</p>
-                        </div>
+                    <div :class="insight.subtextClasses" class="mt-1 md:mt-2 text-xs md:text-sm">
+                        {{ insight.subtext }}
                     </div>
                 </div>
             </div>
@@ -173,29 +140,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useAuthStore } from '@/stores/auth';
+import { useKplStore } from "@/stores/kpl";
 import { useRouter } from 'vue-router';
+import { StarIcon, UserIcon, ShieldIcon } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
+const kplStore = useKplStore();
 const router = useRouter();
-
-interface TeamStanding {
-    position: number;
-    team: string;
-    played: number;
-    won: number;
-    drawn: number;
-    lost: number;
-    goalsFor: number;
-    goalsAgainst: number;
-    points: number;
-    form: ("W" | "D" | "L")[];
-}
 
 const tableHeaders: string[] = [
     "Pos",
     "Team",
+    "",
     "P",
     "W",
     "D",
@@ -207,44 +165,28 @@ const tableHeaders: string[] = [
     "Form",
 ];
 
-const standings = ref<TeamStanding[]>([
-    {
-        position: 1,
-        team: "Gor Mahia",
-        played: 24,
-        won: 16,
-        drawn: 5,
-        lost: 3,
-        goalsFor: 38,
-        goalsAgainst: 15,
-        points: 53,
-        form: ["W", "W", "D", "W", "L"],
-    },
-    {
-        position: 2,
-        team: "Tusker FC",
-        played: 24,
-        won: 15,
-        drawn: 4,
-        lost: 5,
-        goalsFor: 35,
-        goalsAgainst: 18,
-        points: 49,
-        form: ["W", "L", "W", "W", "W"],
-    },
-    {
-        position: 3,
-        team: "AFC Leopards",
-        played: 24,
-        won: 13,
-        drawn: 6,
-        lost: 5,
-        goalsFor: 32,
-        goalsAgainst: 20,
-        points: 45,
-        form: ["D", "W", "W", "L", "W"],
-    },
-]);
+const currentPage = ref(1);
+const itemsPerPage = 9;
+
+const paginatedTeams = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage;
+    const end = start + itemsPerPage;
+    return kplStore.standings.slice(start, end);
+});
+
+const totalPages = computed(() => Math.ceil(kplStore.standings.length / itemsPerPage));
+
+function nextPage() {
+    if (currentPage.value < totalPages.value) {
+        currentPage.value++;
+    }
+}
+
+function prevPage() {
+    if (currentPage.value > 1) {
+        currentPage.value--;
+    }
+}
 
 function getFormBadgeColor(result: "W" | "D" | "L"): string {
     switch (result) {
@@ -263,24 +205,70 @@ function getPositionClass(position: number): string {
     if (position === 1) return "bg-green-600 text-white";
     if (position === 2) return "bg-blue-600 text-white";
     if (position === 3) return "bg-amber-500 text-white";
+    if (position >= 17) return "bg-red-600 text-white";
     return "bg-gray-200 text-gray-700";
 }
 
-function getGDClass(goalDifference: number): string {
-    if (goalDifference > 0) return "text-green-600";
-    if (goalDifference < 0) return "text-red-600";
-    return "text-gray-600";
-}
+const leagueInsights = computed(() => {
+    const leagueLeader = kplStore.standings.reduce((max, team) => 
+        (max.points > team.points) ? max : team
+    );
 
-function getHeaderClass(header: string): string {
-    return header === "Team" ? "text-left" : "text-center";
-}
+    const topScorer = kplStore.standings.reduce((max, team) => 
+        (max.goals_for > team.goals_for) ? max : team
+    );
+
+    const bestDefense = kplStore.standings.reduce((min, team) => 
+        (min.goals_against < team.goals_against) ? min : team
+    );
+
+    return [
+        {
+            title: "League Leader",
+            team: leagueLeader,
+            value: `${leagueLeader.points} points`,
+            subtext: `${leagueLeader.wins} wins, ${leagueLeader.draws} draws, ${leagueLeader.losses} losses`,
+            icon: StarIcon,
+            cardClasses: "bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 md:p-5 shadow-md border border-green-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg",
+            iconContainerClasses: "bg-green-600",
+            titleClasses: "text-green-700",
+            avatarClasses: "border-green-400",
+            valueClasses: "text-green-800",
+            subtextClasses: "text-green-600"
+        },
+        {
+            title: "Top Scorer",
+            team: topScorer,
+            value: `${topScorer.goals_for} goals`,
+            subtext: `${(topScorer.goals_for / topScorer.played).toFixed(1)} goals per game`,
+            icon: UserIcon,
+            cardClasses: "bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-3 md:p-5 shadow-md border border-blue-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg",
+            iconContainerClasses: "bg-blue-600",
+            titleClasses: "text-blue-700",
+            avatarClasses: "border-blue-400",
+            valueClasses: "text-blue-800",
+            subtextClasses: "text-blue-600"
+        },
+        {
+            title: "Best Defense",
+            team: bestDefense,
+            value: `${bestDefense.goals_against} conceded`,
+            subtext: `${(bestDefense.goals_against / bestDefense.played).toFixed(1)} goals per game`,
+            icon: ShieldIcon,
+            cardClasses: "bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-3 md:p-5 shadow-md border border-amber-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg",
+            iconContainerClasses: "bg-amber-600",
+            titleClasses: "text-amber-700",
+            avatarClasses: "border-amber-400",
+            valueClasses: "text-amber-800",
+            subtextClasses: "text-amber-600"
+        }
+    ];
+});
 
 onMounted(async () => {
   await authStore.initialize();
   if (!authStore.isAuthenticated) {
     router.push("/sign-in");
   }
-
 });
 </script>
