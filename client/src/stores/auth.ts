@@ -161,15 +161,38 @@ export const useAuthStore = defineStore("auth", {
 
     async refreshUserProfile(): Promise<void> {
       this.setLoading(true);
-      this.setLoading(true);
       try {
-        const { data } = await apiClient.get<{ profile: User }>(
-          "/profile/get_profile",
-        );
-        this.setUser(data.profile);
+        const { data } = await apiClient.get("/profile");
+    
+        const profile = data?.response?.[0]?.details?.[0];
+    
+        if (profile) {
+          this.setUser(profile);
+        } else {
+          throw new Error("Profile data is missing");
+        }
       } catch (error: any) {
         await this.logout();
         throw error;
+      } finally {
+        this.setLoading(false);
+      }
+    },
+
+    async updateProfile(updatedUser: Partial<User>, uuid:string): Promise<void> {
+      this.setLoading(true);
+      this.setError(null);
+      try {
+          await apiClient.patch(`/profile/update/${uuid}/`, updatedUser, {
+            headers: {
+                "Content-Type": "multipart/form-data", 
+            },
+        });
+
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.message || "Profile update failed";
+        this.setError(errorMessage);
+        throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
       }

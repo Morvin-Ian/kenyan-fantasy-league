@@ -15,12 +15,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = (
+            "id",
             "username",
             "first_name",
             "last_name",
             "full_name",
             "email",
-            "id",
             "phone_number",
             "profile_photo",
             "gender",
@@ -32,11 +32,6 @@ class ProfileSerializer(serializers.ModelSerializer):
         first_name = obj.user.first_name.title()
         last_name = obj.user.last_name.title()
         return f"{first_name} {last_name}"
+    
+    
 
-
-class UpdateProfileSerializer(serializers.ModelSerializer):
-    country = CountryField(name_only=True)
-
-    class Meta:
-        model = Profile
-        fields = ("phone_number", "profile_photo", "gender", "country", "city")

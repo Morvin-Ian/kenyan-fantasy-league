@@ -12,7 +12,7 @@ export const useKplStore = defineStore({
     async fetchTeams() {
       try {
         const response = await apiClient.get("/kpl/teams/");
-        this.teams = response.data.results; // Extract only the relevant data
+        this.teams = response.data.results;
       } catch (error) {
         console.error("Error fetching teams:", error);
       }

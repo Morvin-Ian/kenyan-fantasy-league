@@ -1,46 +1,72 @@
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from util.errors.exception_handler import CustomInternalServerError
+from util.messages.handle_messages import success_response
+
 
 from apps.profiles.models import Profile
 
-from .renderers import ProfileJSONRenderer
-from .serializers import ProfileSerializer, UpdateProfileSerializer
+from .serializers import ProfileSerializer
 
 
 class GetProfileAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    renderer_classes = [ProfileJSONRenderer]
 
     def get(self, request):
         user = self.request.user
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context={"request": request})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        response = success_response(
+            status_code=status.HTTP_200_OK,
+            message_code="profile_retrieved",
+            message=serializer.data
+        )
+        return Response(response, status=status.HTTP_200_OK)
 
 
 class UpdateProfileAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
-    renderer_classes = [ProfileJSONRenderer]
-    serializer_class = UpdateProfileSerializer
+    serializer_class = ProfileSerializer
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
-    def patch(self, request, username):
+    def patch(self, request, uuid):
+        print(request.data)
         try:
-            Profile.objects.get(user__username=username)
-        except Profile.DoesNotExist:
-            return Response("Profile not found", status=status.HTTP_404_NOT_FOUND)
+            profile = Profile.objects.filter(id=uuid).first()
+    
+            if profile.id != uuid:
+               raise CustomInternalServerError(
+                error_code=status.HTTP_400_BAD_REQUEST,
+                message="Invalid profile",
+            )
 
-        user_name = request.user.username
-        if user_name != username:
-            return Response("Invalid username", status=status.HTTP_400_BAD_REQUEST)
+            data = request.data
+            serializer = ProfileSerializer(
+                instance=profile, 
+                data=data,
+                partial=True
+            )
 
-        data = request.data
-        serializer = UpdateProfileSerializer(
-            instance=request.user.profile, data=data, partial=True
-        )
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            if serializer.is_valid():
+                serializer.save()
+                response = success_response(
+                    status_code=status.HTTP_200_OK,
+                    message_code="profile_updated",
+                    message="Profile updated successfully",
+                )
+                return Response(response, status=status.HTTP_200_OK)
+            else:
+                raise CustomInternalServerError(
+                    error_code=status.HTTP_400_BAD_REQUEST,
+                    message=serializer.errors,
+                )
+        except CustomInternalServerError as api_err:
+            raise api_err
+            
+        except Exception as e:
+            raise CustomInternalServerError(
+                message=str(e),
+                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

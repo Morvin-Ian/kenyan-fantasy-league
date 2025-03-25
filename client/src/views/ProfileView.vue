@@ -186,25 +186,41 @@ const userFields = {
     city: { label: "City", type: "text" },
 };
 
-const toggleEdit = () => {
+const toggleEdit = async () => {
     if (isEditing.value) {
-        console.log("Updated User Data:", user.value);
+        try {
+            console.log("Updating Profile...", user.value);
+            
+            const formData = new FormData();
+            for (const key in user.value) {
+                if (key !== "profile_photo" && user.value[key]) {
+                    formData.append(key, user.value[key]);
+                }
+            }
 
-        showNotification.value = true;
-        setTimeout(() => {
-            showNotification.value = false;
-        }, 4000);
+            if (user.value.profile_photo instanceof File) {
+                formData.append("profile_photo", user.value.profile_photo);
+            } 
 
-        // Update the auth store if needed
-        // authStore.updateUserProfile(user.value);
+            await authStore.updateProfile(formData, user.value.id);
 
-        isEditing.value = false;
+            showNotification.value = true;
+            setTimeout(() => {
+                showNotification.value = false;
+            }, 4000);
+
+            isEditing.value = false;
+        } catch (error) {
+            console.error("Error updating profile:", error);
+        }
     } else {
-        // Store original data for cancellation
         originalUserData.value = JSON.parse(JSON.stringify(user.value));
         isEditing.value = true;
     }
 };
+
+
+
 
 const cancelEdit = () => {
     user.value = JSON.parse(JSON.stringify(originalUserData.value));
@@ -221,15 +237,15 @@ const triggerFileUpload = () => {
 const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-        // Create a preview
+        user.value.profile_photo = file;
         const reader = new FileReader();
         reader.onload = (e) => {
             previewImage.value = e.target.result;
         };
         reader.readAsDataURL(file);
 
-        // Here you would normally upload the file to your server
-        // For example: authStore.uploadProfilePhoto(file);
+    }else{
+        user.value.profile_photo = null;
     }
 };
 
