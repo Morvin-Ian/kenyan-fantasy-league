@@ -34,12 +34,17 @@ class UpdateProfileAPIView(APIView):
     def patch(self, request, uuid):
         try:
             profile = Profile.objects.filter(id=uuid).first()
+            if not profile:
+                raise CustomInternalServerError(
+                    message="Profile not found",
+                    status_code=status.HTTP_404_NOT_FOUND
+                )
     
             if profile.id != uuid:
-               raise CustomInternalServerError(
-                error_code=status.HTTP_400_BAD_REQUEST,
-                message="Invalid profile",
-            )
+                raise CustomInternalServerError(
+                    message="Invalid profile",
+                    status_code=status.HTTP_400_BAD_REQUEST
+                )
 
             data = request.data
 
@@ -70,9 +75,10 @@ class UpdateProfileAPIView(APIView):
                 )
                 return Response(response, status=status.HTTP_200_OK)
             else:
-                raise CustomInternalServerError(
-                    error_code=status.HTTP_400_BAD_REQUEST,
+                 raise CustomInternalServerError(
                     message=serializer.errors,
+                    code="bad_request",
+                    status_code=status.HTTP_400_BAD_REQUEST
                 )
         except CustomInternalServerError as api_err:
             raise api_err
@@ -80,5 +86,5 @@ class UpdateProfileAPIView(APIView):
         except Exception as e:
             raise CustomInternalServerError(
                 message=str(e),
-                error_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
