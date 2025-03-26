@@ -190,7 +190,7 @@ export const useAuthStore = defineStore("auth", {
         });
 
       } catch (error: any) {
-        const errorMessage = error.response?.data?.message || "Profile update failed";
+        const errorMessage = error.response?.data?.errors?.details?.message || "Profile update failed";
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {

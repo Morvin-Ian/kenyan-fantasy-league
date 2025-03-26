@@ -128,6 +128,18 @@
                 </button>
             </div>
 
+            <div v-if="errorMessages.length > 0"
+                class="fixed top-12 left-0 right-0 md:left-auto md:right-12 md:top-24 mx-auto mx-auto md:mx-0 max-w-sm bg-red-100/90 backdrop-blur-md px-6 py-4 rounded-xl shadow-lg z-50">
+                <div class="space-y-2">
+                    <div v-for="(error, index) in errorMessages" :key="index" class="flex items-center gap-3">
+                        <div class="flex-shrink-0 w-10 h-10 bg-red-200 rounded-full flex items-center justify-center">
+                            <font-awesome-icon icon="fa-solid fa-cancel" class="text-red-500" />
+                        </div>
+                        <p class="text-red-800 font-medium">{{ error }}</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="fixed top-0 right-0 -z-10 w-96 h-96 bg-pink-100 rounded-full blur-3xl opacity-50"></div>
             <div class="fixed bottom-0 left-0 -z-10 w-96 h-96 bg-sky-100 rounded-full blur-3xl opacity-50"></div>
         </div>
@@ -147,6 +159,7 @@ const fileInput = ref(null);
 const previewImage = ref(null);
 const showNotification = ref(false);
 const originalUserData = ref({});
+const errorMessages = ref([]);
 
 const user = ref({
     username: "",
@@ -188,7 +201,7 @@ const userFields = {
 
 const toggleEdit = async () => {
     if (isEditing.value) {
-        try {            
+        try {
             const formData = new FormData();
             for (const key in user.value) {
                 if (key !== "profile_photo" && user.value[key]) {
@@ -198,8 +211,8 @@ const toggleEdit = async () => {
 
             if (user.value.profile_photo instanceof File) {
                 formData.append("profile_photo", user.value.profile_photo);
-            } 
-
+            }
+            errorMessages.value = [];
             await authStore.updateProfile(formData, user.value.id);
 
             showNotification.value = true;
@@ -209,15 +222,16 @@ const toggleEdit = async () => {
 
             isEditing.value = false;
         } catch (error) {
-            console.error("Error updating profile:", error);
+            errorMessages.value.push("An unexpected error occurred. Please try again.");
+            setTimeout(() => {
+                errorMessages.value = [];
+            }, 4000);
         }
     } else {
         originalUserData.value = JSON.parse(JSON.stringify(user.value));
         isEditing.value = true;
     }
 };
-
-
 
 
 const cancelEdit = () => {
@@ -242,7 +256,7 @@ const handleFileUpload = (event) => {
         };
         reader.readAsDataURL(file);
 
-    }else{
+    } else {
         user.value.profile_photo = null;
     }
 };
