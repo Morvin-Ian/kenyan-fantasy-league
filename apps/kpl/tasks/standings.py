@@ -7,7 +7,8 @@ from celery import shared_task
 
 from util.views import headers 
 from apps.kpl.models import Standing, Team
-
+from .fixtures import find_team
+find_team
 
 def extract_table_standings_data(headers) -> str:
     url = os.getenv('TABLE_STANDINGS_URL')  
@@ -17,10 +18,8 @@ def extract_table_standings_data(headers) -> str:
     previous_year = current_year - 1
     period = f"{previous_year}-{current_year}"
     
-    Team.objects.all().delete()
-
     if web_content.status_code == 200:
-        Team.objects.all().delete()
+        Standing.objects.all().delete()
         soup = BeautifulSoup(web_content.text, 'lxml')
         tables = soup.find_all('tbody', class_='Table__TBODY')
 
@@ -48,9 +47,9 @@ def extract_table_standings_data(headers) -> str:
                 team_name = row.find('abbr')['title'] if row.find('abbr') else 'N/A'
                 logo = row.find('img')['src'] if row.find('img') else 'N/A'
 
-                team = Team.objects.create(
+                team, created = Team.objects.get_or_create(
                     name=team_name,
-                    logo_url=logo
+                    defaults={'logo_url': logo}
                 )
 
                 if idx < len(team_stats):
@@ -96,23 +95,13 @@ def edit_team_logo(headers) -> str:
             logo = team.find('img')['src'] if team.find('img') else ''
 
             if full_name:
-                # Split the full name into words and sort them by length (descending)
-                words = full_name.split()
-                words_sorted_by_length = sorted(words, key=len, reverse=True)
-
-                # Try each word (starting with the longest) to find a matching team
-                team_obj = None
-                for word in words_sorted_by_length:
-                    team_obj = Team.objects.filter(name__icontains=word).first()
-                    if team_obj:
-                        break  # Stop if a match is found
-
+                team_obj = find_team(full_name)
                 if team_obj and logo:
                     team_obj.logo_url = logo
                     team_obj.save()
                     updated_count += 1
                 else:
-                    print(f"No team found for any word in: {full_name}")
+                    print(f"No team found for: {full_name}")
 
         return f"Successfully updated {updated_count} team logos."
 

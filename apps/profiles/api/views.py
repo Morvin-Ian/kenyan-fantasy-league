@@ -2,12 +2,10 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
 from util.errors.exception_handler import CustomInternalServerError
 from util.messages.handle_messages import success_response
-
-
 from apps.profiles.models import Profile
-
 from .serializers import ProfileSerializer
 
 

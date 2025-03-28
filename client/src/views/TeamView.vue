@@ -1,24 +1,44 @@
 <template>
     <div class="p-4">
         <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-            <!-- Main Content (Field) -->
             <div class="w-full lg:w-2/3 rounded-xl shadow-lg">
-                <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
-                    :switch-source="switchSource" :switch-active="switchActive" @player-click="handlePlayerClick" />
+                <Pitch 
+                    :goalkeeper="goalkeeper" 
+                    :defenders="defenders" 
+                    :midfielders="midfielders" 
+                    :forwards="forwards"
+                    :switch-source="switchSource" 
+                    :switch-active="switchActive" 
+                    @player-click="handlePlayerClick" 
+                />
 
-                <Bench :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
-                    @player-click="handlePlayerClick" />
+                <Bench 
+                    :bench-players="benchPlayers" 
+                    :switch-source="switchSource" 
+                    :switch-active="switchActive"
+                    @player-click="handlePlayerClick" 
+                />
             </div>
 
-            <!-- Sidebar -->
-            <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-                :overall-rank="overallRank" :upcoming-fixtures="upcomingFixtures" :recent-results="recentResults"
-                :top-performers="topPerformers" />
+            <Sidebar 
+                :total-points="totalPoints" 
+                :average-points="averagePoints" 
+                :highest-points="highestPoints"
+                :overall-rank="overallRank" 
+                :upcoming-fixtures="upcomingFixtures" 
+                :recent-results="recentResults"
+                :top-performers="topPerformers" 
+            />
         </div>
 
-        <!-- Player Management Modal -->
-        <PlayerModal :show-modal="showModal" :selected-player="selectedPlayer" @close-modal="closeModal"
-            @initiate-switch="initiateSwitch" @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+        <PlayerModal 
+            :show-modal="showModal" 
+            :selected-player="selectedPlayer" 
+            @close-modal="closeModal"
+            @initiate-switch="initiateSwitch" 
+            @make-captain="makeCaptain" 
+            @make-vice-captain="makeViceCaptain" 
+        />
     </div>
 </template>
 
@@ -37,7 +57,6 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
-// State
 const showModal = ref(false);
 const selectedPlayer = ref<Player | null>(null);
 const switchActive = ref(false);
@@ -201,4 +220,23 @@ onMounted(async () => {
     }
 
 });
+
+const animateCard = (event) => {
+    const card = event.currentTarget;
+    card.classList.add('animate-pulse');
+    setTimeout(() => {
+        card.classList.remove('animate-pulse');
+    }, 500);
+};
 </script>
+
+<style scoped>
+.team-card {
+    transition: all 0.3s ease;
+}
+
+.team-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+</style>
