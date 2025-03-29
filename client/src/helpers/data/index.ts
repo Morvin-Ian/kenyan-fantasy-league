@@ -1,9 +1,11 @@
-export const startingEleven = {
+import type { StartingEleven } from "../types/team";
+
+export const startingEleven: StartingEleven = {
   // Goalkeeper (1)
   goalkeeper: {
     id: "1",
     name: "Alisson",
-    team: "GOR",
+    team: { id: "gor", name: "GOR" }, 
     position: "GK",
     points: 6,
     form: "6.7",
@@ -19,7 +21,7 @@ export const startingEleven = {
     {
       id: "2",
       name: "Arnold",
-      team: "AFC",
+      team: { id: "afc", name: "AFC" },
       position: "DEF",
       points: 12,
       form: "7.2",
@@ -32,7 +34,7 @@ export const startingEleven = {
     {
       id: "3",
       name: "Chilwell",
-      team: "AFC",
+      team: { id: "afc", name: "AFC" },
       position: "DEF",
       points: 2,
       form: "5.4",
@@ -45,7 +47,7 @@ export const startingEleven = {
     {
       id: "4",
       name: "Dias",
-      team: "ULINZI",
+      team: { id: "ulinzi", name: "ULINZI" },
       position: "DEF",
       points: 6,
       form: "6.1",
@@ -58,7 +60,7 @@ export const startingEleven = {
     {
       id: "5",
       name: "Gabriel",
-      team: "ULINZI",
+      team: { id: "ulinzi", name: "ULINZI" },
       position: "DEF",
       points: 8,
       form: "6.8",
@@ -75,7 +77,7 @@ export const startingEleven = {
     {
       id: "6",
       name: "Salah",
-      team: "TUSKER",
+      team: { id: "tusker", name: "TUSKER" },
       position: "MID",
       points: 15,
       form: "8.3",
@@ -88,7 +90,7 @@ export const startingEleven = {
     {
       id: "7",
       name: "Son",
-      team: "TUSKER",
+      team: { id: "tusker", name: "TUSKER" },
       position: "MID",
       points: 8,
       form: "7.1",
@@ -101,7 +103,7 @@ export const startingEleven = {
     {
       id: "8",
       name: "Saka",
-      team: "ULINZI",
+      team: { id: "ulinzi", name: "ULINZI" },
       position: "MID",
       points: 7,
       form: "7.4",
@@ -118,7 +120,7 @@ export const startingEleven = {
     {
       id: "9",
       name: "Haaland",
-      team: "GOR",
+      team: { id: "gor", name: "GOR" },
       position: "FWD",
       points: 13,
       form: "8.9",
@@ -131,7 +133,7 @@ export const startingEleven = {
     {
       id: "10",
       name: "Darwin",
-      team: "AFC",
+      team: { id: "afc", name: "AFC" },
       position: "FWD",
       points: 6,
       form: "6.8",
@@ -145,7 +147,7 @@ export const startingEleven = {
     {
       id: "11",
       name: "Watkins",
-      team: "AFC",
+      team: { id: "afc", name: "AFC" },
       position: "FWD",
       points: 8,
       form: "7.2",
@@ -164,7 +166,7 @@ export const benchPlayers = [
   {
     id: "12",
     name: "Raya",
-    team: "AFC",
+    team: { id: "afc", name: "AFC" },
     position: "GK",
     points: 0,
     form: "6.2",
@@ -177,7 +179,7 @@ export const benchPlayers = [
   {
     id: "13",
     name: "White",
-    team: "GOR",
+    team: { id: "gor", name: "GOR" },
     position: "DEF",
     points: 0,
     form: "6.5",
@@ -190,7 +192,7 @@ export const benchPlayers = [
   {
     id: "14",
     name: "Gordon",
-    team: "TUSKER",
+    team: { id: "tusker", name: "TUSKER" },
     position: "MID",
     points: 0,
     form: "6.8",
@@ -203,7 +205,7 @@ export const benchPlayers = [
   {
     id: "15",
     name: "Archer",
-    team: "ULINZI",
+    team: { id: "ulinzi", name: "ULINZI" },
     position: "FWD",
     points: 0,
     form: "5.4",

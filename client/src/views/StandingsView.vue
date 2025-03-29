@@ -25,7 +25,7 @@
                         <tbody>
                             <tr 
                                 v-for="team in paginatedTeams" 
-                                :key="team.team"
+                                :key="team.team.id"
                                 class="hover:bg-green-50 transition-all duration-300 transform hover:scale-[1.01] hover:shadow-lg rounded-xl"
                             >
                                 <td class="p-3 text-center">
@@ -167,6 +167,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useKplStore } from "@/stores/kpl";
 import { useRouter } from 'vue-router';
 import { StarIcon, UserIcon, ShieldIcon } from 'lucide-vue-next';
+import type { TeamStanding } from "@/helpers/types/team";
 
 const authStore = useAuthStore();
 const kplStore = useKplStore();
@@ -190,7 +191,7 @@ const tableHeaders: string[] = [
 const currentPage = ref(1);
 const itemsPerPage = 9;
 
-const paginatedTeams = computed(() => {
+const paginatedTeams = computed<TeamStanding[]>(() => {
     const start = (currentPage.value - 1) * itemsPerPage;
     const end = start + itemsPerPage;
     return kplStore.standings.slice(start, end);
@@ -210,18 +211,13 @@ function prevPage() {
     }
 }
 
-function getFormBadgeColor(result: "W" | "D" | "L"): string {
-    switch (result) {
-        case "W":
-            return "bg-green-500";
-        case "D":
-            return "bg-yellow-500";
-        case "L":
-            return "bg-red-500";
-        default:
-            return "bg-gray-500";
-    }
+
+function getFormBadgeColor(result: string): string {
+    const formResults = ["W", "D", "L"];
+    if (!formResults.includes(result)) return "bg-gray-500"; // Default color for unexpected values
+    return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
 }
+
 
 function getPositionClass(position: number): string {
     if (position === 1) return "bg-green-600 text-white";

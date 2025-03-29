@@ -1,12 +1,13 @@
 import { defineStore } from "pinia";
 import apiClient from "@/axios-interceptor";
+import  type {Fixture, TeamStanding } from "@/helpers/types/team";
 
 export const useKplStore = defineStore({
   id: "kpl",
   state: () => ({
     teams: [],
-    standings: [],
-    fixtures: [],
+    standings: [] as TeamStanding[], 
+    fixtures: [] as Fixture[]
   }),
   actions: {
     async fetchTeams() {

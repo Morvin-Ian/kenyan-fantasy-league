@@ -195,23 +195,24 @@
 
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import type { Fixture, TeamStanding } from "src/helpers/types/team";
 
 const props = defineProps({
   fixtures: {
-    type: Array,
+    type: Array as () => Fixture[],
     required: true
   },
   standings: {
-    type: Array,
+    type: Array as () => TeamStanding[],
     required: true
   }
 });
 
-const firstFiveStandings = computed(() => props.standings.slice(0, 5));
 const firstTenFixtures = computed(() => props.fixtures.slice(0, 10));
+const firstFiveStandings = computed(() => props.standings.slice(0, 5));
+
 const scrollContainer = ref<HTMLElement | null>(null);
 
 const scroll = (direction: "left" | "right") => {
@@ -226,13 +227,12 @@ const scroll = (direction: "left" | "right") => {
   });
 };
 
-const toUpperCase = (text) => {
+const toUpperCase = (text: string) => {
   return text.toUpperCase();
-}
+};
 
-const formatDatePart = (dateStr: string) => {
+const formatDatePart = (dateStr?: string) => {
   if (!dateStr) return "";
-
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat("en-US", {
     weekday: "short",
@@ -241,9 +241,8 @@ const formatDatePart = (dateStr: string) => {
   }).format(date);
 };
 
-const formatTimePart = (dateStr: string) => {
+const formatTimePart = (dateStr?: string) => {
   if (!dateStr) return "";
-
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat("en-US", {
     hour: "2-digit",
@@ -252,6 +251,7 @@ const formatTimePart = (dateStr: string) => {
   }).format(date);
 };
 </script>
+
 
 <style scoped>
 .hide-scrollbar {

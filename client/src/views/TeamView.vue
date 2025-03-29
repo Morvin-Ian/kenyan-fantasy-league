@@ -50,7 +50,7 @@ import Bench from "@/components/Team/Bench.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import PlayerModal from "@/components/Team/PlayerModal.vue";
 import { startingEleven, benchPlayers } from "@/helpers/data";
-import type { Player, Fixture, Result, Performer } from "@/helpers/types/team";
+import type { Player, Fixture, Result, Performer, StartingEleven } from "@/helpers/types/team";
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 
@@ -66,11 +66,25 @@ const isBenchSwitch = ref(false);
 const totalPoints = ref(57);
 const averagePoints = ref(52);
 const highestPoints = ref(121);
-const overallRank = ref("234,567");
+const overallRank = ref<number>(234567);
 
 const upcomingFixtures = ref<Fixture[]>([
-    { match: "Black Stone FC vs Yellow Wolves", date: "20 Feb 2024" },
-    { match: "Black Stone FC vs Silver Sharks", date: "25 Feb 2024" },
+    { 
+        id: "1", 
+        status: "upcoming", 
+        type: "league", 
+        home_team: { id: "blackstonefc", name: "Black Stone FC" }, 
+        away_team: { id: "yellowwolves", name: "Yellow Wolves" }, 
+        match_date: "2024-02-20T19:00:00Z" 
+    },
+    { 
+        id: "2", 
+        status: "upcoming", 
+        type: "league", 
+        home_team: { id: "blackstonefc", name: "Black Stone FC" }, 
+        away_team: { id: "silversharks", name: "Silver Sharks" }, 
+        match_date: "2024-02-25T18:30:00Z" 
+    }
 ]);
 
 const recentResults = ref<Result[]>([
@@ -85,12 +99,6 @@ const topPerformers = ref<Performer[]>([
     { name: "B. Peter", points: 10, image: "https://example.com/player3.png" },
 ]);
 
-interface StartingEleven {
-    goalkeeper: Player;
-    defenders: Player[];
-    midfielders: Player[];
-    forwards: Player[];
-}
 
 const startingElevenRef = ref<StartingEleven>(startingEleven);
 const benchPlayersRef = ref<Player[]>(benchPlayers);
@@ -221,13 +229,7 @@ onMounted(async () => {
 
 });
 
-const animateCard = (event) => {
-    const card = event.currentTarget;
-    card.classList.add('animate-pulse');
-    setTimeout(() => {
-        card.classList.remove('animate-pulse');
-    }, 500);
-};
+
 </script>
 
 <style scoped>

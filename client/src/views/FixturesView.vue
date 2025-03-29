@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Fixtures Column -->
       <div class="lg:col-span-2">

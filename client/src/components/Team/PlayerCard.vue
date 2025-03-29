@@ -69,7 +69,7 @@
      AFC: afc,
      TUSKER: tusker,
     };
-   return teamImages[props.player.team] || gor; // Default to gor if team not found
+   return teamImages[props.player.team.name] || gor; // Default to gor if team not found
  });
  </script>
  <style scoped>
