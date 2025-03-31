@@ -7,6 +7,7 @@ from util.errors.exception_handler import CustomInternalServerError
 from util.messages.handle_messages import success_response
 from apps.profiles.models import Profile
 from .serializers import ProfileSerializer
+from apps.kpl.tasks import players
 
 
 class GetProfileAPIView(APIView):
