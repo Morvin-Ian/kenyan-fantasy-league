@@ -4,7 +4,7 @@
       <main class="flex-grow mt-20 md:mt-16 lg:mt-6 mb-16">
         <RouterView />
       </main>
-      <Footer class="w-full hidden sm:block" />
+      <Footer class="hidden sm:block" />
     </div>
   </template>
 

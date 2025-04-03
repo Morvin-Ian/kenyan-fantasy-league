@@ -53,6 +53,14 @@
                                 <span class="inline-flex h-3 w-3 rounded-full bg-green-400"></span>
                                 <span class="ml-2 text-sm text-gray-600">Online</span>
                             </div>
+                            
+                          <!-- Mobile Logout Button (only visible on small screens) -->
+<button @click="logout" 
+    class="flex md:hidden mt-4 px-5 py-3 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 hover:shadow-lg active:scale-95 transition-all duration-300 font-semibold items-center justify-center gap-2">
+    <font-awesome-icon icon="fa-solid fa-sign-out-alt" />
+    Logout
+</button>
+
                         </div>
                     </div>
 
@@ -233,7 +241,6 @@ const toggleEdit = async () => {
     }
 };
 
-
 const cancelEdit = () => {
     user.value = JSON.parse(JSON.stringify(originalUserData.value));
     previewImage.value = null;
@@ -258,6 +265,18 @@ const handleFileUpload = (event) => {
 
     } else {
         user.value.profile_photo = null;
+    }
+};
+
+const logout = async () => {
+    try {
+        await authStore.logout();
+        router.push("/sign-in");
+    } catch (error) {
+        errorMessages.value.push("Logout failed. Please try again.");
+        setTimeout(() => {
+            errorMessages.value = [];
+        }, 4000);
     }
 };
 

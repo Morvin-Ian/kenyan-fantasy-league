@@ -1,141 +1,259 @@
 <template>
-  <div class="bg-gradient-to-br from-gray-50 to-blue-50 mx-4 rounded-2xl p-3 md:p-8 ">
-    <div class=" mx-auto">
-      <!-- Header -->
-      <div class="text-center mb-6 md:mb-10 pt-4 md:pt-6">
-        <h1 class="text-3xl md:text-5xl font-bold text-gray-900 tracking-tight mb-2 md:mb-4">
-          <span class="bg-clip-text font-bold text-transparent bg-gradient-to-r from-gray-900 to-gray-800">Football Elite</span>
-        </h1>
-        <p class="text-sm md:text-base text-gray-600 max-w-2xl mx-auto px-2">Discover the extraordinary plays and exceptional talents shaping the beautiful game worldwide</p>
-      </div>
+  <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-4 sm:p-6 md:p-8 rounded-2xl mx-2 sm:mx-4 shadow-lg">
+    <div class="max-w-9xl mx-auto">
+    <!-- Enhanced Header with Tagline -->
+    <div class="mb-10 mt-6 ml-3 ">
+      <h1 class=" font-bold text-gray-900 tracking-tight mb-4 text-xl sm:text-2xl font-bold ">Discover Kenya's <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Best Talent</span></h1>
+      <p class="text-sm sm:text-base text-gray-500 mt-1 sm:mt-2">Explore the extraordinary plays and exceptional talents shaping the beautiful game worldwide</p>
+    </div>
 
-      <!-- Featured Players Section -->
-      <div class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 mb-4 md:mb-8 overflow-hidden relative">
-        <div class="absolute top-0 left-0 w-full h-48 pointer-events-none"></div>
-        
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8 gap-3">
-          <h2 class="text-xl md:text-3xl font-bold text-gray-600 tracking-tight flex items-center">
-            <span class="mr-2 md:mr-3">⚽</span> Star Performers
-          </h2>
-          <button class="bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-full hover:from-indigo-600 hover:to-blue-700 transition transform hover:scale-105 hover:shadow-lg font-medium text-xs md:text-sm flex items-center">
+    <!-- Featured Section -->
+    <div class="bg-white rounded-3xl shadow-xl p-8 border border-gray-100 mb-8 relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full -mr-32 -mt-32 opacity-70"></div>
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative">
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-700 bg-clip-text">
+          <span class="mr-3 bg-gradient-to-br from-blue-500 to-indigo-600 text-white p-2 rounded-lg">⚽</span> Star Performers
+        </h2>
+        <div class="flex gap-2 mt-4 md:mt-0">
+          <button class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-5 py-2 rounded-full hover:from-blue-700 hover:to-indigo-700 transition transform hover:scale-105 shadow-md font-medium text-sm flex items-center">
             <span>Explore All Players</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </button>
         </div>
+      </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          <div 
-            v-for="player in featuredPlayers"
-            :key="player.id"
-            class="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md hover:shadow-lg transition-all duration-300 group border border-gray-100 overflow-hidden relative"
-          >
-            <!-- Subtle gradient background on hover -->
-            <div class="absolute inset-0 group-hover:to-indigo-50 transition-opacity duration-500 opacity-0 group-hover:opacity-100"></div>
-            
-            <div class="flex items-center space-x-3 md:space-x-4 mb-4 md:mb-6 relative">
-              <div class="w-14 h-14 md:w-20 md:h-20 rounded-full overflow-hidden border-2 md:border-4 border-indigo-100 group-hover:border-indigo-200 transition transform group-hover:scale-105 shadow-md">
-                <img :src="player.image" :alt="player.name" class="w-full h-full object-cover" />
-              </div>
-              <div>
-                <h3 class="text-lg md:text-xl font-bold text-gray-900">{{ player.name }}</h3>
-                <p class="text-xs md:text-sm text-gray-500">{{ player.team }}</p>
-              </div>
+      <!-- Player Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden relative">
+          <div class="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold py-1 px-3 rounded-bl-lg">TOP SCORER</div>
+          
+          <div class="flex items-center space-x-4 mb-6 relative">
+            <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-indigo-100 group-hover:border-indigo-200 transition transform group-hover:scale-105 shadow-md">
+              <img src="" alt="Erling Haaland" class="w-full h-full object-cover" />
             </div>
-
-            <div class="grid grid-cols-3 gap-2 md:gap-3">
-              <div 
-                v-for="stat in [
-                  { label: 'Goals', value: player.stats.goals, icon: '🥅' },
-                  { label: 'Assists', value: player.stats.assists, icon: '👟' },
-                  { label: 'Rating', value: `${player.stats.rating}`, icon: '⭐' }
-                ]"
-                :key="stat.label"
-                class="bg-gray-50 rounded-lg md:rounded-xl p-2 md:p-3 text-center hover:bg-indigo-50 transition-all duration-300 border border-gray-100"
-              >
-                <p class="text-xs text-gray-500 mb-0 md:mb-1 flex justify-center items-center">
-                  <span class="mr-1">{{ stat.icon }}</span>
-                  {{ stat.label }}
-                </p>
-                <p class="font-bold text-indigo-700 text-base md:text-lg">{{ stat.value }}</p>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">Erling Haaland</h3>
+              <div class="flex items-center mt-1">
+                <img src="" alt="Manchester City logo" class="w-4 h-4 mr-2" />
+                <p class="text-sm text-gray-500">Manchester City</p>
+              </div>
+              <div class="flex items-center mt-1">
+                <span class="text-yellow-500 mr-1">★★★★★</span>
+                <span class="text-xs text-gray-500">Elite</span>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Featured Goals Section -->
-      <div class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 overflow-hidden relative mb-4 md:mb-8">
-        <div class="absolute top-0 left-0 w-full h-48 pointer-events-none"></div>
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">🥅</span> Goals
+              </p>
+              <p class="font-bold text-blue-700 text-lg">28</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">👟</span> Assists
+              </p>
+              <p class="font-bold text-blue-700 text-lg">5</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">⭐</span> Rating
+              </p>
+              <p class="font-bold text-blue-700 text-lg">9.2</p>
+            </div>
+          </div>
+        </div>
         
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-8 gap-3">
-          <h2 class="text-xl md:text-3xl font-bold text-gray-600 tracking-tight flex items-center">
-            <span class="mr-2 md:mr-3">🏆</span> Spectacular Goals
-          </h2>
-          <button class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-3 md:px-5 py-2 md:py-2.5 rounded-full hover:from-blue-600 hover:to-indigo-700 transition transform hover:scale-105 hover:shadow-lg font-medium text-xs md:text-sm flex items-center">
-            <span>Watch All Highlights</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4 ml-1 md:ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-8">
-          <div 
-            v-for="goal in featuredGoals"
-            :key="goal.id"
-            class="bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 group border border-gray-100"
-          >
-            <div class="relative">
-              <iframe 
-                :src="`https://www.youtube.com/embed/${goal.videoId}`"
-                :title="`${goal.scorer} Goal`"
-                class="w-full aspect-video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-              />
-              <div class="absolute top-2 md:top-3 right-2 md:right-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-2 md:px-4 py-0.5 md:py-1 rounded-full text-xs md:text-sm shadow-md flex items-center">
-                <span class="w-1.5 h-1.5 md:w-2 md:h-2 bg-white rounded-full mr-1 md:mr-2 animate-pulse"></span>
-                {{ goal.matchType }}
-              </div>
+        <!-- Player 2 -->
+        <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden relative">
+          <div class="absolute top-0 right-0 bg-indigo-500 text-white text-xs font-bold py-1 px-3 rounded-bl-lg">PLAYMAKER</div>
+          
+          <div class="flex items-center space-x-4 mb-6 relative">
+            <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-indigo-100 group-hover:border-indigo-200 transition transform group-hover:scale-105 shadow-md">
+              <img src="" alt="Jude Bellingham" class="w-full h-full object-cover" />
             </div>
-
-            <div class="p-3 md:p-6">
-              <div class="flex justify-between items-center mb-2 md:mb-4">
-                <span class="text-base md:text-xl font-bold text-gray-900">{{ goal.scorer }}</span>
-                <span class="bg-gray-100 text-gray-700 px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm font-medium">{{ goal.minute }}'</span>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">Jude Bellingham</h3>
+              <div class="flex items-center mt-1">
+                <img src="" alt="Real Madrid logo" class="w-4 h-4 mr-2" />
+                <p class="text-sm text-gray-500">Real Madrid</p>
               </div>
-              <p class="text-xs md:text-sm text-gray-600 mb-3 md:mb-6">{{ goal.match }}</p>
-
-              <div class="flex space-x-4 md:space-x-6 border-t border-gray-100 pt-2 md:pt-4">
-                <div class="flex items-center space-x-1 md:space-x-2 group cursor-pointer">
-                  <HeartIcon class="w-4 h-4 md:w-5 md:h-5 text-pink-500 group-hover:text-pink-600 group-hover:scale-110 transition-all" />
-                  <span class="text-xs md:text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ goal.likes }}</span>
-                </div>
-                <div class="flex items-center space-x-1 md:space-x-2 group cursor-pointer">
-                  <MessageCircleIcon class="w-4 h-4 md:w-5 md:h-5 text-blue-500 group-hover:text-blue-600 group-hover:scale-110 transition-all" />
-                  <span class="text-xs md:text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ goal.comments }}</span>
-                </div>
-                <div class="flex items-center space-x-1 md:space-x-2 ml-auto group cursor-pointer">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5 text-indigo-500 group-hover:text-indigo-600 group-hover:scale-110 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                  <span class="text-xs md:text-sm text-gray-600 group-hover:text-gray-900 transition-colors">Share</span>
-                </div>
+              <div class="flex items-center mt-1">
+                <span class="text-yellow-500 mr-1">★★★★★</span>
+                <span class="text-xs text-gray-500">Elite</span>
               </div>
             </div>
           </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">🥅</span> Goals
+              </p>
+              <p class="font-bold text-blue-700 text-lg">18</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">👟</span> Assists
+              </p>
+              <p class="font-bold text-blue-700 text-lg">10</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">⭐</span> Rating
+              </p>
+              <p class="font-bold text-blue-700 text-lg">9.3</p>
+            </div>
+          </div>
+          
+        </div>
+        
+        <!-- Player 3 -->
+        <div class="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 group overflow-hidden relative">
+          <div class="absolute top-0 right-0 bg-purple-500 text-white text-xs font-bold py-1 px-3 rounded-bl-lg">RISING STAR</div>
+          
+          <div class="flex items-center space-x-4 mb-6 relative">
+            <div class="w-20 h-20 rounded-full overflow-hidden border-4 border-indigo-100 group-hover:border-indigo-200 transition transform group-hover:scale-105 shadow-md">
+              <img src="" alt="Marcus Rashford" class="w-full h-full object-cover" />
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-gray-900">Marcus Rashford</h3>
+              <div class="flex items-center mt-1">
+                <img src="" alt="Manchester United logo" class="w-4 h-4 mr-2" />
+                <p class="text-sm text-gray-500">Manchester United</p>
+              </div>
+              <div class="flex items-center mt-1">
+                <span class="text-yellow-500 mr-1">★★★★☆</span>
+                <span class="text-xs text-gray-500">Pro</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3 mb-5">
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">🥅</span> Goals
+              </p>
+              <p class="font-bold text-blue-700 text-lg">14</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">👟</span> Assists
+              </p>
+              <p class="font-bold text-blue-700 text-lg">7</p>
+            </div>
+            <div class="bg-white rounded-xl p-3 text-center shadow-sm border border-gray-100 group-hover:border-blue-100 transition-all duration-300">
+              <p class="text-xs text-gray-500 mb-1 flex justify-center items-center">
+                <span class="mr-1">⭐</span> Rating
+              </p>
+              <p class="font-bold text-blue-700 text-lg">8.6</p>
+            </div>
+          </div>
+          
+
         </div>
       </div>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-1 gap-6 mb-8">
       
+      <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 col-span-2">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Top Goal Scorers</h3>
+        
+        <div class="space-y-4">
+          <div class="grid grid-cols-8 text-xs font-medium text-gray-500 mb-2">
+            <div class="col-span-1">#</div>
+            <div class="col-span-3">Player</div>
+            <div class="col-span-2">Team</div>
+            <div class="col-span-1 text-center">Apps</div>
+            <div class="col-span-1 text-center">Goals</div>
+          </div>
+          
+          <div class="grid grid-cols-8 items-center py-3 border-b border-gray-100">
+            <div class="col-span-1 font-bold">1</div>
+            <div class="col-span-3 flex items-center">
+              <span>Erling Haaland</span>
+            </div>
+            <div class="col-span-2 flex items-center">
+              <span class="text-sm">Man City</span>
+            </div>
+            <div class="col-span-1 text-center">26</div>
+            <div class="col-span-1 text-center font-bold text-blue-600">28</div>
+          </div>
+          
+          <div class="grid grid-cols-8 items-center py-3 border-b border-gray-100">
+            <div class="col-span-1 font-bold">2</div>
+            <div class="col-span-3 flex items-center">
+              <span>Kylian Mbappé</span>
+            </div>
+            <div class="col-span-2 flex items-center">
+              <span class="text-sm">Real Madrid</span>
+            </div>
+            <div class="col-span-1 text-center">25</div>
+            <div class="col-span-1 text-center font-bold text-blue-600">24</div>
+          </div>
+          
+          <div class="grid grid-cols-8 items-center py-3 border-b border-gray-100">
+            <div class="col-span-1 font-bold">3</div>
+            <div class="col-span-3 flex items-center">
+              <span>Harry Kane</span>
+            </div>
+            <div class="col-span-2 flex items-center">
+              <span class="text-sm">Bayern</span>
+            </div>
+            <div class="col-span-1 text-center">26</div>
+            <div class="col-span-1 text-center font-bold text-blue-600">22</div>
+          </div>
+          
+          <div class="grid grid-cols-8 items-center py-3 border-b border-gray-100">
+            <div class="col-span-1 font-bold">4</div>
+            <div class="col-span-3 flex items-center">
+              <span>Mohamed Salah</span>
+            </div>
+            <div class="col-span-2 flex items-center">
+              <span class="text-sm">Liverpool</span>
+            </div>
+            <div class="col-span-1 text-center">24</div>
+            <div class="col-span-1 text-center font-bold text-blue-600">19</div>
+          </div>
+          
+          <div class="grid grid-cols-8 items-center py-3">
+            <div class="col-span-1 font-bold">5</div>
+            <div class="col-span-3 flex items-center">
+              <span>Jude Bellingham</span>
+            </div>
+            <div class="col-span-2 flex items-center">
+              <span class="text-sm">Real Madrid</span>
+            </div>
+            <div class="col-span-1 text-center">25</div>
+            <div class="col-span-1 text-center font-bold text-blue-600">18</div>
+          </div>
+        </div>        
+      </div>
+    </div>
+    
+    <!-- Newsletter Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-xl p-8 text-white">
+      <div class="max-w-lg mx-auto text-center">
+        <h3 class="text-2xl font-bold mb-4">Never Miss a Match</h3>
+        <p class="mb-6 text-blue-100">Subscribe to our newsletter for exclusive content, match previews, and player insights delivered straight to your inbox.</p>
+        
+        <div class="flex">
+          <input type="email" placeholder="Your email address" class="flex-grow bg-white bg-opacity-20 border border-blue-400 rounded-l-lg px-4 py-3 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white" />
+          <button class="bg-white text-blue-700 px-6 py-3 rounded-r-lg font-medium hover:bg-blue-50 transition">Subscribe</button>
+        </div>
+      </div>
     </div>
   </div>
+</div>
 </template>
 
 <script setup>
-import { HeartIcon, MessageCircleIcon } from 'lucide-vue-next';
 import player3 from "@/assets/images/player3.png";
 import player2 from "@/assets/images/player2.png";
 import player1 from "@/assets/images/player1.png";
@@ -176,28 +294,6 @@ const featuredPlayers = [
   }
 ];
 
-const featuredGoals = [
-  {
-    id: 1,
-    scorer: "Jude Bellingham",
-    match: "El Clásico: Real Madrid vs Barcelona",
-    minute: "78",
-    matchType: "La Liga",
-    likes: "15.2K",
-    comments: "1.2K",
-    videoId: "Zc_vFPdHU48"
-  },
-  {
-    id: 2,
-    scorer: "Marcus Rashford",
-    match: "Manchester Derby: United vs City",
-    minute: "34",
-    matchType: "Premier League",
-    likes: "12.8K",
-    comments: "986",
-    videoId: "f7ENx8tWEHo"
-  }
-];
 
 </script>
 
