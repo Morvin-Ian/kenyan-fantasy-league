@@ -32,11 +32,11 @@ class Player(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='players')
     position = models.CharField(max_length=50, choices=POSITION_CHOICES)
-    jersey_number = models.PositiveIntegerField()
-    age = models.PositiveIntegerField()
+    jersey_number = models.PositiveIntegerField(null=True, blank=True) 
+    age = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
-        ordering = ['name']
+        ordering = ['team']
         verbose_name = "Player"
         verbose_name_plural = "Players"
 

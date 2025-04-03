@@ -15,6 +15,7 @@ class GetProfileAPIView(APIView):
 
     def get(self, request):
         user = self.request.user
+        # players.get_all_players.delay()
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context={"request": request})
         response = success_response(

@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from util.views import headers
 from apps.kpl.models import Team, Player
 from datetime import datetime
-
+import re
 
 TEAM_URLS = {
     "afc leopards": "AFC_LEOPARDS_URL",
@@ -28,6 +28,29 @@ TEAM_URLS = {
     "ulinzi stars": "ULINZI_URL"
 }
 
+def get_position_from_string(position_string):
+    position_string = position_string.lower()
+    
+    if 'goalkeeper' in position_string or 'gk' in position_string:
+        return 'GKP'
+        
+    if ('defender' in position_string or 
+        'back' in position_string or 
+        'centre-back' in position_string or
+        'fullback' in position_string):
+        return 'DEF'
+        
+    if ('forward' in position_string or 
+        'striker' in position_string or 
+        'winger' in position_string or
+        'centre-forward' in position_string):
+        return 'FWD'
+        
+    if ('midfield' in position_string or 
+        'mid' in position_string):
+        return 'MID'
+        
+    return None
 
 def get_players(team_name):
     env_var_name = TEAM_URLS.get(team_name.lower()) 
@@ -46,11 +69,13 @@ def get_players(team_name):
     
     if web_content.status_code == 200:
         soup = BeautifulSoup(web_content.text, 'lxml')
-        
         table_body = soup.find_all('tbody')[1]  
-        
         players = table_body.find_all('tr', class_=['odd', 'even'])
-        playerlist = []
+
+        team = Team.objects.filter(name=team_name).first()
+        if not team:
+            print(f"Team '{team_name}' not found in the database.")
+            return
 
         for player in players:
             name_tag = player.find('td', class_='hauptlink')
@@ -59,14 +84,34 @@ def get_players(team_name):
 
             if name_tag and age_tag and position_tag:
                 name = name_tag.text.strip()
-                age = age_tag[1].text.strip() if len(age_tag) > 1 else "N/A"
+                age = age_tag[1].text.strip()  
                 position = position_tag.text.strip()
 
-                playerlist.append((name, position, age))
+                if age == '-' or age == '(-)' or age == '- (-)':
+                    age_value = None
+                else:
+                    match = re.search(r'\((\d+)\)', age)
+                    age_value = match.group(1) if match else age
 
-        print(playerlist)
+                position_code = get_position_from_string(position)
+                if not position_code:
+                    position_code = "MID"
+
+                player_obj, created = Player.objects.update_or_create(
+                    name=name,
+                    team=team,
+                    defaults={'position': position_code, 'age': age_value}
+                )
+                
+                if created:
+                    print(f"Created new player: {name} ({team_name})")
+                else:
+                    print(f"Updated player: {name} ({team_name})")
     else:
         print(f"Failed to retrieve the web page. Status code: {web_content.status_code}")
+
+def get_muranga_seal_players():
+    pass
 
 @shared_task
 def get_all_players():
