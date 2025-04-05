@@ -108,6 +108,9 @@ class FantasyLeague(TimeStampedUUIDModel):
     class Meta:
         verbose_name = "League"
         verbose_name_plural = "Leagues"
+    
+    def __str__(self):
+        return f"{self.name} (GW{self.start_gameweek}-{self.end_gameweek}, {self.teams.count()} teams)"
 
 class PlayerTransfer(TimeStampedUUIDModel):
     fantasy_team = models.ForeignKey(FantasyTeam, on_delete=models.CASCADE, related_name="transfers")
@@ -139,3 +142,7 @@ class PlayerPerformance(TimeStampedUUIDModel):
     class Meta:
         verbose_name = "Player Performance"
         verbose_name_plural = "Players Performance"
+
+    def __str__(self):
+        return f"{self.fantasy_player.player.name} - GW{self.fantasy_player.gameweek.number} ({self.goals_scored}G, {self.assists}A, {self.minutes_played}min)"
+
