@@ -63,12 +63,26 @@ class Standing(TimeStampedUUIDModel):
     
     def __str__(self):
         return f"{self.position}. {self.team.name} - {self.points} pts"
+    
+class Gameweek(TimeStampedUUIDModel):
+    number = models.PositiveIntegerField(unique=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    transfer_deadline = models.DateTimeField()
+    is_active = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["number"]
+
+    def __str__(self):
+        return f"Gameweek {self.number}"
 
 class Fixture(TimeStampedUUIDModel):
     home_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='home_fixtures')
     away_team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name='away_fixtures')
     match_date = models.DateTimeField()
     venue = models.CharField(max_length=255)
+    gameweek = models.ForeignKey(Gameweek, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=FIXTURE_STATUS, default=FIXTURE_STATUS[0][1])
     home_team_score = models.PositiveIntegerField(null=True, blank=True)
     away_team_score = models.PositiveIntegerField(null=True, blank=True)

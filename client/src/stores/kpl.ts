@@ -38,12 +38,18 @@ export const useKplStore = defineStore({
       }
     },
 
-    async fetchPlayers(){
+    async fetchPlayers() {
       try {
-        const response = await apiClient.get("/kpl/players/");
-        this.players = response.data.results;
+        let nextUrl: string | null = "/kpl/players/";
+    
+        while (nextUrl) {
+          const response = await apiClient.get(nextUrl);
+          this.players = this.players.concat(response.data.results);
+          nextUrl = response.data.next; 
+        }
+    
       } catch (error) {
-        console.error("Error fetching fixtures:", error);
+        console.error("Error fetching players:", error);
       }
     },
 
@@ -51,8 +57,7 @@ export const useKplStore = defineStore({
       await Promise.all([
         this.fetchTeams(),
         this.fetchStandings(),
-        this.fetchFixtures(),
-        this.fetchPlayers()
+        this.fetchFixtures()
       ]);
     },
   },
