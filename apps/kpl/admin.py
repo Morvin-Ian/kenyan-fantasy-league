@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Team, Standing, Player, Fixture
+from .models import Team, Standing, Player, Fixture, Gameweek
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
@@ -23,3 +23,9 @@ class FixtureAdmin(admin.ModelAdmin):
     list_display = ('home_team', 'away_team', 'match_date', 'venue', 'status', 'home_team_score', 'away_team_score')
     list_filter = ('status', 'match_date')
     search_fields = ('home_team__name', 'away_team__name', 'venue')
+
+@admin.register(Gameweek)
+class Gameweekdmin(admin.ModelAdmin):
+    list_display = ('number', 'start_date', 'end_date', 'transfer_deadline', 'is_active')
+    list_filter = ('number', 'is_active')
+    search_fields = ('number', 'is_active')
