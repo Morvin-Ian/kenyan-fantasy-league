@@ -5,8 +5,6 @@ Whether you're passionate about football or other popular sports, **KFL** lets y
 
  Test your sports knowledge,  compete with friends and family, and climb the leaderboards as you enjoy the thrill of fantasy sports like never before!
 
----
-
 
 ## Running the Project Locally
 
