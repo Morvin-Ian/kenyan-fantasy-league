@@ -2,7 +2,6 @@
     <div class="min-h-screen p-2 md:p-10">
         <div class="max-w-7xl mx-auto">
             <div class="bg-white rounded-xl md:rounded-3xl shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl">
-                <!-- Header Section - Made more compact on mobile -->
                 <div class="bg-white p-3 md:p-6 text-center relative">
                     <h1 class="text-2xl md:text-4xl font-black text-gray-600 flex items-center justify-center space-x-2 md:space-x-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-10 md:w-10 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
@@ -194,11 +193,9 @@ const tableHeaders: string[] = [
 ];
 
 const currentPage = ref(1);
-const itemsPerPage = ref(window.innerWidth < 640 ? 5 : 9); // Fewer items per page on mobile
+const itemsPerPage = ref(window.innerWidth < 640 ? 5 : 9); 
 
-// Function to get responsive headers for small screens
 function getResponsiveHeader(header: string): string {
-    // For mobile screens, simplify headers
     if (window.innerWidth < 640) {
         if (header === "Position") return "Pos";
         if (header === "Goals For") return "GF";
@@ -209,20 +206,13 @@ function getResponsiveHeader(header: string): string {
     return header;
 }
 
-// Function to limit form results on mobile
 function getMobileFormResults(form: string[]): string[] {
     if (window.innerWidth < 640) {
-        return form.slice(0, 3); // Show only the last 3 results on mobile
+        return form.slice(0, 3); 
     }
     return form;
 }
 
-// Update items per page on window resize
-onMounted(() => {
-    window.addEventListener('resize', () => {
-        itemsPerPage.value = window.innerWidth < 640 ? 5 : 9;
-    });
-});
 
 const paginatedTeams = computed<TeamStanding[]>(() => {
     const start = (currentPage.value - 1) * itemsPerPage.value;
@@ -314,10 +304,14 @@ const leagueInsights = computed(() => {
     ];
 });
 
-onMounted(async () => {
-  await authStore.initialize();
-  if (!authStore.isAuthenticated) {
-    router.push("/sign-in");
-  }
+onMounted(() => {
+    authStore.initialize();
+    if (!authStore.isAuthenticated) {
+        router.push("/sign-in");
+    }
+    window.addEventListener('resize', () => {
+        itemsPerPage.value = window.innerWidth < 640 ? 5 : 9;
+    });
 });
+
 </script>

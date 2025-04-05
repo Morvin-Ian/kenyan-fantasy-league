@@ -50,7 +50,7 @@ import Bench from "@/components/Team/Bench.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import PlayerModal from "@/components/Team/PlayerModal.vue";
 import { startingEleven, benchPlayers } from "@/helpers/data";
-import type { Player, Fixture, Result, Performer, StartingEleven } from "@/helpers/types/team";
+import type { FantasyPlayer as Player, Fixture, Result, Performer, StartingEleven } from "@/helpers/types/team";
 import { useAuthStore } from '@/stores/auth';
 import { useRouter } from 'vue-router';
 

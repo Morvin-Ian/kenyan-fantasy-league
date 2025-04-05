@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.kpl.models import Team, Standing, Fixture
+from apps.kpl.models import Team, Standing, Fixture, Player
 
 class TeamSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,4 +19,9 @@ class FixtureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Fixture
+        exclude = ("pkid", "created_at", "updated_at")
+class PlayerSerializer(serializers.ModelSerializer):
+    team = TeamSerializer(read_only=True)  
+    class Meta:
+        model = Player
         exclude = ("pkid", "created_at", "updated_at")

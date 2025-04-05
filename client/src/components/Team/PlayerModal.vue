@@ -82,7 +82,7 @@
   </template>
   
   <script setup lang="ts">
-  import type { Player } from "@/helpers/types/team";
+  import type { FantasyPlayer as Player } from "@/helpers/types/team";
   
   const props = defineProps<{
     showModal: boolean;

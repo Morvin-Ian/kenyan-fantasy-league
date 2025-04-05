@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 p-6">
+  <div class="min-h-screen p-6">
     <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Main Fixtures Column -->
       <div class="lg:col-span-2">
@@ -90,7 +90,6 @@
 
       <!-- Sidebar Columns -->
       <div class="space-y-6">
-        <!-- Team Form Guide -->
         <div class="bg-white rounded-lg shadow-md p-5">
           <h2 class="text-xl font-bold text-gray-800 mb-4">Team Form</h2>
           <div class="space-y-3">

@@ -191,9 +191,7 @@ const getProfilePhotoUrl = () => {
         return default_profile;
     }
 
-    const image = profilePhoto.split("/");
-    const image_name = image[image.length - 1];
-    return `/mediafiles/${image_name}`;
+    return profilePhoto;
 };
 
 const userFields = {

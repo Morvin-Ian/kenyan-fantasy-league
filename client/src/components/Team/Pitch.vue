@@ -102,7 +102,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import PlayerCard from "@/components/Team/PlayerCard.vue";
-import type { Player } from "@/helpers/types/team";
+import type {FantasyPlayer as Player } from "@/helpers/types/team";
 
 const props = defineProps<{
   goalkeeper: Player;

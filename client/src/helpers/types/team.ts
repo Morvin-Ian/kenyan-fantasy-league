@@ -1,4 +1,4 @@
-export type Team = {
+export interface Team {
   id: string;
   name: string;
   logo_url?: string; 
@@ -6,6 +6,16 @@ export type Team = {
 
 
 export interface Player {
+  id: string;
+  name: string;
+  position: string;
+  age?: number;
+  jersey_number?: number;
+  team: Team;
+}
+
+
+export interface FantasyPlayer {
   id: string;
   name: string;
   team: Team; 
@@ -22,12 +32,11 @@ export interface Player {
 }
 
 
-
 export interface StartingEleven {
-  goalkeeper: Player;
-  defenders: Player[];
-  midfielders: Player[];
-  forwards: Player[];
+  goalkeeper: FantasyPlayer;
+  defenders: FantasyPlayer[];
+  midfielders: FantasyPlayer[];
+  forwards: FantasyPlayer[];
 }
 
 export interface Fixture {
@@ -64,5 +73,5 @@ export interface TeamStanding {
   goalDifference: number;
   goal_differential: number;
   points: number;
-  form: string;
+  form: string[];
 }
