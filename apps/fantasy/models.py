@@ -42,19 +42,20 @@ class FantasyTeam(TimeStampedUUIDModel):
             '5-3-2': {'DEF': 5, 'MID': 3, 'FWD': 2, 'GK': 1},
             '5-4-1': {'DEF': 5, 'MID': 4, 'FWD': 1, 'GK': 1},
         }
-        
+    
         if self.players.exists():
-            position_counts = self.players.values_list(
-                'player__position', flat=True
-            ).annotate(count=models.Count('id'))
+            # Count players by position
+            position_counts = {}
+            for player in self.players.all():
+                pos = player.player.position
+                position_counts[pos] = position_counts.get(pos, 0) + 1
             
             required = formation_map[self.formation]
-            for pos, count in position_counts.items():
-                if count != required.get(pos, 0):
-                    raise ValidationError(
-                        f"Formation {self.formation} requires {required[pos]} {pos} players"
-                    )
-
+            for pos, required_count in required.items():
+                actual_count = position_counts.get(pos, 0)
+                if actual_count != required_count:
+                    raise ValidationError(f"Formation {self.formation} requires {required_count} {pos} players, you have {actual_count}")
+                
         total_value = sum(
             float(p.current_value) 
             for p in self.players.all()
@@ -85,10 +86,11 @@ class FantasyPlayer(TimeStampedUUIDModel):
         if self.fantasy_team.players.count() >= 15 and not self.pk:
             raise ValidationError("You can't have more than 15 players in a fantasy team.")
 
-        same_team_count = self.fantasy_team.players.filter(
+        same_team_players = self.fantasy_team.players.filter(
             player__team=self.player.team
-        ).exclude(pk=self.pk).count()
-        if same_team_count >= 3:
+        ).exclude(pk=self.pk)
+
+        if same_team_players.count() >= 3:
             raise ValidationError("You can't select more than 3 players from a single real team.")
 
     def save(self, *args, **kwargs):
@@ -107,17 +109,19 @@ class FantasyLeague(TimeStampedUUIDModel):
         verbose_name = "League"
         verbose_name_plural = "Leagues"
 
-class FantasyTransfer(TimeStampedUUIDModel):
-    fantasy_team = models.ForeignKey(FantasyTeam, on_delete=models.CASCADE)
-    player_out = models.ForeignKey(Player, related_name='transfers_out', on_delete=models.CASCADE)
-    player_in = models.ForeignKey(Player, related_name='transfers_in', on_delete=models.CASCADE)
+class PlayerTransfer(TimeStampedUUIDModel):
+    fantasy_team = models.ForeignKey(FantasyTeam, on_delete=models.CASCADE, related_name="transfers")
+    player_in = models.ForeignKey("Player", on_delete=models.CASCADE, related_name="transfers_in")
+    player_out = models.ForeignKey("Player", on_delete=models.CASCADE, related_name="transfers_out")
     gameweek = models.ForeignKey(Gameweek, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_free = models.BooleanField(default=False)
-
+    transfer_cost = models.DecimalField(max_digits=4, decimal_places=1, default=0)
+    
     class Meta:
-        verbose_name = "Transfer"
-        verbose_name_plural = "Transfers"
+        verbose_name = "Player Transfer"
+        verbose_name_plural = "Player Transfers"
+        
+    def __str__(self):
+        return f"{self.fantasy_team.name}: {self.player_out.name} → {self.player_in.name} (GW {self.gameweek.number})"
 
 class PlayerPerformance(TimeStampedUUIDModel):
     fantasy_player = models.ForeignKey(FantasyPlayer, on_delete=models.CASCADE, related_name='performances')
