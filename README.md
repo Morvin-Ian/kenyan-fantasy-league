@@ -7,17 +7,6 @@ Whether you're passionate about football or other popular sports, **KFL** lets y
 
 ---
 
-## About
-
-The **KFL** is a fantasy sports platform built for Kenyan fans. Our mission is to bring sports lovers together through fun, competition, and community.
-
-Stay tuned for:
-- Custom leagues  
-- Exciting rewards  
-- Local and international sports integration
-
----
-
 
 ## Running the Project Locally
 
