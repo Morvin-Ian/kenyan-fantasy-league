@@ -155,7 +155,6 @@
             </div>
           </div>
           
-
         </div>
       </div>
     </div>
@@ -236,19 +235,7 @@
         </div>        
       </div>
     </div>
-    
-    <!-- Newsletter Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-xl p-8 text-white">
-      <div class="max-w-lg mx-auto text-center">
-        <h3 class="text-2xl font-bold mb-4">Never Miss a Match</h3>
-        <p class="mb-6 text-blue-100">Subscribe to our newsletter for exclusive content, match previews, and player insights delivered straight to your inbox.</p>
-        
-        <div class="flex">
-          <input type="email" placeholder="Your email address" class="flex-grow bg-white bg-opacity-20 border border-blue-400 rounded-l-lg px-4 py-3 text-white placeholder-blue-200 focus:outline-none focus:ring-2 focus:ring-white" />
-          <button class="bg-white text-blue-700 px-6 py-3 rounded-r-lg font-medium hover:bg-blue-50 transition">Subscribe</button>
-        </div>
-      </div>
-    </div>
+ 
   </div>
 </div>
 </template>

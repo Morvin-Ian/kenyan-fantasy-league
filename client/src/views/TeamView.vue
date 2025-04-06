@@ -7,15 +7,9 @@
                     :defenders="defenders" 
                     :midfielders="midfielders" 
                     :forwards="forwards"
-                    :switch-source="switchSource" 
-                    :switch-active="switchActive" 
-                    @player-click="handlePlayerClick" 
-                />
-
-                <Bench 
                     :bench-players="benchPlayers" 
                     :switch-source="switchSource" 
-                    :switch-active="switchActive"
+                    :switch-active="switchActive" 
                     @player-click="handlePlayerClick" 
                 />
             </div>
@@ -46,7 +40,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import Pitch from "@/components/Team/Pitch.vue";
-import Bench from "@/components/Team/Bench.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import PlayerModal from "@/components/Team/PlayerModal.vue";
 import { startingEleven, benchPlayers } from "@/helpers/data";

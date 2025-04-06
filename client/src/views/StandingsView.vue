@@ -8,10 +8,8 @@
                         class="text-2xl md:text-4xl font-black text-gray-600 flex items-center justify-center space-x-2 md:space-x-4">
                         <span class="truncate">Premier League Standings</span>
                     </h1>
-
                 </div>
 
-                <!-- Table Section with horizontal scrolling for small screens -->
                 <div class="p-2 md:p-6">
                     <div class="overflow-x-auto rounded-lg shadow">
                         <table class="w-full text-xs md:text-sm border-collapse table-fixed">
@@ -55,10 +53,10 @@
                                     <td class="p-1 md:p-3 text-center font-bold text-green-700">{{ team.points }}</td>
 
                                     <td class="p-1 md:p-3">
-                                        <div class="flex justify-center space-x-1 md:space-x-2">
-                                            <span v-for="(result, index) in getMobileFormResults(team.form)"
-                                                :key="index" :class="getFormBadgeColor(result)"
-                                                class="w-5 h-5 md:w-7 md:h-7 rounded-full flex items-center justify-center text-white font-bold text-xs md:text-sm transition-transform hover:scale-110 shadow-md">
+                                        <div class="flex justify-center gap-0.5 md:gap-1">
+                                            <span v-for="(result, index) in getRandomFormResults()" :key="index"
+                                                :class="getFormBadgeColor(result)"
+                                                class="w-4 h-4 md:w-5 md:h-5 rounded-full flex text-white items-center justify-center text-[8px] md:text-xs font-bold transition-transform hover:scale-110 shadow-sm p-2">
                                                 {{ result }}
                                             </span>
                                         </div>
@@ -68,7 +66,7 @@
                         </table>
                     </div>
 
-                    <!-- Pagination Controls - Simplified for mobile -->
+                    <!-- Pagination Controls - SimplifgetFormBadgeColoried for mobile -->
                     <div class="flex justify-center items-center mt-4 md:mt-8 space-x-2 md:space-x-6">
                         <button @click="prevPage" :disabled="currentPage === 1"
                             class="group px-3 py-2 md:px-6 md:py-3 bg-green-500 text-white text-xs md:text-base rounded-full shadow-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-1 md:space-x-2">
@@ -163,7 +161,7 @@ const tableHeaders: string[] = [
 ];
 
 const currentPage = ref(1);
-const itemsPerPage = ref(window.innerWidth < 640 ? 5 : 9);
+const itemsPerPage = ref(9);
 
 function getResponsiveHeader(header: string): string {
     if (window.innerWidth < 640) {
@@ -174,6 +172,15 @@ function getResponsiveHeader(header: string): string {
         if (header === "Points") return "Pts";
     }
     return header;
+}
+
+function getRandomFormResults(): string[] {
+    const results = ['W', 'D', 'L'];
+    const form = [];
+    for (let i = 0; i < 3; i++) {
+        form.push(results[Math.floor(Math.random() * results.length)]);
+    }
+    return window.innerWidth < 640 ? form.slice(0, 3) : form;
 }
 
 function getMobileFormResults(form: string[]): string[] {

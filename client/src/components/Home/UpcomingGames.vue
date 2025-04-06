@@ -110,7 +110,7 @@
           Stay updated with the latest standings
         </p>
       </div>
-      <router-link to="/standings" 
+      <router-link to="/standings"
         class="flex items-center gap-1 sm:gap-2 text-blue-600 hover:text-blue-700 transition-colors mt-2 sm:mt-0">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -141,7 +141,8 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(team, index) in firstFiveStandings" :key="team.id" class="border-b hover:bg-gray-50 transition-colors">
+            <tr v-for="(team, index) in firstFiveStandings" :key="team.id"
+              class="border-b hover:bg-gray-50 transition-colors">
               <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-sm"
                 :class="{ 'text-indigo-600': index < 4, 'text-red-500': index > 16 }">{{ index + 1 }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4">
@@ -159,15 +160,11 @@
                 :class="{ 'text-green-500': team.goalDifference > 0, 'text-red-500': team.goalDifference < 0 }">{{
                   team.goal_differential }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-sm">{{ team.points }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4">
-                <div class="flex justify-center space-x-1">
-                  <span v-for="result in team.form" :key="result"
-                    class="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-xs text-white font-medium"
-                    :class="{
-                      'bg-green-500': result === 'W',
-                      'bg-gray-400': result === 'D',
-                      'bg-red-500': result === 'L'
-                    }">
+              <td class="p-1 md:p-3">
+                <div class="flex justify-center gap-0.5 md:gap-1">
+                  <span v-for="(result, index) in getRandomFormResults()" :key="index"
+                    :class="getFormBadgeColor(result)"
+                    class="w-4 h-4 md:w-5 md:h-5 rounded-full flex text-white items-center justify-center text-[8px] md:text-xs font-bold transition-transform hover:scale-110 shadow-sm p-2">
                     {{ result }}
                   </span>
                 </div>
@@ -230,6 +227,21 @@ const scroll = (direction: "left" | "right") => {
 const toUpperCase = (text: string) => {
   return text.toUpperCase();
 };
+
+function getRandomFormResults(): string[] {
+  const results = ['W', 'D', 'L'];
+  const form = [];
+  for (let i = 0; i < 5; i++) {
+    form.push(results[Math.floor(Math.random() * results.length)]);
+  }
+  return window.innerWidth < 640 ? form.slice(0, 3) : form;
+}
+
+function getFormBadgeColor(result: string): string {
+    const formResults = ["W", "D", "L"];
+    if (!formResults.includes(result)) return "bg-gray-500"; // Default color for unexpected values
+    return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
+}
 
 const formatDatePart = (dateStr?: string) => {
   if (!dateStr) return "";

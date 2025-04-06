@@ -57,7 +57,7 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
     
     def captain_status(self, obj):
         if obj.is_captain:
-            return format_html('<span style="color: gold;">✦ ✦ Captain</span>')
+            return format_html('<span style="color: gold;">✦✦ Captain</span>')
         elif obj.is_vice_captain:
             return format_html('<span style="color: silver;">✦ Vice</span>')
         return '-'

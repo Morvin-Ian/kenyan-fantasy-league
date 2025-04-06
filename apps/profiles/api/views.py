@@ -7,7 +7,7 @@ from util.errors.exception_handler import CustomInternalServerError
 from util.messages.handle_messages import success_response
 from apps.profiles.models import Profile
 from .serializers import ProfileSerializer
-from apps.kpl.tasks import players
+from apps.kpl.tasks import players, standings, fixtures
 
 
 class GetProfileAPIView(APIView):
@@ -16,6 +16,8 @@ class GetProfileAPIView(APIView):
     def get(self, request):
         user = self.request.user
         # players.get_all_players.delay()
+        # standings.get_kpl_table.delay()
+        # fixtures.get_kpl_fixtures.delay()
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context={"request": request})
         response = success_response(
