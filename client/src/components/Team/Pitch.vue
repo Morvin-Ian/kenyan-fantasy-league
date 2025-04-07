@@ -89,7 +89,7 @@ const props = defineProps<{
     defenders: Player[];
     midfielders: Player[];
     forwards: Player[];
-    benchPlayers: Player[],SUBSTITUTES
+    benchPlayers: Player[],
     switchSource: Player | null;
     switchActive: boolean;
 }>();

@@ -22,3 +22,4 @@ docker compose down -v
 
 # Step 4: Start the application
 docker compose up
+                                             

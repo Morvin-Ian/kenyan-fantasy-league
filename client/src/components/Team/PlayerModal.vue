@@ -61,7 +61,6 @@
           class="w-full bg-red-100 text-red-600 py-3 rounded-lg text-sm font-semibold 
                 hover:bg-red-200 transition-colors duration-300 flex items-center justify-center gap-2"
         >
-          <ExclamationTriangleIcon class="h-5 w-5" />
           <span>View Injury Details</span>
         </button>
       </div>
@@ -87,7 +86,7 @@ const emit = defineEmits<{
 }>();
 
 const emitAction = (action: "close-modal" | "initiate-switch" | "make-captain" | "make-vice-captain") => {
-  emit(action);
+  emit(action, props.selectedPlayer);
 };
 
 const getFormColor = (form?: number) => {

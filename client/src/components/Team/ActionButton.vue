@@ -19,7 +19,7 @@
   <script setup lang="ts">
   const props = defineProps<{
     color: string
-    icon: object | string 
+    icon?: object | string 
     active?: boolean       
     disabled?: boolean     
   }>();
