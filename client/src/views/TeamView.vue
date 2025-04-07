@@ -1,6 +1,6 @@
 <template>
     <div class="p-4">
-        <div class=" flex flex-col lg:flex-row gap-6">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
             <div class="w-full lg:w-2/3 rounded-xl shadow-lg relative">
                 <Pitch 
                     :goalkeeper="goalkeeper" 
@@ -13,6 +13,7 @@
                     @player-click="handlePlayerClick" 
                 />
                 
+                <!-- Save Button - appears when changes are detected -->
                 <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
                     <button 
                         @click="saveTeamChanges" 
