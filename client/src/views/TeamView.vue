@@ -47,8 +47,7 @@
             @make-vice-captain="makeViceCaptain" 
         />
         
-        <!-- Saved changes notification toast -->
-        <div 
+]        <div 
             v-if="showSavedNotification" 
             class="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50 flex items-center"
         >
