@@ -35,7 +35,8 @@ jobs:
           --health-retries 5
 
     env:
-      SECRET_KEY: 'test-secret-key'
+      SECRET_KEY: 'p%llpcloa#e0(#%p06t#w*#x0zsvmhfx59myh@wuf7vffq(zao'
+      ALLOWED_HOSTS="127.0.0.1 0.0.0.0 api nginx [::1]"
       DEBUG: 'True'
       POSTGRES_USER: testuser
       POSTGRES_PASSWORD: testpass
