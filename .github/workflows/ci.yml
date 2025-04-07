@@ -1,71 +1,30 @@
-name: CI
+name: Django CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  build:
+
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:12.0-alpine
-        env:
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
-          POSTGRES_DB: testdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
-
-    env:
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpass
-      POSTGRES_DB: testdb
-      DATABASE_URL: postgres://testuser:testpass@localhost:5432/testdb
-      REDIS_URL: redis://localhost:6379/0
-      DJANGO_SETTINGS_MODULE: config.settings.test
-      CELERY_BROKER_URL: redis://localhost:6379/0
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7, 3.8, 3.9, 3.10]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build containers
-        run: docker-compose -f docker-compose.yml build
-
-      - name: Run Django tests
-        run: docker-compose -f docker-compose.yml run --rm api python manage.py test
-
-      # Optional: Vue tests
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
-      - name: Install frontend dependencies
-        run: |
-          cd client
-          npm install
-
-      - name: Run Vue tests (optional)
-        run: |
-          cd client
-          npm run test || echo "Skipping if not configured"
-
-      - name: Teardown
-        run: docker-compose -f docker-compose.yml down
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    - name: Run Tests
+      run: |
+        python manage.py test
