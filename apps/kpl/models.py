@@ -13,7 +13,7 @@ POSITION_CHOICES = [
     ('GKP', 'Goalkeeper'),
     ('DEF', 'Defender'),
     ('MID', 'Midfielder'),
-    ('FWD', 'Foward'),
+    ('FWD', 'Forward'),
 ]
 
 class Team(TimeStampedUUIDModel):
@@ -88,6 +88,7 @@ class Fixture(TimeStampedUUIDModel):
     away_team_score = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:
+        unique_together = ('home_team', 'away_team', 'match_date')
         ordering = ['match_date']
         verbose_name = "Fixture"
         verbose_name_plural = "Fixtures"

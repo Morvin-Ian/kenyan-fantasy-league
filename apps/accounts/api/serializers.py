@@ -6,7 +6,6 @@ from rest_framework import serializers
 
 User = get_user_model()
 
-
 class UserSerializer(serializers.ModelSerializer):
     gender = serializers.CharField(source="profile.gender")
     phone_number = PhoneNumberField(source="profile.phone_number")

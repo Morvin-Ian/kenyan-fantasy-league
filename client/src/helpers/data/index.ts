@@ -216,3 +216,50 @@ export const benchPlayers = [
     pointsPerGame: 2.8,
   },
 ];
+
+
+
+export const availablePlayers = [
+  // Goalkeepers
+  {
+    id: "gk1",
+    name: "A. Becker",
+    position: "GK",
+    team: "Liverpool",
+    teamLogo: "/logos/liverpool.png",
+    price: 5.5,
+    points: 72,
+    image: "/players/becker.png"
+  },
+  {
+    id: "gk2",
+    name: "E. Martinez",
+    position: "GK",
+    team: "Aston Villa",
+    teamLogo: "/logos/astonvilla.png",
+    price: 5.0,
+    points: 67,
+    image: "/players/martinez.png"
+  },
+  {
+    id: "gk3",
+    name: "D. Raya",
+    position: "GK",
+    team: "Arsenal",
+    teamLogo: "/logos/arsenal.png",
+    price: 4.8,
+    points: 65,
+    image: "/players/raya.png"
+  },
+  {
+    id: "gk4",
+    name: "J. Pickford",
+    position: "GK",
+    team: "Everton",
+    teamLogo: "/logos/everton.png",
+    price:4.,
+     points: 65,
+    image: "/players/raya.png"
+  }
+
+]

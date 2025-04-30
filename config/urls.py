@@ -11,7 +11,6 @@ urlpatterns = [
     path("api/v1/kpl/", include("apps.kpl.api.urls")),
 ]
 
-
 admin.site.site_header = "Fantasy Kenyan League"
 admin.site.site_title = "Fantasy League Admin Portal"
 admin.site.index_title = "Welcome to The Realm"
