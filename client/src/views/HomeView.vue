@@ -8,14 +8,14 @@
           :fixtures="kplStore.fixtures"
           :standings="kplStore.standings"
           />
-        <SearchPlayer />
+        <GameweekDetails />
         <Performance />
       </div>
     </div>
   </template>
   
   <script setup lang="ts">
-  import SearchPlayer from "@/components/Home/SearchPlayer.vue";
+  import GameweekDetails from "@/components/Home/GameweekDetails.vue";
   import UpcomingGames from "@/components/Home/UpcomingGames.vue";
   import Performance from "@/components/Home/Performance.vue";
   import { onMounted, ref } from "vue";

@@ -31,7 +31,7 @@
                             <button @click="isAccountOpen = !isAccountOpen"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200">
                                 <img :src="getProfilePhotoUrl()" alt="Avatar"
-                                    class="h-11 w-12 rounded-full object-cover" />
+                                    class="h-10 w-10 rounded-full object-cover" />
                                 <span class="ml-2">
                                     <span class="font-bold text-xs">Hello, {{ authStore.user?.last_name }}</span>
                                     <font-awesome-icon icon="fa-solid fa-chevron-down"
