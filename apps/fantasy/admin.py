@@ -1,10 +1,10 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
-    FantasyTeam, 
-    FantasyPlayer, 
-    FantasyLeague, 
-    PlayerTransfer, 
+    FantasyTeam,
+    FantasyPlayer,
+    FantasyLeague,
+    PlayerTransfer,
     PlayerPerformance
 )
 
@@ -13,11 +13,11 @@ class FantasyTeamAdmin(admin.ModelAdmin):
     list_display = ('name', 'owner_display', 'formation', 'total_points', 'budget_display', 'gameweek')
     list_filter = ('formation', 'gameweek')
     search_fields = ('name', 'user__username', 'user__email')
-    
+
     def owner_display(self, obj):
         return obj.user.username
     owner_display.short_description = 'Owner'
-    
+
     def budget_display(self, obj):
         if float(obj.budget) < 20.0:
             color = 'red'
@@ -42,19 +42,19 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
     list_display = ('player_name', 'fantasy_team_name', 'gameweek_display', 'is_starter', 'captain_status', 'points_display')
     list_filter = ('is_starter', 'is_captain', 'is_vice_captain', 'gameweek')
     search_fields = ('player__name', 'fantasy_team__name')
-    
+
     def player_name(self, obj):
         return obj.player.name
     player_name.short_description = 'Player'
-    
+
     def fantasy_team_name(self, obj):
         return obj.fantasy_team.name
     fantasy_team_name.short_description = 'Team'
-    
+
     def gameweek_display(self, obj):
         return f"GW {obj.gameweek.number}"
     gameweek_display.short_description = 'Gameweek'
-    
+
     def captain_status(self, obj):
         if obj.is_captain:
             return format_html('<span style="color: gold;">✦✦ Captain</span>')
@@ -62,7 +62,7 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
             return format_html('<span style="color: silver;">✦ Vice</span>')
         return '-'
     captain_status.short_description = 'Role'
-    
+
     def points_display(self, obj):
         return format_html('<b>{}</b>', obj.gameweek_points)
     points_display.short_description = 'Points'
@@ -79,25 +79,25 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
     list_display = ('player_name', 'team_name', 'gameweek_display', 'minutes_played', 'goals_scored', 'assists', 'yellow_card_display', 'red_card_display')
     list_filter = ('fantasy_player__gameweek', 'yellow_cards', 'red_cards')
     search_fields = ('fantasy_player__player__name',)
-    
+
     def player_name(self, obj):
         return obj.fantasy_player.player.name
     player_name.short_description = 'Player'
-    
+
     def team_name(self, obj):
         return obj.fantasy_player.fantasy_team.name
     team_name.short_description = 'Fantasy Team'
-    
+
     def gameweek_display(self, obj):
         return f"GW {obj.fantasy_player.gameweek.number}"
     gameweek_display.short_description = 'Gameweek'
-    
+
     def yellow_card_display(self, obj):
         if obj.yellow_cards > 0:
             return format_html('<span style="color: #FFD700;">●</span> ' * obj.yellow_cards)
         return '-'
     yellow_card_display.short_description = 'YC'
-    
+
     def red_card_display(self, obj):
         if obj.red_cards > 0:
             return format_html('<span style="color: red;">●</span> ' * obj.red_cards)
@@ -110,7 +110,7 @@ class PlayerTransferAdmin(admin.ModelAdmin):
     list_display = ('transfer_display', 'fantasy_team', 'gameweek_display', 'transfer_cost_display')
     list_filter = ('gameweek', 'transfer_cost')
     search_fields = ('fantasy_team__name', 'player_in__name', 'player_out__name')
-    
+
     def transfer_display(self, obj):
         return format_html(
             '{} <span style="color: #888;">→</span> {}',
@@ -118,11 +118,11 @@ class PlayerTransferAdmin(admin.ModelAdmin):
             obj.player_in.name
         )
     transfer_display.short_description = 'Transfer'
-    
+
     def gameweek_display(self, obj):
         return f"GW {obj.gameweek.number}"
     gameweek_display.short_description = 'Gameweek'
-    
+
     def transfer_cost_display(self, obj):
         if obj.transfer_cost > 0:
             return format_html('<span style="color: red;">-{}</span>', obj.transfer_cost)
@@ -135,17 +135,16 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
     list_display = ('name', 'commissioner_display', 'gameweek_range', 'teams_count')
     search_fields = ('name', 'commissioner__username')
     filter_horizontal = ('teams',)
-    
+
     def commissioner_display(self, obj):
         return obj.commissioner.username
     commissioner_display.short_description = 'Commissioner'
-    
+
     def gameweek_range(self, obj):
         return f"GW {obj.start_gameweek} - {obj.end_gameweek}"
     gameweek_range.short_description = 'Duration'
-    
+
     def teams_count(self, obj):
         count = obj.teams.count()
         return format_html('<span style="font-weight: bold;">{}</span>', count)
     teams_count.short_description = 'Teams'
-

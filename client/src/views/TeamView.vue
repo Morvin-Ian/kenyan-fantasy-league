@@ -80,7 +80,6 @@ const switchActive = ref(false);
 const switchSource = ref<Player | null>(null);
 const isBenchSwitch = ref(false);
 
-// Track changes and save state
 const hasUnsavedChanges = ref(false);
 const showSavedNotification = ref(false);
 const initialTeamState = ref<{
@@ -134,7 +133,6 @@ const midfielders = computed(() => startingElevenRef.value.midfielders);
 const forwards = computed(() => startingElevenRef.value.forwards);
 
 
-// Initialize the original team state for change detection
 function initializeTeamState() {
   initialTeamState.value = {
     startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
@@ -196,7 +194,6 @@ function performSwitch(targetPlayer: Player) {
   
   // Check if the switch is between players of different positions
   if (sourcePlayer.position !== targetPlayer.position) {
-    // Check if the resulting formation would be valid
     if (!isValidFormationChange(sourcePlayer, targetPlayer)) {
       alert("Invalid formation change. Must have at least 3 defenders, 3 midfielders, and 1 forward.");
       resetSwitchState();
@@ -206,22 +203,18 @@ function performSwitch(targetPlayer: Player) {
   
   // Handle switching between positions in starting eleven
   if (isPlayerInStartingEleven(sourcePlayer) && isPlayerInStartingEleven(targetPlayer)) {
-    // Simple position swap within starting eleven
     swapPlayersInStartingEleven(sourcePlayer, targetPlayer);
   } 
   // Handle switching between starting eleven and bench
   else if (isPlayerInStartingEleven(sourcePlayer) && !isPlayerInStartingEleven(targetPlayer)) {
-    // Move player from starting eleven to bench and vice versa
     movePlayerFromStartingToBench(sourcePlayer, targetPlayer);
   } 
   // Handle switching from bench to starting eleven
   else if (!isPlayerInStartingEleven(sourcePlayer) && isPlayerInStartingEleven(targetPlayer)) {
-    // Move player from bench to starting eleven and vice versa
     movePlayerFromStartingToBench(targetPlayer, sourcePlayer);
   }
   // Handle switching positions on the bench
   else {
-    // Simply swap the bench players
     swapBenchPlayers(sourcePlayer, targetPlayer);
   }
   

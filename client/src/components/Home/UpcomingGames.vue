@@ -207,7 +207,7 @@ const props = defineProps({
   }
 });
 
-const firstTenFixtures = computed(() => props.fixtures.slice(0, 10));
+const firstTenFixtures = computed(() => props.fixtures.slice(-10));
 const firstFiveStandings = computed(() => props.standings.slice(0, 5));
 
 const scrollContainer = ref<HTMLElement | null>(null);

@@ -41,7 +41,7 @@ class UpdateProfileAPIView(APIView):
                     message="Profile not found",
                     status_code=status.HTTP_404_NOT_FOUND
                 )
-    
+
             if profile.id != uuid:
                 raise CustomInternalServerError(
                     message="Invalid profile",
@@ -50,7 +50,7 @@ class UpdateProfileAPIView(APIView):
 
             data = request.data
 
-            user = profile.user  
+            user = profile.user
             user_updated = False
 
             user_fields = ['username', 'email', 'last_name', 'first_name']
@@ -60,10 +60,10 @@ class UpdateProfileAPIView(APIView):
                     user_updated = True
 
             if user_updated:
-                user.save()  
+                user.save()
 
             serializer = ProfileSerializer(
-                instance=profile, 
+                instance=profile,
                 data=data,
                 partial=True
             )
@@ -84,7 +84,7 @@ class UpdateProfileAPIView(APIView):
                 )
         except CustomInternalServerError as api_err:
             raise api_err
-            
+
         except Exception as e:
             raise CustomInternalServerError(
                 message=str(e),
