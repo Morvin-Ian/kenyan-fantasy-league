@@ -17,7 +17,7 @@ FORMATION_CHOICES = [
 
 class FantasyTeam(TimeStampedUUIDModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="fantasy_teams")
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, unique=True)
     budget = models.DecimalField(max_digits=6, decimal_places=2, default=100.00)
     gameweek = models.PositiveIntegerField(default=1)  
     formation = models.CharField(max_length=10, choices=FORMATION_CHOICES, default="3-4-3")
@@ -33,35 +33,34 @@ class FantasyTeam(TimeStampedUUIDModel):
     def __str__(self):
         return f"{self.name} (Owner: {self.user.username})"
     
-    # def clean(self):
-    #     formation_map = {
-    #         '3-4-3': {'DEF': 3, 'MID': 4, 'FWD': 3, 'GK': 1},
-    #         '3-5-2': {'DEF': 3, 'MID': 5, 'FWD': 2, 'GK': 1},
-    #         '4-4-2': {'DEF': 4, 'MID': 4, 'FWD': 2, 'GK': 1},
-    #         '4-3-3': {'DEF': 4, 'MID': 3, 'FWD': 3, 'GK': 1},
-    #         '5-3-2': {'DEF': 5, 'MID': 3, 'FWD': 2, 'GK': 1},
-    #         '5-4-1': {'DEF': 5, 'MID': 4, 'FWD': 1, 'GK': 1},
-    #     }
+    def clean(self):
+        formation_map = {
+            '3-4-3': {'DEF': 3, 'MID': 4, 'FWD': 3, 'GK': 1},
+            '3-5-2': {'DEF': 3, 'MID': 5, 'FWD': 2, 'GK': 1},
+            '4-4-2': {'DEF': 4, 'MID': 4, 'FWD': 2, 'GK': 1},
+            '4-3-3': {'DEF': 4, 'MID': 3, 'FWD': 3, 'GK': 1},
+            '5-3-2': {'DEF': 5, 'MID': 3, 'FWD': 2, 'GK': 1},
+            '5-4-1': {'DEF': 5, 'MID': 4, 'FWD': 1, 'GK': 1},
+        }
     
-    #     if not self._state.adding and self.players.exists():
-    #         # Count players by position
-    #         position_counts = {}
-    #         for player in self.players.all():
-    #             pos = player.player.position
-    #             position_counts[pos] = position_counts.get(pos, 0) + 1
+        if not self._state.adding and self.players.exists():
+            position_counts = {}
+            for player in self.players.all():
+                pos = player.player.position
+                position_counts[pos] = position_counts.get(pos, 0) + 1
             
-    #         required = formation_map[self.formation]
-    #         for pos, required_count in required.items():
-    #             actual_count = position_counts.get(pos, 0)
-    #             if actual_count != required_count:
-    #                 raise ValidationError(f"Formation {self.formation} requires {required_count} {pos} players, you have {actual_count}")
+            required = formation_map[self.formation]
+            for pos, required_count in required.items():
+                actual_count = position_counts.get(pos, 0)
+                if actual_count != required_count:
+                    raise ValidationError(f"Formation {self.formation} requires {required_count} {pos} players, you have {actual_count}")
                 
-    #     total_value = sum(
-    #         float(p.current_value) 
-    #         for p in self.players.all()
-    #     )
-    #     if total_value > float(self.budget):
-    #         raise ValidationError("Team value exceeds budget")
+        total_value = sum(
+            float(p.current_value) 
+            for p in self.players.all()
+        )
+        if total_value > float(self.budget):
+            raise ValidationError("Team value exceeds budget")
 
 class FantasyPlayer(TimeStampedUUIDModel):
     fantasy_team = models.ForeignKey(FantasyTeam, on_delete=models.CASCADE, related_name="players")
