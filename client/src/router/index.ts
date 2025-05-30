@@ -58,8 +58,9 @@ const router = createRouter({
     {
       path: "/profile",
       name: "profile",
-      component: ProfileView,
+      component: () => import("@/views/ProfileView.vue"), 
     },
+
     {
       path: "/password/reset/confirm/:uid/:token",
       name: "reset-password",
@@ -71,7 +72,7 @@ const router = createRouter({
       component: PasswordResetRequest,
     },
     {
-      path: "/:pathMatch(.*)*", 
+      path: "/:pathMatch(.*)*",
       name: "NotFound",
       component: NotFound,
     },

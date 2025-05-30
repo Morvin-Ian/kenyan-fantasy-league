@@ -134,6 +134,7 @@ import { AlertCircle, CheckCircle, XCircle, Eye, EyeOff } from "lucide-vue-next"
 import { required, minLength, helpers } from "@vuelidate/validators";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { onMounted } from "vue";
 
 const authStore = useAuthStore();
 const route = useRoute();
@@ -167,31 +168,28 @@ const isLoading = ref(false);
 const error = ref<string | null>(null);
 const success = ref<string | null>(null);
 
-// Password strength calculator
 const passwordStrength = computed(() => {
     const password = form.value.newPassword;
     if (!password) return 0;
     
     let strength = 0;
     
-    // Length
     if (password.length >= 8) strength += 20;
     if (password.length >= 12) strength += 10;
     
-    // Complexity
-    if (/[A-Z]/.test(password)) strength += 20; // Uppercase
-    if (/[a-z]/.test(password)) strength += 10; // Lowercase
-    if (/[0-9]/.test(password)) strength += 20; // Numbers
-    if (/[^A-Za-z0-9]/.test(password)) strength += 20; // Special chars
+    if (/[A-Z]/.test(password)) strength += 20; 
+    if (/[a-z]/.test(password)) strength += 10; 
+    if (/[0-9]/.test(password)) strength += 20; 
+    if (/[^A-Za-z0-9]/.test(password)) strength += 20; 
     
     return Math.min(strength, 100);
 });
 
 const strengthColor = computed(() => {
     const strength = passwordStrength.value;
-    if (strength < 40) return '#dc2626'; // Red
-    if (strength < 70) return '#f59e0b'; // Orange
-    return '#16a34a'; // Green
+    if (strength < 40) return '#dc2626'; 
+    if (strength < 70) return '#f59e0b'; 
+    return '#16a34a'; 
 });
 
 const strengthText = computed(() => {
@@ -232,6 +230,13 @@ const clearError = () => {
 const goToLogin = () => {
     router.push("/sign-in");
 };
+
+onMounted(() => {
+  authStore.error = null;
+  if (authStore.isAuthenticated) {
+    router.replace({ name: "home" });
+  }
+});
 </script>
 
 <style scoped>

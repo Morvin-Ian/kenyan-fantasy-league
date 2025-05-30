@@ -145,6 +145,7 @@ const handleSubmit = async () => {
 };
 
 onMounted(() => {
+    authStore.error = null; 
     if (authStore.isAuthenticated) {
         router.replace({ name: "home" });
     }

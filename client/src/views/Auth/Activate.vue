@@ -2,18 +2,12 @@
   <div class="activation-wrapper">
     <div class="activation-card" :class="{ 'card-success': activationSuccess, 'card-error': error }">
       <div class="brand">
-        <div class="logo-circle">
-          <svg class="brand-logo" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L4 6v12l8 4 8-4V6l-8-4z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M12 22V12M12 2v10M4 6l8 6 8-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
+    
         <h1 class="title">Account Activation</h1>
       </div>
 
-      <!-- Loading State -->
       <transition name="fade-scale">
-        <div v-if="loading" class="state-container">
+        <div v-if="authStore.isLoading" class="state-container">
           <div class="loading-spinner">
             <svg viewBox="0 0 50 50" class="spinner">
               <circle cx="25" cy="25" r="20" fill="none" stroke-width="5" stroke-linecap="round" class="path"></circle>
@@ -73,11 +67,10 @@
                 stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </button>
-          <a href="#" class="support-link">Contact Support</a>
         </div>
       </transition>
       
-      <div class="card-footer" v-if="!loading && !activationSuccess && !error">
+      <div class="card-footer" v-if="!authStore.isLoading && !activationSuccess && !error">
         <p class="footer-text">If you need assistance, contact our <a href="#" class="text-link">support team</a></p>
       </div>
     </div>
@@ -88,11 +81,13 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const route = useRoute()
 const authStore = useAuthStore()
 
-const loading = ref(true)
 const error = ref('')
 const activationSuccess = ref(false)
 
@@ -101,23 +96,25 @@ async function activateAccount() {
 
   if (!uid || !token) {
     error.value = 'Invalid activation link. Please request a new one.'
-    loading.value = false
     return
   }
 
   try {
-    loading.value = true
     error.value = ''
     await authStore.activateAccount(uid, token)
     activationSuccess.value = true
   } catch (err) {
     error.value = 'We couldn\'t activate your account. Please try again or contact support.'
   } finally {
-    loading.value = false
   }
 }
 
+
 onMounted(() => {
+  if (authStore.isAuthenticated) {
+    router.replace({ name: "home" });
+  }
+  authStore.error = null;
   activateAccount()
 })
 </script>

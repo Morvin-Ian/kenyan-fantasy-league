@@ -22,7 +22,7 @@ export const useAuthStore = defineStore("auth", {
   getters: {
     isAuthenticated(): boolean {
       return Boolean(this.token);
-    },    
+    },
     authToken(): string | null {
       return this.token;
     },
@@ -53,24 +53,20 @@ export const useAuthStore = defineStore("auth", {
     async login(credentials: LoginCredentials): Promise<AuthResponse | void> {
       this.setLoading(true);
       this.setError(null);
-        
+
       try {
         const { data } = await apiClient.post<AuthResponse>(
           "/auth/jwt/create/",
           credentials,
         );
         this.setToken(data.access);
-        await this.refreshUserProfile();
-        await this.initialize();
-          
+
         if (credentials.rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
         return data;
       } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 
-                             error.response?.data?.detail || 
-                             "Login failed";
+        const errorMessage = error.response?.data?.errors[0]?.details?.message || "Login failed";
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
@@ -82,18 +78,32 @@ export const useAuthStore = defineStore("auth", {
       this.setLoading(true);
       this.setError(null);
       try {
-        const data = await apiClient.post<User>("/auth/users/", registerData);
+        await apiClient.post<User>("/auth/users/", registerData);
       } catch (error: any) {
-        const errorMessage = error.response?.data?.message || 
-                             error.response?.data?.detail ||
-                             "Registration failed. Please try again.";
+        const details = error?.response?.data?.errors?.[0]?.details;
+
+        let errorMessage = "Registration failed. Please try again.";
+
+        if (details && typeof details === "object") {
+          const messages: string[] = [];
+
+          for (const field in details) {
+            if (Array.isArray(details[field])) {
+              messages.push(...details[field]);
+            }
+          }
+          if (messages.length > 0) {
+            errorMessage = messages.join(" ");
+          }
+        }
+
+        console.log(errorMessage);
         this.setError(errorMessage);
-        throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
       }
     },
-    
+
     async activateAccount(
       uid: string | string[],
       token: string | string[],
@@ -137,7 +147,6 @@ export const useAuthStore = defineStore("auth", {
         const errorMessage =
           error.response?.data?.detail || "Password reset failed";
         this.setError(errorMessage);
-        throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
       }
@@ -153,7 +162,6 @@ export const useAuthStore = defineStore("auth", {
         const errorMessage =
           error.response?.data?.detail || "Password reset failed";
         this.setError(errorMessage);
-        throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
       }
@@ -163,9 +171,9 @@ export const useAuthStore = defineStore("auth", {
       this.setLoading(true);
       try {
         const { data } = await apiClient.get("/profile");
-    
+
         const profile = data?.response?.[0]?.details?.[0];
-    
+
         if (profile) {
           this.setUser(profile);
         } else {
@@ -179,20 +187,19 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    async updateProfile(updatedUser: Partial<User>, uuid:string): Promise<void> {
+    async updateProfile(updatedUser: Partial<User>, uuid: string): Promise<void> {
       this.setLoading(true);
       this.setError(null);
       try {
-          await apiClient.patch(`/profile/update/${uuid}/`, updatedUser, {
-            headers: {
-                "Content-Type": "multipart/form-data", 
-            },
+        await apiClient.patch(`/profile/update/${uuid}/`, updatedUser, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
 
       } catch (error: any) {
-        const errorMessage = error.response?.data?.errors?.details?.message || "Profile update failed";
+        const errorMessage = error.response?.data?.errors[0]?.details?.message || "Profile update failed";
         this.setError(errorMessage);
-        throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
       }

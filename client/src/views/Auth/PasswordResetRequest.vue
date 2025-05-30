@@ -76,8 +76,11 @@ import useVuelidate from "@vuelidate/core";
 import { required, email } from "@vuelidate/validators";
 import { useAuthStore } from "@/stores/auth";
 import { AlertCircle, CheckCircle, XCircle, Mail } from "lucide-vue-next";
+import { useRouter } from "vue-router";
+import { onMounted } from "vue";
 
 const authStore = useAuthStore();
+const router = useRouter();
 
 const form = reactive({
     email: "",
@@ -115,6 +118,13 @@ const handleResetRequest = async () => {
         isLoading.value = false;
     }
 };
+
+onMounted(() => {
+  authStore.error = null;
+  if (authStore.isAuthenticated) {
+    router.replace({ name: "home" });
+  }
+});
 </script>
 
 <style scoped>

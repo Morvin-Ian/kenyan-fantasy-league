@@ -27,7 +27,7 @@
 
                     <!-- Desktop Account Menu -->
                     <div class="flex items-center">
-                        <div v-if="isAuthenticated" class="relative">
+                        <div v-if="authStore.isAuthenticated" class="relative">
                             <button @click="isAccountOpen = !isAccountOpen"
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200">
                                 <img :src="getProfilePhotoUrl()" alt="Avatar"

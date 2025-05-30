@@ -121,7 +121,7 @@
                 </div>
             </div>
 
-            <div v-if="showNotification"
+            <div v-if="showNotification && !authStore.error"
                 class="fixed top-12 left-0 right-0 md:left-auto md:right-12 md:top-24 mx-auto md:mx-0 max-w-sm bg-white/90 backdrop-blur-md px-6 py-4 rounded-xl shadow-lg transform transition-all duration-500 flex items-center gap-3 z-50"
                 :class="{ 'translate-y-0 opacity-100': showNotification, 'translate-y-12 opacity-0': !showNotification }">
                 <div class="flex-shrink-0 w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -136,15 +136,13 @@
                 </button>
             </div>
 
-            <div v-if="errorMessages.length > 0"
+            <div v-if="authStore.error"
                 class="fixed top-12 left-0 right-0 md:left-auto md:right-12 md:top-24 mx-auto mx-auto md:mx-0 max-w-sm bg-red-100/90 backdrop-blur-md px-6 py-4 rounded-xl shadow-lg z-50">
-                <div class="space-y-2">
-                    <div v-for="(error, index) in errorMessages" :key="index" class="flex items-center gap-3">
+                <div class="flex items-center gap-3">
                         <div class="flex-shrink-0 w-10 h-10 bg-red-200 rounded-full flex items-center justify-center">
                             <font-awesome-icon icon="fa-solid fa-cancel" class="text-red-500" />
                         </div>
-                        <p class="text-red-800 font-medium">{{ error }}</p>
-                    </div>
+                        <p class="text-red-800 font-medium">{{ authStore.error }}</p>
                 </div>
             </div>
 
@@ -155,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import default_profile from "../assets/images/user.jpeg";
@@ -167,7 +165,6 @@ const fileInput = ref(null);
 const previewImage = ref(null);
 const showNotification = ref(false);
 const originalUserData = ref({});
-const errorMessages = ref([]);
 
 const user = ref({
     username: "",
@@ -200,7 +197,7 @@ const userFields = {
     first_name: { label: "First Name", type: "text" },
     last_name: { label: "Last Name", type: "text" },
     gender: { label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-    phone_number: { label: "Phone", type: "number" },
+    // phone_number: { label: "Phone", type: "number" },
     country: { label: "Country", type: "text" },
     city: { label: "City", type: "text" },
 };
@@ -218,7 +215,7 @@ const toggleEdit = async () => {
             if (user.value.profile_photo instanceof File) {
                 formData.append("profile_photo", user.value.profile_photo);
             }
-            errorMessages.value = [];
+
             await authStore.updateProfile(formData, user.value.id);
 
             showNotification.value = true;
@@ -228,10 +225,7 @@ const toggleEdit = async () => {
 
             isEditing.value = false;
         } catch (error) {
-            errorMessages.value.push("An unexpected error occurred. Please try again.");
-            setTimeout(() => {
-                errorMessages.value = [];
-            }, 4000);
+           console.error("Profile update failed:", error)
         }
     } else {
         originalUserData.value = JSON.parse(JSON.stringify(user.value));
@@ -271,18 +265,15 @@ const logout = async () => {
         await authStore.logout();
         router.push("/sign-in");
     } catch (error) {
-        errorMessages.value.push("Logout failed. Please try again.");
-        setTimeout(() => {
-            errorMessages.value = [];
-        }, 4000);
+        authStore.error = "Logout failed. Please try again.";
     }
 };
 
 onMounted(async () => {
-    await authStore.initialize();
     if (!authStore.isAuthenticated) {
         router.push("/sign-in");
     } else {
+        await authStore.initialize();
         user.value = {
             ...user.value,
             ...authStore.user
