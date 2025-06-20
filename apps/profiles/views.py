@@ -8,6 +8,7 @@ from .serializers import ProfileSerializer
 from apps.kpl.tasks import players, standings, fixtures
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
+from .services import ProfileService
 
 User = get_user_model()
 

@@ -8,8 +8,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework_simplejwt.authentication import JWTStatelessUserAuthentication
+from rest_framework.exceptions import ValidationError
 
-
+from .services import FantasyService
 from apps.fantasy.models import FantasyTeam
 from .serializers import FantasyTeamSerializer
 
@@ -18,7 +19,24 @@ class FantasyTeamViewSet(ModelViewSet):
     serializer_class = FantasyTeamSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
-    
+
+    def perform_create(self, serializer):
+        user = self.request.user
+
+        if FantasyTeam.objects.filter(user=user).exists():
+            raise ValidationError(
+                "You already have a fantasy team.",
+                code=status.HTTP_400_BAD_REQUEST
+            )
+
+        team_name = serializer.validated_data.get('name')
+        if team_name and FantasyTeam.objects.filter(name__iexact=team_name).exists():
+            raise ValidationError(
+                f"A team with the name '{team_name}' already exists.",
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return FantasyService.create_fantasy_team(user, serializer.validated_data)
+
     @action(detail=False, methods=["get"], url_path="user-team")
     def get_user_team(self, request):
         try:
@@ -30,4 +48,9 @@ class FantasyTeamViewSet(ModelViewSet):
                 {"detail": "An unexpected error occurred.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
+
+# class FantasyPlayerViewSet(ModelViewSet):
+#     queryset = FantasyPlayer.objects.all()
+#     serializer_class = FantasyPlayerSerializer
+#     permission_classes = [permissions.IsAuthenticated]
+#     lookup_field = "id"
