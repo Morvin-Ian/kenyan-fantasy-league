@@ -80,7 +80,7 @@ export const useAuthStore = defineStore("auth", {
       try {
         await apiClient.post<User>("/auth/users/", registerData);
       } catch (error: any) {
-        const details = error?.response?.data?.errors?.[0]?.details;
+        const details = error?.response?.data;
 
         let errorMessage = "Registration failed. Please try again.";
 
@@ -97,7 +97,6 @@ export const useAuthStore = defineStore("auth", {
           }
         }
 
-        console.log(errorMessage);
         this.setError(errorMessage);
       } finally {
         this.setLoading(false);
@@ -172,10 +171,8 @@ export const useAuthStore = defineStore("auth", {
       try {
         const { data } = await apiClient.get("/profile");
 
-        const profile = data?.response?.[0]?.details?.[0];
-
-        if (profile) {
-          this.setUser(profile);
+        if (data) {
+          this.setUser(data);
         } else {
           throw new Error("Profile data is missing");
         }
@@ -198,7 +195,7 @@ export const useAuthStore = defineStore("auth", {
         });
 
       } catch (error: any) {
-        const errorMessage = error.response?.data?.errors[0]?.details?.message || "Profile update failed";
+        const errorMessage = error.response.data.detail || "Profile update failed";
         this.setError(errorMessage);
       } finally {
         this.setLoading(false);
