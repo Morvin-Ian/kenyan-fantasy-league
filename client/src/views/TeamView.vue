@@ -2,73 +2,63 @@
   <div class="p-4">
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="w-full lg:w-2/3 rounded-xl shadow-lg relative">
-        <Pitch 
-          :goalkeeper="goalkeeper" 
-          :defenders="defenders" 
-          :midfielders="midfielders" 
-          :forwards="forwards"
-          :bench-players="benchPlayers" 
-          :switch-source="switchSource" 
-          :switch-active="switchActive"
-          @player-click="handlePlayerClick" 
-        />
+        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
+          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
+          @player-click="handlePlayerClick" />
         <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
-          <button @click="saveTeamChanges" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center">
+          <button @click="saveTeamChanges"
+            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center">
             <span class="mr-2">Save Changes</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              <path fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd" />
             </svg>
           </button>
         </div>
       </div>
-      <Sidebar 
-        :total-points="totalPoints" 
-        :average-points="averagePoints" 
-        :highest-points="highestPoints"
-        :overall-rank="overallRank"
-        :team="userTeamName" 
-      />
+      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+        :overall-rank="overallRank" :team="userTeamName" />
     </div>
     <div v-else class="max-w-3xl mx-auto text-center py-12">
       <h2 class="text-3xl font-bold text-gray-800 mb-4">You haven't created a team yet!</h2>
       <p class="text-lg text-gray-600 mb-6">Start your fantasy football journey by creating your team now.</p>
-      <button @click="toggleModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">Create Your Team</button>
+      <button @click="toggleModal"
+        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">Create
+        Your Team</button>
     </div>
-    <PlayerModal 
-      v-if="userTeam && userTeam.length" 
-      :show-modal="showModal" 
-      :selected-player="selectedPlayer"
-      @close-modal="closeModal" 
-      @initiate-switch="initiateSwitch" 
-      @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain"
-      @make-vice-captain="makeViceCaptain"
-    />
-    <SearchPlayer 
-      :show-search-modal="showSearchModal"
-      :selectedPlayer="selectedPlayer"
-      @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer"
-    />
-    
-    <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" />
+
+    <div v-if="showCreateTeamModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-6 w-full max-w-md">
         <h3 class="text-2xl font-bold text-gray-800 mb-4">Create Your Team</h3>
         <form @submit.prevent="createTeam">
           <div class="mb-4">
             <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
-            <input v-model="teamName" id="teamName" type="text" class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your team name" required />
+            <input v-model="teamName" id="teamName" type="text"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your team name" required />
           </div>
           <div class="flex justify-end gap-4">
-            <button type="button" @click="showCreateTeamModal = false" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded">Cancel</button>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">Create Team</button>
+            <button type="button" @click="showCreateTeamModal = false"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded">Cancel</button>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">Create
+              Team</button>
           </div>
         </form>
       </div>
     </div>
-    <div v-if="showSavedNotification" class="fixed bottom-7 left-1/2 transform -translate-x-1/2 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50 flex items-center">
-      <svg class="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    <div v-if="showSavedNotification"
+      class="fixed bottom-7 left-1/2 transform -translate-x-1/2 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50 flex items-center">
+      <svg class="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg">
+        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+        </path>
       </svg>
       <span>Team changes saved successfully!</span>
     </div>
