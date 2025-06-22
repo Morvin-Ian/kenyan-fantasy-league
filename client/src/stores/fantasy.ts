@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import apiClient from "@/axios-interceptor";
-import type { Fixture, TeamStanding, Team, Player } from "@/helpers/types/team";
-import type { FantasyTeam } from "@/helpers/types/fantasy";
+import type { FantasyPlayer, FantasyTeam } from "@/helpers/types/fantasy";
 
 export const useFantasyStore = defineStore("fantasy", {
   state: () => ({
     fantasyTeams: [] as FantasyTeam[],
+    fantasyPlayers: [] as FantasyPlayer[],
     userTeam: [] as FantasyTeam[],
     isLoading: false,
     error: null,
@@ -40,6 +40,18 @@ export const useFantasyStore = defineStore("fantasy", {
         this.isLoading = true;
         const response = await apiClient.post("/fantasy/teams/", { name });
         this.userTeam = response.data;
+      } catch (error) {
+        this.error = error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchFantasyTeamPlayers() {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.get(`/fantasy/players/team-players`);
+        this.fantasyPlayers = response.data;
       } catch (error) {
         this.error = error;
       } finally {

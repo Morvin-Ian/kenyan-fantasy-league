@@ -19,7 +19,7 @@ POSITION_CHOICES = [
 class Team(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
     logo_url = models.URLField()
-    
+    jersey_image = models.ImageField(upload_to='team_jerseys/', null=True, blank=True)
     class Meta:
         ordering = ['name']
         verbose_name = 'Team'

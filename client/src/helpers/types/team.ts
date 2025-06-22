@@ -1,9 +1,11 @@
+import { FantasyPlayer } from "./fantasy";
+
 export interface Team {
   id: string;
   name: string;
-  logo_url?: string; 
-};
-
+  logo_url?: string;
+  jersey_image?: string;
+}
 
 export interface Player {
   id: string;
@@ -13,24 +15,6 @@ export interface Player {
   jersey_number?: number;
   team: Team;
 }
-
-
-export interface FantasyPlayer {
-  id: string;
-  name: string;
-  team: Team; 
-  position: string;
-  points: number;
-  form: string;
-  price: number;
-  nextFixture: string;
-  chanceOfPlaying: number;
-  selectedBy: string;
-  pointsPerGame: number;
-  isCaptain?: boolean;
-  isViceCaptain?: boolean;
-}
-
 
 export interface StartingEleven {
   goalkeeper: FantasyPlayer;
@@ -43,8 +27,8 @@ export interface Fixture {
   id: string;
   status: string;
   type: string;
-  home_team: Team;  
-  away_team: Team;  
+  home_team: Team;
+  away_team: Team;
   match_date?: string;
   datetime?: string;
 }
@@ -62,8 +46,8 @@ export interface Performer {
 
 export interface TeamStanding {
   id: number;
-  position:number;
-  team: Team; 
+  position: number;
+  team: Team;
   played: number;
   wins: number;
   draws: number;

@@ -70,9 +70,6 @@ const props = defineProps<{
     averagePoints: Number;
     highestPoints: Number;
     overallRank: Number;
-    upcomingFixtures: Fixture[];
-    recentResults: Result[];
-    topPerformers: Performer[];
     team: string;
 }>();
 </script>

@@ -11,8 +11,8 @@ from rest_framework_simplejwt.authentication import JWTStatelessUserAuthenticati
 from rest_framework.exceptions import ValidationError
 
 from .services import FantasyService
-from apps.fantasy.models import FantasyTeam
-from .serializers import FantasyTeamSerializer
+from apps.fantasy.models import FantasyTeam, FantasyPlayer
+from .serializers import FantasyTeamSerializer, FantasyPlayerSerializer
 
 class FantasyTeamViewSet(ModelViewSet):
     queryset = FantasyTeam.objects.all()
@@ -49,8 +49,22 @@ class FantasyTeamViewSet(ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# class FantasyPlayerViewSet(ModelViewSet):
-#     queryset = FantasyPlayer.objects.all()
-#     serializer_class = FantasyPlayerSerializer
-#     permission_classes = [permissions.IsAuthenticated]
-#     lookup_field = "id"
+class FantasyPlayerViewSet(ModelViewSet):
+    queryset = FantasyPlayer.objects.all()
+    serializer_class = FantasyPlayerSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "id"
+
+    @action(detail=False, methods=["get"], url_path="team-players")
+    def get_team_players(self, request):
+         try:
+             team = FantasyTeam.objects.filter(user=request.user)
+             if team.exists():
+                players = FantasyPlayer.objects.filter(fantasy_team=team.first())
+                serializer = self.get_serializer(players, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+         except Exception as e:
+             return Response(
+                 {"detail": "An unexpected error occurred.", "error": str(e)},
+                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
+             )

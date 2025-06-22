@@ -9,3 +9,22 @@ export interface FantasyTeam {
   overall_rank: number | null;
   transfer_budget: string;
 }
+
+export interface FantasyPlayer {
+  id: string;
+  name: string;
+  position: string;
+  team: string;
+  jersey_image: string;
+  price: string;
+  fantasy_team: string;
+  player: string;
+  gameweek: number;
+  total_points: number;
+  gameweek_points: number;
+  is_captain: boolean;
+  is_vice_captain: boolean;
+  is_starter: boolean;
+  purchase_price: string;
+  current_value: string;
+}
