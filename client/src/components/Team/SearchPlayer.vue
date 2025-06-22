@@ -1,17 +1,16 @@
 <template>
   <div v-if="showSearchModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-3xl p-4 sm:p-8 w-full max-w-5xl mx-4 shadow-2xl relative">
-      <button @click="$emit('close-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700"> <svg
-          xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div class="bg-white rounded-3xl p-4 sm:p-8 w-full max-w-5xl mx-4 shadow-2xl relative max-h-[90vh] flex flex-col">
+      <button @click="$emit('close-modal')" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-indigo-100">
+      <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-indigo-100 flex-grow overflow-y-auto">
         <!-- Header -->
         <div class="relative p-6 sm:p-8 bg-gradient-to-r from-blue-900 to-indigo-800 overflow-hidden">
           <div class="absolute inset-0 opacity-20">
             <svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg">
-              <!-- SVG path remains unchanged -->
               <path
                 d="M38.1,-65.3C46.1,-55.9,47.6,-39.5,53.8,-25.6C60,-11.7,70.8,-0.3,71.8,11.5C72.8,23.3,63.9,35.5,53.3,45.9C42.6,56.4,30.2,65.1,15.9,70.5C1.7,75.9,-14.4,78.1,-26.8,72.2C-39.3,66.4,-48.1,52.5,-57.5,38.8C-66.9,25.1,-76.8,11.6,-77.7,-2.8C-78.6,-17.2,-70.3,-32.4,-58.6,-42.4C-46.8,-52.4,-31.6,-57.2,-18.2,-64.7C-4.9,-72.2,6.7,-82.4,19.2,-80.8C31.8,-79.3,45.2,-66,54.6,-50.8C63.9,-35.7,73.1,-18.9,75.9,0.1C78.6,19.1,74.9,40.1,64.2,54.9C53.4,69.7,35.7,78.3,18.6,80.1C1.4,81.9,-15.1,77,-31.6,71.5C-48.1,66,-64.6,59.9,-75.4,48.2C-86.2,36.5,-91.3,19.2,-90.9,2.3C-90.6,-14.6,-84.7,-29.3,-76.4,-43C-68.1,-56.7,-57.4,-69.4,-43.8,-75.7C-30.3,-82,-15.1,-81.8,0,-81.8C15.2,-81.8,30.3,-82,38.1,-65.3Z"
                 transform="translate(250 250)" />
@@ -20,14 +19,12 @@
           <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white relative z-10 flex flex-wrap items-center">
             <span class="mr-3 text-3xl sm:text-4xl">⚽</span> Fantasy Player Search
           </h1>
-          <p class="text-blue-100 mt-2 max-w-2xl text-sm sm:text-base">Find and add the best players to your fantasy
-            team.</p>
+          <p class="text-blue-100 mt-2 max-w-2xl text-sm sm:text-base">Find and add the best players to your fantasy team.</p>
         </div>
 
         <!-- Search and Filters -->
         <div class="p-4 sm:p-6 md:p-8 bg-gradient-to-b from-blue-50 to-white border-b border-blue-100">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            <!-- Search and filter inputs (unchanged from original) -->
             <div class="relative group transform transition-all duration-300 hover:scale-105">
               <input v-model="filters.name" type="text" placeholder="Search by name"
                 class="w-full pl-12 pr-4 py-3.5 rounded-xl border border-blue-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 shadow-sm group-hover:shadow-md" />
@@ -244,17 +241,35 @@
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useKplStore } from "@/stores/kpl";
 import type { Player } from "@/helpers/types/team";
+import { FantasyPlayer } from "@/helpers/types/fantasy";
 
-defineProps<{
+const props = defineProps<{
   showSearchModal: boolean;
+  selectedPlayer: FantasyPlayer | null;
 }>();
 
-const emit =  defineEmits<{
+const emit = defineEmits<{
   (e: 'close-modal'): void;
   (e: 'select-player', player: Player): void;
 }>();
 
 const kplStore = useKplStore();
+
+watch(
+  () => props.selectedPlayer,
+  { immediate: true }
+);
+
+watch(
+  () => [props.showSearchModal, props.selectedPlayer],
+  ([isOpen, selectedPlayer]) => {
+    if (isOpen && selectedPlayer) {
+      filters.position = selectedPlayer.position || "";
+      triggerAnimation();
+    }
+  },
+  { immediate: true }
+);
 
 const filters = reactive({
   name: "",
@@ -323,7 +338,7 @@ const displayedPages = computed(() => {
 
 const clearFilters = () => {
   filters.name = "";
-  filters.position = "";
+  filters.position = props.selectedPlayer?.position || "";
   filters.team = "";
   currentPage.value = 1;
   triggerAnimation();

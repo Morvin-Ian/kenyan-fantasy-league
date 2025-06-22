@@ -45,7 +45,8 @@
       @make-vice-captain="makeViceCaptain"
     />
     <SearchPlayer 
-      :show-search-modal="showSearchModal" 
+      :show-search-modal="showSearchModal"
+      :selectedPlayer="selectedPlayer"
       @close-modal="closeSearchModal"
       @select-player="handlePlayerTransfer"
     />
@@ -85,7 +86,8 @@ import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { useFantasyStore } from "@/stores/fantasy";
-import { useKplStore } from "@/stores/kpl";
+import defaultJersey from "@/assets/images/jerseys/default.png";
+import goalkeeperJersey from "@/assets/images/jerseys/goalkeeper.png";
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -127,6 +129,25 @@ const userTeamName = computed(() => (userTeam.value.length ? userTeam.value[0].n
 const averagePoints = ref(52);
 const highestPoints = ref(121);
 
+const createPlaceholderPlayer = (position: string, index: number, isStarter: boolean = true): Player => ({
+  id: `placeholder-${position.toLowerCase()}-${index}`,
+  name: `Add ${position}`,
+  position,
+  team: "N/A",
+  price: "0.00",
+  fantasy_team: "",
+  player: "",
+  gameweek: 1,
+  total_points: 0,
+  gameweek_points: 0,
+  is_captain: false,
+  is_vice_captain: false,
+  is_starter: isStarter,
+  purchase_price: "0.00",
+  current_value: "0.00",
+  jersey_image: position === "GKP" ? goalkeeperJersey : defaultJersey,
+});
+
 const toggleModal = () => {
   showCreateTeamModal.value = !showCreateTeamModal.value;
 };
@@ -138,6 +159,10 @@ const closeSearchModal = () => {
 
 function initializeTeamState() {
   const players = fantasyStore.fantasyPlayers || [];
+  const formationString = fantasyStore.userTeam[0]?.formation || "4-4-2";
+  const [def, mid, fwd] = formationString.split("-").map(Number);
+
+  // Initialize starting eleven
   startingElevenRef.value = {
     goalkeeper: {} as Player,
     defenders: [],
@@ -145,6 +170,8 @@ function initializeTeamState() {
     forwards: [],
   };
   benchPlayersRef.value = [];
+
+  // Add real players to starting eleven or bench
   players.forEach((player: Player) => {
     if (player.is_starter) {
       if (player.position === "GKP") startingElevenRef.value.goalkeeper = player;
@@ -155,26 +182,116 @@ function initializeTeamState() {
       benchPlayersRef.value.push(player);
     }
   });
+
+  // Add placeholder players to starting eleven if needed
+  if (!startingElevenRef.value.goalkeeper.id || startingElevenRef.value.goalkeeper.id.startsWith("placeholder")) {
+    startingElevenRef.value.goalkeeper = createPlaceholderPlayer("GKP", 0);
+  }
+  while (startingElevenRef.value.defenders.length < def) {
+    startingElevenRef.value.defenders.push(createPlaceholderPlayer("DEF", startingElevenRef.value.defenders.length));
+  }
+  while (startingElevenRef.value.midfielders.length < mid) {
+    startingElevenRef.value.midfielders.push(createPlaceholderPlayer("MID", startingElevenRef.value.midfielders.length));
+  }
+  while (startingElevenRef.value.forwards.length < fwd) {
+    startingElevenRef.value.forwards.push(createPlaceholderPlayer("FWD", startingElevenRef.value.forwards.length));
+  }
+
+  // Add placeholder players to bench if needed
+  const requiredBenchPlayers = 4;
+  const benchCompositions = {
+    "3-4-3": { DEF: 2, MID: 1, FWD: 0 },
+    "3-5-2": { DEF: 2, MID: 0, FWD: 1 },
+    "4-4-2": { DEF: 1, MID: 1, FWD: 1 },
+    "4-3-3": { DEF: 1, MID: 2, FWD: 0 },
+    "5-3-2": { DEF: 0, MID: 2, FWD: 1 },
+    "5-4-1": { DEF: 0, MID: 1, FWD: 2 },
+  };
+  const desiredBench = benchCompositions[formationString] || benchCompositions["4-4-2"];
+
+  // Ensure one goalkeeper on the bench
+  const hasGoalkeeper = benchPlayersRef.value.some((player) => player.position === "GKP" && !player.id.startsWith("placeholder"));
+  if (!hasGoalkeeper) {
+    benchPlayersRef.value.push(createPlaceholderPlayerValue("GKP", benchPlayersRef.value.length, false));
+  }
+
+  // Count current bench players by position (excluding placeholders)
+  const benchPositionCounts = benchPlayersRef.value.reduce(
+    (acc, player) => {
+      if (!player.id.startsWith("placeholder")) {
+        acc[player.position] = (acc[player.position] || 0) + 1;
+      }
+      return acc;
+    },
+    { GKP: 0, DEF: 0, MID: 0, FWD: 0 } as Record<string, number>
+  );
+
+  // Add placeholders to meet desired bench composition
+  const positions = [
+    { position: "FWD", needed: desiredBench.FWD - benchPositionCounts.FWD },
+    { position: "MID", needed: desiredBench.MID - benchPositionCounts.MID },
+    { position: "DEF", needed: desiredBench.DEF - benchPositionCounts.DEF },
+  ].filter((pos) => pos.needed > 0);
+
+  while (benchPlayersRef.value.length < requiredBenchPlayers && positions.length > 0) {
+    const nextPosition = positions.reduce((prev, curr) => (prev.needed > curr.needed ? prev : curr)).position;
+    benchPlayersRef.value.push(createPlaceholderPlayer(nextPosition, benchPlayersRef.value.length, false));
+    benchPositionCounts[nextPosition]++;
+    positions.find((pos) => pos.position === nextPosition)!.needed--;
+  }
+
+  // Fill remaining bench slots with default placeholders (e.g., MID)
+  while (benchPlayersRef.value.length < requiredBenchPlayers) {
+    benchPlayersRef.value.push(createPlaceholderPlayer("MID", benchPlayersRef.value.length, false));
+  }
+
+  // Save initial state
   initialTeamState.value = {
     startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
     benchPlayers: JSON.parse(JSON.stringify(benchPlayersRef.value)),
   };
+  console.log("Initialized team state:", initialTeamState.value);
   hasUnsavedChanges.value = false;
 }
 
+// Deep comparison function to check if team states are equal
+function areTeamsEqual(state1: { startingEleven: StartingEleven; benchPlayers: Player[] }, state2: { startingEleven: StartingEleven; benchPlayers: Player[] }): boolean {
+  const comparePlayers = (p1: Player, p2: Player) => p1.id === p2.id && p1.is_captain === p2.is_captain && p1.is_vice_captain === p2.is_vice_captain && p1.is_starter === p2.is_starter;
+  const comparePlayerArrays = (arr1: Player[], arr2: Player[]) => arr1.length === arr2.length && arr1.every((p1, i) => comparePlayers(p1, arr2[i]));
+
+  return (
+    comparePlayers(state1.startingEleven.goalkeeper, state2.startingEleven.goalkeeper) &&
+    comparePlayerArrays(state1.startingEleven.defenders, state2.startingEleven.defenders) &&
+    comparePlayerArrays(state1.startingEleven.midfielders, state2.startingEleven.midfielders) &&
+    comparePlayerArrays(state1.startingEleven.forwards, state2.startingEleven.forwards) &&
+    comparePlayerArrays(state1.benchPlayers, state2.benchPlayers)
+  );
+}
+
 watch(
-  [() => JSON.stringify(startingElevenRef.value), () => JSON.stringify(benchPlayersRef.value)],
+  [() => startingElevenRef.value, () => benchPlayersRef.value],
   () => {
     if (initialTeamState.value) {
-      hasUnsavedChanges.value = true;
+      const currentState = {
+        startingEleven: startingElevenRef.value,
+        benchPlayers: benchPlayersRef.value,
+      };
+      hasUnsavedChanges.value = !areTeamsEqual(initialTeamState.value, currentState);
+      console.log("Unsaved changes detected:", hasUnsavedChanges.value, "Current state:", currentState, "Initial state:", initialTeamState.value);
     }
   },
   { deep: true }
 );
 
 const openPlayerModal = (player: Player) => {
-  selectedPlayer.value = player;
-  showModal.value = true;
+  if (!player.id.startsWith("placeholder")) {
+    selectedPlayer.value = player;
+    showModal.value = true;
+  } else {
+    // Directly open search modal for placeholders
+    selectedPlayer.value = player;
+    showSearchModal.value = true;
+  }
 };
 
 const closeModal = () => {
@@ -183,7 +300,6 @@ const closeModal = () => {
 };
 
 const handlePlayerClick = (player: Player) => {
-
   if (switchActive.value) {
     performSwitch(player);
   } else {
@@ -192,7 +308,11 @@ const handlePlayerClick = (player: Player) => {
 };
 
 const initiateTransfer = (player: Player) => {
-  openPlayerModal(player);
+  if (player.id.startsWith("placeholder")) {
+    console.warn("Cannot initiate transfer for placeholder player.");
+    return;
+  }
+  selectedPlayer.value = player;
   showSearchModal.value = true;
 };
 
@@ -202,40 +322,36 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
     return;
   }
 
-
   const oldPlayer = selectedPlayer.value;
 
-  if (!isValidFormationChange(oldPlayer, newPlayer)) {
+  // Validate position compatibility
+  if (oldPlayer.position !== newPlayer.position && !isValidFormationChange(oldPlayer, newPlayer)) {
     alert("Invalid transfer: Formation constraints not met (min 3 DEF, 3 MID, 1 FWD).");
+    closeSearchModal();
     return;
   }
 
-  // Validate max 3 players from same team
+  // Check team limits
   const sameTeamPlayers = [
     ...startingElevenRef.value.defenders,
     ...startingElevenRef.value.midfielders,
     ...startingElevenRef.value.forwards,
     startingElevenRef.value.goalkeeper,
     ...benchPlayersRef.value,
-  ].filter((p) => p.team === newPlayer.team.name && p.id !== oldPlayer.id);
+  ].filter((p) => p.team === newPlayer.team.name && p.id !== oldPlayer.id && !p.id.startsWith("placeholder"));
   if (sameTeamPlayers.length >= 3) {
     alert("Cannot select more than 3 players from the same team.");
+    closeSearchModal();
     return;
   }
 
-  // Validate max 15 players
-  const totalPlayers = [
-    ...startingElevenRef.value.defenders,
-    ...startingElevenRef.value.midfielders,
-    ...startingElevenRef.value.forwards,
-    startingElevenRef.value.goalkeeper,
-    ...benchPlayersRef.value,
-  ].length;
-  if (totalPlayers >= 15 && !isPlayerInTeam(newPlayer)) {
-    alert("Cannot have more than 15 players in your fantasy team.");
+  // Check if new player is already in the team
+  if (isPlayerInTeam(newPlayer)) {
+    alert("This player is already in your team.");
+    closeSearchModal();
     return;
   }
-  console.log("Transferring player:", oldPlayer, "to new player:", newPlayer);
+
   // Perform the transfer
   if (isPlayerInStartingEleven(oldPlayer)) {
     replaceStartingWithNewPlayer(oldPlayer, newPlayer);
@@ -244,27 +360,12 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
   }
 
   hasUnsavedChanges.value = true;
-  showSearchModal.value = false;
-
-  // Save changes to backend
-//   try {
-//     await saveTeamChanges();
-//     await fantasyStore.fetchFantasyTeamPlayers();
-//     initializeTeamState();
-//   } catch (error) {
-//     console.error("Transfer failed:", error);
-//     alert("Failed to save transfer. Please try again.");
-//     initializeTeamState();
-//     return;
-//   }
-
-  // Show notification
   showSavedNotification.value = true;
   setTimeout(() => {
     showSavedNotification.value = false;
   }, 3000);
 
-  closeModal();
+  closeSearchModal();
 };
 
 const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
@@ -272,10 +373,10 @@ const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) =
     id: newPlayer.id,
     name: newPlayer.name,
     position: newPlayer.position,
-    team: newPlayer.team.name, 
-    jersey_image: newPlayer.team.jersey_image || "",
-    price: oldPlayer.price, 
-    fantasy_team: oldPlayer.fantasy_team,
+    team: newPlayer.team.name,
+    jersey_image: newPlayer.team.jersey_image || (newPlayer.position === "GKP" ? goalkeeperJersey : defaultJersey),
+    price: oldPlayer.price,
+    fantasy_team: fantasyStore.userTeam[0].id,
     player: newPlayer.id,
     gameweek: oldPlayer.gameweek,
     total_points: 0,
@@ -286,9 +387,6 @@ const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) =
     purchase_price: oldPlayer.purchase_price,
     current_value: oldPlayer.current_value,
   };
-
-  console.log("new fantasy player:", newFantasyPlayer);
-
 
   if (oldPlayer.position === "GKP" && newPlayer.position === "GKP") {
     startingElevenRef.value.goalkeeper = newFantasyPlayer;
@@ -303,9 +401,15 @@ const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) =
       const players = startingElevenRef.value[positionKey] as Player[];
       const index = players.findIndex((p) => p.id === oldPlayer.id);
       if (index !== -1) {
-        players[index] = newFantasyPlayer;
+        players.splice(index, 1, newFantasyPlayer);
       }
     }
+  }
+
+  // Replace a placeholder on the bench if necessary
+  const benchIndex = benchPlayersRef.value.findIndex((p) => p.id.startsWith("placeholder") && p.position === newPlayer.position);
+  if (benchIndex !== -1) {
+    benchPlayersRef.value.splice(benchIndex, 1, createPlaceholderPlayer(newPlayer.position, benchIndex, false));
   }
 };
 
@@ -316,10 +420,10 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
       id: newPlayer.id,
       name: newPlayer.name,
       position: newPlayer.position,
-      team: newPlayer.team.name, 
-      jersey_image: newPlayer.team.jersey_image || "",
+      team: newPlayer.team.name,
+      jersey_image: newPlayer.team.jersey_image || (newPlayer.position === "GKP" ? goalkeeperJersey : defaultJersey),
       price: oldPlayer.price,
-      fantasy_team: oldPlayer.fantasy_team,
+      fantasy_team: fantasyStore.userTeam[0].id,
       player: newPlayer.id,
       gameweek: oldPlayer.gameweek,
       total_points: 0,
@@ -330,17 +434,49 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
       purchase_price: oldPlayer.purchase_price,
       current_value: oldPlayer.current_value,
     };
-    benchPlayersRef.value[index] = newFantasyPlayer;
+    benchPlayersRef.value.splice(index, 1, newFantasyPlayer);
+  }
+
+  // Maintain bench composition by replacing a placeholder on the bench if needed
+  const benchComposition = {
+    GKP: 1,
+    DEF: 1,
+    MID: 1,
+    FWD: 1,
+  };
+  const benchPositionCounts = benchPlayersRef.value.reduce(
+    (acc, player) => {
+      if (!player.id.startsWith("placeholder")) {
+        acc[player.position] = (acc[player.position] || 0) + 1;
+      }
+      return acc;
+    },
+    { GKP: 0, DEF: 0, MID: 0, FWD: 0 } as Record<string, number>
+  );
+
+  const missingPosition = Object.keys(benchComposition).find(
+    (pos) => benchPositionCounts[pos] < benchComposition[pos as keyof typeof benchComposition] && pos !== newPlayer.position
+  );
+
+  if (missingPosition) {
+    const placeholderIndex = benchPlayersRef.value.findIndex((p) => p.id.startsWith("placeholder") && p.position === missingPosition);
+    if (placeholderIndex !== -1) {
+      benchPlayersRef.value.splice(placeholderIndex, 1, createPlaceholderPlayer(missingPosition, placeholderIndex, false));
+    }
   }
 };
 
 const initiateSwitch = (player: Player) => {
+  if (player.id.startsWith("placeholder")) {
+    console.warn("Cannot initiate switch with placeholder player.");
+    return;
+  }
   if (!selectedPlayer.value) {
     selectedPlayer.value = player;
   }
   switchSource.value = selectedPlayer.value;
   switchActive.value = true;
-  isBenchSwitch.value = benchPlayersRef.value.some((p) => p.id === selectedPlayer.value?.id);
+  isBenchSwitch.value = benchPlayers.value.some((p) => p.id === selectedPlayer.value?.id);
   closeModal();
 };
 
@@ -378,16 +514,22 @@ const saveTeamChanges = async () => {
   try {
     const teamData = {
       startingEleven: {
-        goalkeeper: startingElevenRef.value.goalkeeper,
-        defenders: startingElevenRef.value.defenders,
-        midfielders: startingElevenRef.value.midfielders,
-        forwards: startingElevenRef.value.forwards,
+        goalkeeper: startingElevenRef.value.goalkeeper.id.startsWith("placeholder") ? null : startingElevenRef.value.goalkeeper,
+        defenders: startingElevenRef.value.defenders.filter((p) => !p.id.startsWith("placeholder")),
+        midfielders: startingElevenRef.value.midfielders.filter((p) => !p.id.startsWith("placeholder")),
+        forwards: startingElevenRef.value.forwards.filter((p) => !p.id.startsWith("placeholder")),
       },
-      benchPlayers: benchPlayersRef.value,
+      benchPlayers: benchPlayersRef.value.filter((p) => !p.id.startsWith("placeholder")),
     };
-    await fantasyStore.saveTeam(teamData); // Re-enable API call
-    initializeTeamState();
+    await fantasyStore.saveTeam(teamData);
+    // Reset initial state after saving
+    initialTeamState.value = {
+      startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
+      benchPlayers: JSON.parse(JSON.stringify(benchPlayersRef.value)),
+    };
+    hasUnsavedChanges.value = false;
     showSavedNotification.value = true;
+    console.log("Team saved, unsaved changes reset:", hasUnsavedChanges.value);
     setTimeout(() => {
       showSavedNotification.value = false;
     }, 3000);
@@ -444,7 +586,7 @@ function isValidFormationChange(sourcePlayer: Player, targetPlayer: Player | Kpl
 
 function countPlayersInPosition(position: string): number {
   let count = 0;
-  if (position === "GKP" && startingElevenRef.value.goalkeeper.position === "GKP") {
+  if (position === "GKP" && startingElevenRef.value.goalkeeper.position === "GKP" && !startingElevenRef.value.goalkeeper.id.startsWith("placeholder")) {
     count = 1;
   } else {
     const positionMapping: Record<string, keyof StartingEleven> = {
@@ -454,7 +596,7 @@ function countPlayersInPosition(position: string): number {
     };
     const positionKey = positionMapping[position];
     if (positionKey) {
-      count = (startingElevenRef.value[positionKey] as Player[]).length;
+      count = (startingElevenRef.value[positionKey] as Player[]).filter((p) => !p.id.startsWith("placeholder")).length;
     }
   }
   return count;
@@ -514,7 +656,7 @@ function addPlayerToStartingEleven(player: Player) {
 
 function replaceStartingWithBenchPlayer(startingPlayer: Player, benchPlayer: Player) {
   if (startingPlayer.position === "GKP" && benchPlayer.position === "GKP") {
-    const tempGoalkeeper = { ...startingElevenRef.value.goalkeeper };
+    const tempGoalkeeper = { ...startingElevenRefvenue.value.goalkeeper };
     startingElevenRef.value.goalkeeper = { ...benchPlayer, is_starter: true };
     const benchIndex = benchPlayersRef.value.findIndex((p) => p.id === benchPlayer.id);
     benchPlayersRef.value[benchIndex] = {
@@ -577,15 +719,15 @@ function swapPlayersInStartingEleven(player1: Player, player2: Player) {
     addPlayerToStartingEleven({
       ...player1,
       position: player2.position,
-      is_captain: is_captain1,
-      is_vice_captain: is_vice_captain1,
+      is_captain: is_captain2,
+      is_vice_captain: is_vice_captain2,
       is_starter: true,
     });
     addPlayerToStartingEleven({
       ...player2,
       position: player1.position,
-      is_captain: is_captain2,
-      is_vice_captain: is_vice_captain2,
+      is_captain: is_captain1,
+      is_vice_captain: is_vice_captain1,
       is_starter: true,
     });
   }
@@ -697,14 +839,13 @@ onMounted(async () => {
 });
 </script>
 
-
 <style scoped>
 .team-card {
-    transition: all 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .team-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  transform: scale(1.02);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 </style>
