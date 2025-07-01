@@ -34,7 +34,7 @@ DEBUG = os.getenv("DEBUG")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
 
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8080', 'http://0.0.0.0:8080']
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8080", "http://0.0.0.0:8080"]
 
 
 SITE_ID = 1
@@ -57,7 +57,7 @@ THIRD_PARTY_APPS = [
     "djoser",
     "rest_framework_simplejwt",
     "djcelery_email",
-    "django_celery_beat"
+    "django_celery_beat",
 ]
 
 LOCAL_APPS = [
@@ -126,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "Africa/Nairobi"
 
@@ -156,21 +156,18 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication"
     ],
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
+    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 30,
-
-    'DEFAULT_THROTTLE_CLASSES': (
-        'rest_framework.throttling.UserRateThrottle',
-    ),
-    'DEFAULT_THROTTLE_RATES': {
-        'anon': '10/minute',
-        'user': '1000/min',
-        'premium': '12/minute'
-    }
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 30,
+    "DEFAULT_THROTTLE_CLASSES": ("rest_framework.throttling.UserRateThrottle",),
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "10/minute",
+        "user": "1000/min",
+        "premium": "12/minute",
+    },
 }
 
 
@@ -205,14 +202,13 @@ DJOSER = {
 }
 
 
-
 logger = logging.getLogger(__name__)
 
 LOG_LEVEL = "INFO"
 
 import os
 
-os.makedirs('logs', exist_ok=True)
+os.makedirs("logs", exist_ok=True)
 
 logging.config.dictConfig(
     {
@@ -235,7 +231,7 @@ logging.config.dictConfig(
                 "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "file",
                 "filename": os.path.join("logs", "fantasy_league.log"),
-                "maxBytes": 10485760, 
+                "maxBytes": 10485760,
                 "backupCount": 5,
             },
             "django.server": DEFAULT_LOGGING["handlers"]["django.server"],
@@ -251,12 +247,12 @@ logging.config.dictConfig(
 from datetime import timedelta
 
 CELERY_BEAT_SCHEDULE = {
-    'update-kpl-standings': {
-        'task': 'apps.kpl.tasks.standings.get_kpl_table',
-        'schedule': timedelta(days=1).total_seconds(),  # Runs every 24 hours
+    "update-kpl-standings": {
+        "task": "apps.kpl.tasks.standings.get_kpl_table",
+        "schedule": timedelta(days=1).total_seconds(),  # Runs every 24 hours
     },
-    'update-kpl-fixtures': {
-        'task': 'apps.kpl.tasks.fixtures.get_kpl_fixtures',
-        'schedule': timedelta(days=2).total_seconds(),  # Runs every 2 days
+    "update-kpl-fixtures": {
+        "task": "apps.kpl.tasks.fixtures.get_kpl_fixtures",
+        "schedule": timedelta(days=2).total_seconds(),  # Runs every 2 days
     },
 }

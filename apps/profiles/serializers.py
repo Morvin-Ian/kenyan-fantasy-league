@@ -6,8 +6,12 @@ from apps.profiles.models import Profile
 
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
-    first_name = serializers.CharField(source="user.first_name", read_only=True, required=False)
-    last_name = serializers.CharField(source="user.last_name", read_only=True, required=False)
+    first_name = serializers.CharField(
+        source="user.first_name", read_only=True, required=False
+    )
+    last_name = serializers.CharField(
+        source="user.last_name", read_only=True, required=False
+    )
     email = serializers.EmailField(source="user.email", read_only=True)
     full_name = serializers.SerializerMethodField(read_only=True)
     country = CountryField(name_only=True)
@@ -31,9 +35,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         first_name = obj.user.first_name
         last_name = obj.user.last_name
-        
+
         if not first_name or not last_name:
             return None
-            
-        return f"{first_name.title()} {last_name.title()}"
 
+        return f"{first_name.title()} {last_name.title()}"

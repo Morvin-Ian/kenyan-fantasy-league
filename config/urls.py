@@ -17,4 +17,3 @@ admin.site.site_title = "Fantasy League Admin Portal"
 admin.site.index_title = "Welcome to The Realm"
 # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 # urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    

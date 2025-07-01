@@ -12,6 +12,7 @@ from .services import ProfileService
 
 User = get_user_model()
 
+
 class GetProfileAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -35,33 +36,40 @@ class UpdateProfileAPIView(APIView):
             profile = Profile.objects.filter(id=uuid).first()
             if not profile:
                 return Response(
-                    {"detail": "Profile not found."},
-                    status=status.HTTP_404_NOT_FOUND
+                    {"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND
                 )
 
             if profile.id != uuid:
                 return Response(
                     {"detail": "Invalid profile ID."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             data = request.data
             user = profile.user
             user_updated = False
-            user_fields = ['username', 'email', 'last_name', 'first_name']
+            user_fields = ["username", "email", "last_name", "first_name"]
 
-            if 'username' in data and data['username'] != user.username:
-                if User.objects.filter(username=data['username']).exclude(id=user.id).exists():
+            if "username" in data and data["username"] != user.username:
+                if (
+                    User.objects.filter(username=data["username"])
+                    .exclude(id=user.id)
+                    .exists()
+                ):
                     return Response(
                         {"detail": "Username already exists."},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
-            if 'email' in data and data['email'] != user.email:
-                if User.objects.filter(email=data['email']).exclude(id=user.id).exists():
+            if "email" in data and data["email"] != user.email:
+                if (
+                    User.objects.filter(email=data["email"])
+                    .exclude(id=user.id)
+                    .exists()
+                ):
                     return Response(
                         {"detail": "Email already exists."},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             for field in user_fields:
@@ -75,24 +83,21 @@ class UpdateProfileAPIView(APIView):
                 except IntegrityError as e:
                     return Response(
                         {"detail": "Conflict updating user: " + str(e)},
-                        status=status.HTTP_400_BAD_REQUEST
+                        status=status.HTTP_400_BAD_REQUEST,
                     )
 
             serializer = ProfileSerializer(instance=profile, data=data, partial=True)
             if serializer.is_valid():
                 serializer.save()
-                return Response(
-                    {"data": serializer.data},
-                    status=status.HTTP_200_OK
-                )
+                return Response({"data": serializer.data}, status=status.HTTP_200_OK)
             else:
                 return Response(
                     {"detail": "Invalid data.", "errors": serializer.errors},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
         except Exception as e:
             return Response(
                 {"detail": "An unexpected error occurred.", "error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

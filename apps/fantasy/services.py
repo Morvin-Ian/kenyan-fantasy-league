@@ -1,13 +1,14 @@
 from .models import FantasyTeam
 from apps.accounts.models import User
 
+
 class FantasyService:
     @staticmethod
-    def create_fantasy_team(user:User, data: dict) -> FantasyTeam:
+    def create_fantasy_team(user: User, data: dict) -> FantasyTeam:
         return FantasyTeam.objects.create(user=user, **data)
 
     @staticmethod
-    def update_fantasy_team(team:FantasyTeam, data: dict) -> FantasyTeam:
+    def update_fantasy_team(team: FantasyTeam, data: dict) -> FantasyTeam:
         for key, value in data.items():
             setattr(team, key, value)
 
@@ -15,5 +16,5 @@ class FantasyService:
         return team
 
     @staticmethod
-    def delete_fantasy_team(team:FantasyTeam) -> None:
+    def delete_fantasy_team(team: FantasyTeam) -> None:
         team.delete()

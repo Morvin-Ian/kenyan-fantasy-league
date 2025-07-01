@@ -58,15 +58,16 @@ test-html:
 
 flake8:
 	docker compose exec api flake8 .
-
+	
 black-check:
-	docker compose exec api black --check --exclude=migrations .
+	docker compose exec api black --check --exclude='migrations|venv' .
 
 black-diff:
-	docker compose exec api black --diff --exclude=migrations .
+	docker compose exec api black --diff --exclude='migrations|venv' .
 
 black:
-	docker compose exec api black --exclude=migrations .
+	docker compose exec api black --exclude='migrations|venv' .
+
 
 isort-check:
 	docker compose exec api isort . --check-only --skip env --skip migrations --skip venv

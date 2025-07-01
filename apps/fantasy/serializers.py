@@ -9,53 +9,69 @@ from django.core.exceptions import ValidationError
 
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
+    user = serializers.ReadOnlyField(source="user.username")
 
     class Meta:
         model = FantasyTeam
         exclude = ("pkid", "created_at", "updated_at")
-        read_only_fields = ('user', 'total_points', 'overall_rank', 'budget', 'gameweek', 'free_transfers', 'transfer_budget')
+        read_only_fields = (
+            "user",
+            "total_points",
+            "overall_rank",
+            "budget",
+            "gameweek",
+            "free_transfers",
+            "transfer_budget",
+        )
 
 
 class FantasyPlayerSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='player.name', read_only=True)
-    position = serializers.CharField(source='player.position', read_only=True)
-    team = serializers.CharField(source='player.team.name', read_only=True)
-    price = serializers.DecimalField(source='purchase_price', max_digits=6, decimal_places=2)
-    jersey_image = serializers.ImageField(source='player.team.jersey_image', read_only=True)
-    player = serializers.UUIDField(source='player.id', read_only=True)  # Return player.id
-    fantasy_team = serializers.UUIDField(source='fantasy_team.id', read_only=True)  # Return fantasy_team.id
+    name = serializers.CharField(source="player.name", read_only=True)
+    position = serializers.CharField(source="player.position", read_only=True)
+    team = serializers.CharField(source="player.team.name", read_only=True)
+    price = serializers.DecimalField(
+        source="purchase_price", max_digits=6, decimal_places=2
+    )
+    jersey_image = serializers.ImageField(
+        source="player.team.jersey_image", read_only=True
+    )
+    player = serializers.UUIDField(
+        source="player.id", read_only=True
+    )  # Return player.id
+    fantasy_team = serializers.UUIDField(
+        source="fantasy_team.id", read_only=True
+    )  # Return fantasy_team.id
 
     class Meta:
         model = FantasyPlayer
         fields = (
-            'id',
-            'name',
-            'position',
-            'team',
-            'price',
-            'fantasy_team',
-            'player',
-            'gameweek',
-            'total_points',
-            'gameweek_points',
-            'is_captain',
-            'is_vice_captain',
-            'is_starter',
-            'purchase_price',
-            'current_value',
-            'jersey_image',
+            "id",
+            "name",
+            "position",
+            "team",
+            "price",
+            "fantasy_team",
+            "player",
+            "gameweek",
+            "total_points",
+            "gameweek_points",
+            "is_captain",
+            "is_vice_captain",
+            "is_starter",
+            "purchase_price",
+            "current_value",
+            "jersey_image",
         )
         read_only_fields = (
-            'total_points',
-            'gameweek_points',
-            'current_value',
-            'jersey_image',
-            'name',
-            'position',
-            'team',
-            'player',
-            'fantasy_team',
+            "total_points",
+            "gameweek_points",
+            "current_value",
+            "jersey_image",
+            "name",
+            "position",
+            "team",
+            "player",
+            "fantasy_team",
         )
 
     # def validate(self, data):
