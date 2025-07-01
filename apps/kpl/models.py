@@ -1,6 +1,6 @@
 from django.db import models
-from util.models import TimeStampedUUIDModel
 
+from util.models import TimeStampedUUIDModel
 
 FIXTURE_STATUS = [
     ("upcoming", "Upcoming"),

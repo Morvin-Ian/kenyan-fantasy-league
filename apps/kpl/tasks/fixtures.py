@@ -1,11 +1,13 @@
-from celery import shared_task
-import requests
-import os
 import logging
-from bs4 import BeautifulSoup
-from util.views import headers
-from apps.kpl.models import Team, Fixture
+import os
 from datetime import datetime
+
+import requests
+from bs4 import BeautifulSoup
+from celery import shared_task
+
+from apps.kpl.models import Fixture, Team
+from util.views import headers
 
 logger = logging.getLogger(__name__)
 

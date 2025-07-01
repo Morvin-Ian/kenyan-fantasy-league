@@ -58,7 +58,7 @@ test-html:
 
 flake8:
 	docker compose exec api flake8 .
-	
+
 black-check:
 	docker compose exec api black --check --exclude='migrations|venv' .
 
@@ -70,10 +70,10 @@ black:
 
 
 isort-check:
-	docker compose exec api isort . --check-only --skip env --skip migrations --skip venv
+	docker compose exec api isort . --check-only --skip env --skip migrations --skip .venv
 
 isort-diff:
-	docker compose exec api isort . --diff --skip env --skip migrations --skip venv
+	docker compose exec api isort . --diff --skip env --skip migrations --skip .venv
 
 isort:
-	docker compose exec api isort . --skip env --skip migrations --skip venv
+	docker compose exec api isort . --skip env --skip migrations --skip .venv

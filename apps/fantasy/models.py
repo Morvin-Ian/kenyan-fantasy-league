@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.db import models
 from django.core.exceptions import ValidationError
+from django.db import models
+
+from apps.kpl.models import Gameweek, Player
 from util.models import TimeStampedUUIDModel
-from apps.kpl.models import Player, Gameweek
 
 User = get_user_model()
 

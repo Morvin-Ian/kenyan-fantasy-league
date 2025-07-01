@@ -1,12 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import (
-    FantasyTeam,
-    FantasyPlayer,
-    FantasyLeague,
-    PlayerTransfer,
-    PlayerPerformance,
-)
+
+from .models import (FantasyLeague, FantasyPlayer, FantasyTeam,
+                     PlayerPerformance, PlayerTransfer)
 
 
 @admin.register(FantasyTeam)

@@ -10,11 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-import os
-from pathlib import Path
 import logging
 import logging.config
+import os
 from datetime import timedelta
+from pathlib import Path
+
 from django.utils.log import DEFAULT_LOGGING
 from dotenv import load_dotenv
 

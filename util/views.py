@@ -1,5 +1,6 @@
-from django.http import JsonResponse
 import random
+
+from django.http import JsonResponse
 
 user_agents = [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "

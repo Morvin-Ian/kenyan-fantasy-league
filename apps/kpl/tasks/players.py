@@ -1,11 +1,13 @@
-from celery import shared_task
-import requests
 import os
-from bs4 import BeautifulSoup
-from util.views import headers
-from apps.kpl.models import Team, Player
-from datetime import datetime
 import re
+from datetime import datetime
+
+import requests
+from bs4 import BeautifulSoup
+from celery import shared_task
+
+from apps.kpl.models import Player, Team
+from util.views import headers
 
 TEAM_URLS = {
     "afc leopards": "AFC_LEOPARDS_URL",

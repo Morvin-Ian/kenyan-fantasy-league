@@ -1,12 +1,10 @@
-from rest_framework.viewsets import ReadOnlyModelViewSet
 from rest_framework.permissions import IsAuthenticated
-from .serializers import (
-    TeamSerializer,
-    StandingSerializer,
-    FixtureSerializer,
-    PlayerSerializer,
-)
-from apps.kpl.models import Team, Standing, Fixture, Player
+from rest_framework.viewsets import ReadOnlyModelViewSet
+
+from apps.kpl.models import Fixture, Player, Standing, Team
+
+from .serializers import (FixtureSerializer, PlayerSerializer,
+                          StandingSerializer, TeamSerializer)
 
 
 class TeamViewSet(ReadOnlyModelViewSet):

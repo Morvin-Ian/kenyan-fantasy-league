@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from apps.kpl.models import Team, Standing, Fixture, Player
+
+from apps.kpl.models import Fixture, Player, Standing, Team
 
 
 class TeamSerializer(serializers.ModelSerializer):

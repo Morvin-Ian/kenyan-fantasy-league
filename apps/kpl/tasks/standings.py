@@ -1,12 +1,13 @@
-import requests
 import os
 from datetime import datetime
 
+import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
 
-from util.views import headers
 from apps.kpl.models import Standing, Team
+from util.views import headers
+
 from .fixtures import find_team
 
 find_team

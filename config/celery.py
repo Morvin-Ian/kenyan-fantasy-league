@@ -1,6 +1,9 @@
 from __future__ import absolute_import
+
 import os
+
 from celery import Celery
+
 from config.settings import base
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")

@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Team, Standing, Player, Fixture, Gameweek
+
+from .models import Fixture, Gameweek, Player, Standing, Team
 
 
 @admin.register(Team)

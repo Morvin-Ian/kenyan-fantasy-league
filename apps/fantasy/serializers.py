@@ -1,11 +1,10 @@
-from apps.accounts.models import User
-from rest_framework import serializers
-from rest_framework import status
-from apps.kpl.models import Player, Gameweek
-from apps.kpl.serializers import PlayerSerializer, TeamSerializer
-from apps.fantasy.models import FantasyTeam, FantasyPlayer
-from apps.kpl.models import Player
 from django.core.exceptions import ValidationError
+from rest_framework import serializers, status
+
+from apps.accounts.models import User
+from apps.fantasy.models import FantasyPlayer, FantasyTeam
+from apps.kpl.models import Gameweek, Player
+from apps.kpl.serializers import PlayerSerializer, TeamSerializer
 
 
 class FantasyTeamSerializer(serializers.ModelSerializer):

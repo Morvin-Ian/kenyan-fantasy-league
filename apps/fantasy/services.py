@@ -1,5 +1,6 @@
-from .models import FantasyTeam
 from apps.accounts.models import User
+
+from .models import FantasyTeam
 
 
 class FantasyService:
