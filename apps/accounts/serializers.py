@@ -12,8 +12,8 @@ class UserSerializer(serializers.ModelSerializer):
     profile_photo = serializers.ImageField(source="profile.profile_photo")
     country = CountryField(source="profile.country")
     city = serializers.CharField(source="profile.city")
-    first_name = serializers.SerializerMethodField()
-    last_name = serializers.SerializerMethodField()
+    first_name = serializers.SerializerMethodField(required=False)
+    last_name = serializers.SerializerMethodField(required=False)
     full_name = serializers.SerializerMethodField(source="get_fullname")
 
     class Meta:

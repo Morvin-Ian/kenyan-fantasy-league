@@ -33,7 +33,7 @@
                                 <img :src="getProfilePhotoUrl()" alt="Avatar"
                                     class="h-10 w-10 rounded-full object-cover" />
                                 <span class="ml-2">
-                                    <span class="font-bold text-xs">Hello, {{ authStore.user?.last_name }}</span>
+                                    <span class="font-bold text-xs">Hello, {{ authStore.user?.username }}</span>
                                     <font-awesome-icon icon="fa-solid fa-chevron-down"
                                         class="ml-1 transition-transform duration-200"
                                         :class="{ 'rotate-180': isAccountOpen }" />

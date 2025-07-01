@@ -15,42 +15,22 @@
         <!-- Name fields in a row -->
         <div class="name-row">
           <div class="form-group">
-            <label for="firstName">First Name</label>
-            <input id="firstName" v-model="form.firstName" type="text" required placeholder="First name"
-              :class="{ error: v$.firstName.$error }" @blur="v$.firstName.$touch" />
-            <span v-if="v$.firstName.$error" class="error-text">
-              {{ v$.firstName.$errors[0].$message }}
+            <label for="username">Username</label>
+            <input id="username" v-model="form.username" type="text" required placeholder="Choose a username"
+              :class="{ error: v$.username.$error }" @blur="v$.username.$touch" />
+            <span v-if="v$.username.$error" class="error-text">
+              {{ v$.username.$errors[0].$message }}
             </span>
           </div>
 
           <div class="form-group">
-            <label for="lastName">Last Name</label>
-            <input id="lastName" v-model="form.lastName" type="text" required placeholder="Last name"
-              :class="{ error: v$.lastName.$error }" @blur="v$.lastName.$touch" />
-            <span v-if="v$.lastName.$error" class="error-text">
-              {{ v$.lastName.$errors[0].$message }}
-            </span>
-          </div>
-        </div>
-
-        <!-- Username field -->
-        <div class="form-group">
-          <label for="username">Username</label>
-          <input id="username" v-model="form.username" type="text" required placeholder="Choose a username"
-            :class="{ error: v$.username.$error }" @blur="v$.username.$touch" />
-          <span v-if="v$.username.$error" class="error-text">
-            {{ v$.username.$errors[0].$message }}
-          </span>
-        </div>
-
-        <!-- Email field -->
-        <div class="form-group">
           <label for="email">Email address</label>
           <input id="email" v-model="form.email" type="email" required placeholder="your@email.com"
             :class="{ error: v$.email.$error }" @blur="v$.email.$touch" />
           <span v-if="v$.email.$error" class="error-text">
             {{ v$.email.$errors[0].$message }}
           </span>
+        </div>
         </div>
 
         <!-- Password field -->
@@ -176,8 +156,6 @@ const showPassword = ref(false);
 const showConfirmPassword = ref(false);
 
 const form = reactive({
-  firstName: "",
-  lastName: "",
   username: "",
   email: "",
   password: "",
@@ -192,24 +170,6 @@ const nameValidator = helpers.regex(/^[a-zA-Z\s-']+$/);
 const usernameValidator = helpers.regex(/^[a-zA-Z0-9_-]+$/);
 
 const rules = {
-  firstName: {
-    required,
-    minLength: minLength(2),
-    maxLength: maxLength(20),
-    validName: helpers.withMessage(
-      "First name can only contain letters, spaces, hyphens and apostrophes",
-      nameValidator
-    ),
-  },
-  lastName: {
-    required,
-    minLength: minLength(2),
-    maxLength: maxLength(20),
-    validName: helpers.withMessage(
-      "Last name can only contain letters, spaces, hyphens and apostrophes",
-      nameValidator
-    ),
-  },
   username: {
     required,
     minLength: minLength(3),
@@ -276,8 +236,6 @@ const handleSubmit = async () => {
 
   try {
     await authStore.register({
-      first_name: form.firstName,
-      last_name: form.lastName,
       username: form.username,
       email: form.email,
       password: form.password,

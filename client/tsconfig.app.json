@@ -5,9 +5,9 @@
   "compilerOptions": {
     "composite": true,
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "target": "ES5", // or another target
-    "module": "ESNext", // or another module system
-    "lib": ["DOM", "ES2015"], // Add ES
+    "target": "ES5", 
+    "module": "ESNext", 
+    "lib": ["DOM", "ES2015"], 
 
     "baseUrl": ".",
     "paths": {

@@ -66,7 +66,7 @@ export const useAuthStore = defineStore("auth", {
         }
         return data;
       } catch (error: any) {
-        const errorMessage = error.response?.data?.errors[0]?.details?.message || "Login failed";
+        const errorMessage = error.response?.data?.detail || "Login failed";
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
@@ -156,7 +156,6 @@ export const useAuthStore = defineStore("auth", {
       this.setError(null);
       try {
         const response = await apiClient.post("/auth/users/reset_password_confirm/", data);
-        console.log(response);
       } catch (error: any) {
         const errorMessage =
           error.response?.data?.detail || "Password reset failed";
