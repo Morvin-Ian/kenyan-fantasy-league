@@ -34,12 +34,8 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
     jersey_image = serializers.ImageField(
         source="player.team.jersey_image", read_only=True
     )
-    player = serializers.UUIDField(
-        source="player.id", read_only=True
-    )  # Return player.id
-    fantasy_team = serializers.UUIDField(
-        source="fantasy_team.id", read_only=True
-    )  # Return fantasy_team.id
+    player = serializers.UUIDField(source="player.id", read_only=True)
+    fantasy_team = serializers.UUIDField(source="fantasy_team.id", read_only=True)
 
     class Meta:
         model = FantasyPlayer

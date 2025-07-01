@@ -1,10 +1,12 @@
 <template>
   <div class="min-h-screen p-6">
-    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Main Fixtures Column -->
+    <div v-if="isLoading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+    </div>
+
+    <div v-else class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div class="lg:col-span-2">
         <div class="bg-white shadow-md rounded-lg overflow-hidden">
-          <!-- Header Section -->
           <div class="border-b p-6 flex flex-col md:flex-row justify-between items-center">
             <div>
               <h1 class="text-3xl font-bold text-gray-800">Kenyan Premier League</h1>
@@ -19,7 +21,7 @@
             </div>
           </div>
 
-          <div class="p-6">
+          <div v-if="fixtures.length > 0" class="p-6">
             <div class="space-y-4">
               <div v-for="match in paginatedFixtures" :key="match.id"
                 class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
@@ -66,8 +68,8 @@
             <div class="mt-6 flex justify-between items-center">
               <button @click="prevPage" :disabled="currentPage === 1"
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
                 <span>Previous</span>
@@ -78,12 +80,16 @@
               <button @click="nextPage" :disabled="currentPage === totalPages"
                 class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all flex items-center space-x-2">
                 <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
+          </div>
+
+          <div v-else class="p-6 text-center text-gray-500">
+            No fixtures available
           </div>
         </div>
       </div>
@@ -158,20 +164,39 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { BarChart2Icon } from 'lucide-vue-next';
 import { useKplStore } from '@/stores/kpl';
 
 const kplStore = useKplStore();
 const { fixtures } = storeToRefs(kplStore);
+const isLoading = ref(false);
+
+watch(() => fixtures.value, (newFixtures) => {
+  if (newFixtures.length === 0) {
+    fetchFixtures();
+  }
+}, { immediate: true });
+
+async function fetchFixtures() {
+  try {
+    isLoading.value = true;
+    await kplStore.fetchFixtures();
+  } catch (error) {
+    console.error("Failed to fetch fixtures:", error);
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 const currentPage = ref(1);
 const itemsPerPage = 5;
 
-const totalPages = computed(() => Math.ceil(fixtures.value.length / itemsPerPage));
+const totalPages = computed(() => Math.ceil(fixtures.value.length / itemsPerPage) || 1);
 
 const paginatedFixtures = computed(() => {
+  if (fixtures.value.length === 0) return [];
   const start = (currentPage.value - 1) * itemsPerPage;
   return fixtures.value.slice(start, start + itemsPerPage);
 });
@@ -188,7 +213,6 @@ const prevPage = () => {
   }
 };
 
-// Utility Functions
 const formatDatePart = (dateStr) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);

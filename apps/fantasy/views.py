@@ -1,12 +1,8 @@
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from rest_framework_simplejwt.authentication import \
-    JWTStatelessUserAuthentication
 
 from apps.fantasy.models import FantasyPlayer, FantasyTeam
 
@@ -63,6 +59,11 @@ class FantasyPlayerViewSet(ModelViewSet):
                 players = FantasyPlayer.objects.filter(fantasy_team=team.first())
                 serializer = self.get_serializer(players, many=True)
                 return Response(serializer.data, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"detail": "No fantasy team found for this user."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         except Exception as e:
             return Response(
                 {"detail": "An unexpected error occurred.", "error": str(e)},

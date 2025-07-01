@@ -1,6 +1,9 @@
 <template>
     <div class="min-h-screen p-2 md:p-10">
-        <div class="max-w-7xl mx-auto">
+        <div v-if="isLoading" class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+        </div>
+        <div v-else class="max-w-7xl mx-auto">
             <div
                 class="bg-white rounded-xl md:rounded-3xl shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl">
                 <div class="bg-white p-3 md:p-6 text-center relative">
@@ -132,9 +135,8 @@
         </div>
     </div>
 </template>
-
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { useAuthStore } from '@/stores/auth';
 import { useKplStore } from "@/stores/kpl";
 import { useRouter } from 'vue-router';
@@ -161,7 +163,25 @@ const tableHeaders: string[] = [
 ];
 
 const currentPage = ref(1);
-const itemsPerPage = ref(9);
+const itemsPerPage = ref(window.innerWidth < 640 ? 5 : 9);
+const isLoading = ref(false);
+
+watch(() => kplStore.standings, (newStandings) => {
+    if (newStandings.length === 0) {
+        fetchStandings();
+    }
+}, { immediate: true });
+
+async function fetchStandings() {
+    try {
+        isLoading.value = true;
+        await kplStore.fetchStandings();
+    } catch (error) {
+        console.error("Failed to fetch standings:", error);
+    } finally {
+        isLoading.value = false;
+    }
+}
 
 function getResponsiveHeader(header: string): string {
     if (window.innerWidth < 640) {
@@ -183,21 +203,16 @@ function getRandomFormResults(): string[] {
     return window.innerWidth < 640 ? form.slice(0, 3) : form;
 }
 
-function getMobileFormResults(form: string[]): string[] {
-    if (window.innerWidth < 640) {
-        return form.slice(0, 3);
-    }
-    return form;
-}
-
-
 const paginatedTeams = computed<TeamStanding[]>(() => {
+    if (kplStore.standings.length === 0) return [];
     const start = (currentPage.value - 1) * itemsPerPage.value;
     const end = start + itemsPerPage.value;
     return kplStore.standings.slice(start, end);
 });
 
-const totalPages = computed(() => Math.ceil(kplStore.standings.length / itemsPerPage.value));
+const totalPages = computed(() =>
+    Math.ceil(kplStore.standings.length / itemsPerPage.value) || 1
+);
 
 function nextPage() {
     if (currentPage.value < totalPages.value) {
@@ -213,7 +228,7 @@ function prevPage() {
 
 function getFormBadgeColor(result: string): string {
     const formResults = ["W", "D", "L"];
-    if (!formResults.includes(result)) return "bg-gray-500"; // Default color for unexpected values
+    if (!formResults.includes(result)) return "bg-gray-500";
     return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
 }
 
@@ -226,6 +241,8 @@ function getPositionClass(position: number): string {
 }
 
 const leagueInsights = computed(() => {
+    if (kplStore.standings.length === 0) return [];
+
     const leagueLeader = kplStore.standings.reduce((max, team) =>
         (max.points > team.points) ? max : team
     );
@@ -286,9 +303,16 @@ onMounted(() => {
     if (!authStore.isAuthenticated) {
         router.push("/sign-in");
     }
+
+    itemsPerPage.value = window.innerWidth < 640 ? 5 : 9;
+
     window.addEventListener('resize', () => {
         itemsPerPage.value = window.innerWidth < 640 ? 5 : 9;
     });
-});
 
+    // Fetch standings if empty
+    if (kplStore.standings.length === 0) {
+        fetchStandings();
+    }
+});
 </script>

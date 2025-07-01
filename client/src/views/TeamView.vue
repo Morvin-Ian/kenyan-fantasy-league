@@ -173,7 +173,6 @@ function initializeTeamState() {
     }
   });
 
-  // Add placeholder players to starting eleven if needed
   if (!startingElevenRef.value.goalkeeper.id || startingElevenRef.value.goalkeeper.id.startsWith("placeholder")) {
     startingElevenRef.value.goalkeeper = createPlaceholderPlayer("GKP", 0);
   }
@@ -187,7 +186,6 @@ function initializeTeamState() {
     startingElevenRef.value.forwards.push(createPlaceholderPlayer("FWD", startingElevenRef.value.forwards.length));
   }
 
-  // Add placeholder players to bench if needed
   const requiredBenchPlayers = 4;
   const benchCompositions = {
     "3-4-3": { DEF: 2, MID: 1, FWD: 0 },
@@ -199,52 +197,36 @@ function initializeTeamState() {
   };
   const desiredBench = benchCompositions[formationString] || benchCompositions["4-4-2"];
 
-  // Ensure one goalkeeper on the bench
-  const hasGoalkeeper = benchPlayersRef.value.some((player) => player.position === "GKP" && !player.id.startsWith("placeholder"));
-  if (!hasGoalkeeper) {
-    benchPlayersRef.value.push(createPlaceholderPlayerValue("GKP", benchPlayersRef.value.length, false));
-  }
+  benchPlayersRef.value = [];
 
-  // Count current bench players by position (excluding placeholders)
-  const benchPositionCounts = benchPlayersRef.value.reduce(
-    (acc, player) => {
-      if (!player.id.startsWith("placeholder")) {
-        acc[player.position] = (acc[player.position] || 0) + 1;
+  benchPlayersRef.value.push(createPlaceholderPlayer("GKP", 0, false));
+
+  const positionsToAdd = [
+    { position: "DEF", count: desiredBench.DEF },
+    { position: "MID", count: desiredBench.MID },
+    { position: "FWD", count: desiredBench.FWD },
+  ];
+
+  let benchIndex = 1; // Start after GKP
+  positionsToAdd.forEach(({ position, count }) => {
+    for (let i = 0; i < count; i++) {
+      if (benchPlayersRef.value.length < requiredBenchPlayers) {
+        benchPlayersRef.value.push(createPlaceholderPlayer(position, benchIndex++, false));
       }
-      return acc;
-    },
-    { GKP: 0, DEF: 0, MID: 0, FWD: 0 } as Record<string, number>
-  );
+    }
+  });
 
-  // Add placeholders to meet desired bench composition
-  const positions = [
-    { position: "FWD", needed: desiredBench.FWD - benchPositionCounts.FWD },
-    { position: "MID", needed: desiredBench.MID - benchPositionCounts.MID },
-    { position: "DEF", needed: desiredBench.DEF - benchPositionCounts.DEF },
-  ].filter((pos) => pos.needed > 0);
-
-  while (benchPlayersRef.value.length < requiredBenchPlayers && positions.length > 0) {
-    const nextPosition = positions.reduce((prev, curr) => (prev.needed > curr.needed ? prev : curr)).position;
-    benchPlayersRef.value.push(createPlaceholderPlayer(nextPosition, benchPlayersRef.value.length, false));
-    benchPositionCounts[nextPosition]++;
-    positions.find((pos) => pos.position === nextPosition)!.needed--;
-  }
-
-  // Fill remaining bench slots with default placeholders (e.g., MID)
   while (benchPlayersRef.value.length < requiredBenchPlayers) {
-    benchPlayersRef.value.push(createPlaceholderPlayer("MID", benchPlayersRef.value.length, false));
+    benchPlayersRef.value.push(createPlaceholderPlayer("MID", benchIndex++, false));
   }
 
-  // Save initial state
   initialTeamState.value = {
     startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
     benchPlayers: JSON.parse(JSON.stringify(benchPlayersRef.value)),
   };
-  console.log("Initialized team state:", initialTeamState.value);
   hasUnsavedChanges.value = false;
 }
 
-// Deep comparison function to check if team states are equal
 function areTeamsEqual(state1: { startingEleven: StartingEleven; benchPlayers: Player[] }, state2: { startingEleven: StartingEleven; benchPlayers: Player[] }): boolean {
   const comparePlayers = (p1: Player, p2: Player) => p1.id === p2.id && p1.is_captain === p2.is_captain && p1.is_vice_captain === p2.is_vice_captain && p1.is_starter === p2.is_starter;
   const comparePlayerArrays = (arr1: Player[], arr2: Player[]) => arr1.length === arr2.length && arr1.every((p1, i) => comparePlayers(p1, arr2[i]));
