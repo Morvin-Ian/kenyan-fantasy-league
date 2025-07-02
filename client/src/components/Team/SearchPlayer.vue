@@ -6,7 +6,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
-      <div class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-indigo-100 flex-grow overflow-y-auto">
+      <div
+        class="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl overflow-hidden border border-indigo-100 flex-grow overflow-y-auto">
         <!-- Header -->
         <div class="relative p-6 sm:p-8 bg-gradient-to-r from-blue-900 to-indigo-800 overflow-hidden">
           <div class="absolute inset-0 opacity-20">
@@ -19,7 +20,8 @@
           <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white relative z-10 flex flex-wrap items-center">
             <span class="mr-3 text-3xl sm:text-4xl">⚽</span> Fantasy Player Search
           </h1>
-          <p class="text-blue-100 mt-2 max-w-2xl text-sm sm:text-base">Find and add the best players to your fantasy team.</p>
+          <p class="text-blue-100 mt-2 max-w-2xl text-sm sm:text-base">Find and add the best players to your fantasy
+            team.</p>
         </div>
 
         <!-- Search and Filters -->
@@ -296,6 +298,14 @@ const loading = ref(true);
 const currentPage = ref(1);
 const playersPerPage = ref(5);
 
+const getPlayers = async () => {
+  await kplStore.fetchPlayers();
+};
+
+if (kplStore.players.length === 0) {
+  getPlayers();
+}
+
 const filteredPlayers = computed(() => {
   return (kplStore.players || []).filter((player) => {
     const matchesName = player.name.toLowerCase().includes(filters.name.toLowerCase());
@@ -380,7 +390,7 @@ onMounted(async () => {
   if (kplStore.teams.length === 0) {
     await kplStore.fetchTeams();
   }
-  await kplStore.fetchPlayers();
+
   loading.value = false;
   triggerAnimation();
 

@@ -33,7 +33,9 @@ onMounted(async () => {
       router.push("/sign-in");
     } else {
       await authStore.initialize();
-      await kplStore.fetchAllData();
+      if (kplStore.fixtures.length == 0 || kplStore.standings.length == 0) {
+        await kplStore.fetchAllData();
+      }
     }
   } finally {
     isLoading.value = false;

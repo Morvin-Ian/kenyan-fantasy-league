@@ -166,6 +166,9 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async refreshUserProfile(): Promise<void> {
+      if (this.user !== null && this.user !== undefined) {
+        return;
+      }
       this.setLoading(true);
       try {
         const { data } = await apiClient.get("/profile");

@@ -35,13 +35,14 @@ export const useFantasyStore = defineStore("fantasy", {
       }
     },
 
-    async createFantasyTeam(name: string) {
+    async createFantasyTeam(name: string, formation: string) {
       try {
         this.isLoading = true;
-        const response = await apiClient.post("/fantasy/teams/", { name });
+        const response = await apiClient.post("/fantasy/teams/", { name, formation });
         this.userTeam = response.data;
       } catch (error) {
-        this.error = error;
+        const errorMessage = error.response?.data.name[0] || "Failed to create team. Please try again.";
+        this.error = errorMessage;
       } finally {
         this.isLoading = false;
       }

@@ -62,7 +62,7 @@ class FantasyPlayerViewSet(ModelViewSet):
             else:
                 return Response(
                     {"detail": "No fantasy team found for this user."},
-                    status=status.HTTP_404_NOT_FOUND,
+                    status=status.HTTP_200_OK,
                 )
         except Exception as e:
             return Response(

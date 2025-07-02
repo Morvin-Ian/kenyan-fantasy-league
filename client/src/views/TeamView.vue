@@ -44,6 +44,22 @@
               class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your team name" required />
           </div>
+          <div class="mb-4">
+            <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
+            <select v-model="selectedFormation" id="formation"
+              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              <option value="" disabled>Select a formation</option>
+              <option value="3-4-3">3-4-3</option>
+              <option value="3-5-2">3-5-2</option>
+              <option value="4-4-2">4-4-2</option>
+              <option value="4-3-3">4-3-3</option>
+              <option value="5-3-2">5-3-2</option>
+              <option value="5-4-1">5-4-1</option>
+            </select>
+          </div>
+          <div v-if="errorMessage" class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+            <span>{{ errorMessage }}</span>
+          </div>
           <div class="flex justify-end gap-4">
             <button type="button" @click="showCreateTeamModal = false"
               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded">Cancel</button>
@@ -53,7 +69,7 @@
         </form>
       </div>
     </div>
-    <div v-if="showSavedNotification"
+    <!-- <div v-if="showSavedNotification"
       class="fixed bottom-7 left-1/2 transform -translate-x-1/2 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50 flex items-center">
       <svg class="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
         xmlns="http://www.w3.org/2000/svg">
@@ -61,7 +77,7 @@
         </path>
       </svg>
       <span>Team changes saved successfully!</span>
-    </div>
+    </div> -->
   </div>
 </template>
 
@@ -92,6 +108,8 @@ const switchSource = ref<Player | null>(null);
 const isBenchSwitch = ref(false);
 const showCreateTeamModal = ref(false);
 const teamName = ref("");
+const selectedFormation = ref("");
+const errorMessage = ref<string | null>(null);
 const hasUnsavedChanges = ref(false);
 const showSavedNotification = ref(false);
 const initialTeamState = ref<{
@@ -140,6 +158,7 @@ const createPlaceholderPlayer = (position: string, index: number, isStarter: boo
 
 const toggleModal = () => {
   showCreateTeamModal.value = !showCreateTeamModal.value;
+  errorMessage.value = null; 
 };
 
 const closeSearchModal = () => {
@@ -149,10 +168,9 @@ const closeSearchModal = () => {
 
 function initializeTeamState() {
   const players = fantasyStore.fantasyPlayers || [];
-  const formationString = fantasyStore.userTeam[0]?.formation || "4-4-2";
+  const formationString = selectedFormation.value || fantasyStore.userTeam[0]?.formation || "4-4-2";
   const [def, mid, fwd] = formationString.split("-").map(Number);
 
-  // Initialize starting eleven
   startingElevenRef.value = {
     goalkeeper: {} as Player,
     defenders: [],
@@ -161,7 +179,6 @@ function initializeTeamState() {
   };
   benchPlayersRef.value = [];
 
-  // Add real players to starting eleven or bench
   players.forEach((player: Player) => {
     if (player.is_starter) {
       if (player.position === "GKP") startingElevenRef.value.goalkeeper = player;
@@ -207,7 +224,7 @@ function initializeTeamState() {
     { position: "FWD", count: desiredBench.FWD },
   ];
 
-  let benchIndex = 1; // Start after GKP
+  let benchIndex = 1;
   positionsToAdd.forEach(({ position, count }) => {
     for (let i = 0; i < count; i++) {
       if (benchPlayersRef.value.length < requiredBenchPlayers) {
@@ -260,7 +277,6 @@ const openPlayerModal = (player: Player) => {
     selectedPlayer.value = player;
     showModal.value = true;
   } else {
-    // Directly open search modal for placeholders
     selectedPlayer.value = player;
     showSearchModal.value = true;
   }
@@ -296,14 +312,12 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
 
   const oldPlayer = selectedPlayer.value;
 
-  // Validate position compatibility
   if (oldPlayer.position !== newPlayer.position && !isValidFormationChange(oldPlayer, newPlayer)) {
     alert("Invalid transfer: Formation constraints not met (min 3 DEF, 3 MID, 1 FWD).");
     closeSearchModal();
     return;
   }
 
-  // Check team limits
   const sameTeamPlayers = [
     ...startingElevenRef.value.defenders,
     ...startingElevenRef.value.midfielders,
@@ -317,14 +331,12 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
     return;
   }
 
-  // Check if new player is already in the team
   if (isPlayerInTeam(newPlayer)) {
     alert("This player is already in your team.");
     closeSearchModal();
     return;
   }
 
-  // Perform the transfer
   if (isPlayerInStartingEleven(oldPlayer)) {
     replaceStartingWithNewPlayer(oldPlayer, newPlayer);
   } else {
@@ -378,7 +390,6 @@ const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) =
     }
   }
 
-  // Replace a placeholder on the bench if necessary
   const benchIndex = benchPlayersRef.value.findIndex((p) => p.id.startsWith("placeholder") && p.position === newPlayer.position);
   if (benchIndex !== -1) {
     benchPlayersRef.value.splice(benchIndex, 1, createPlaceholderPlayer(newPlayer.position, benchIndex, false));
@@ -409,7 +420,6 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
     benchPlayersRef.value.splice(index, 1, newFantasyPlayer);
   }
 
-  // Maintain bench composition by replacing a placeholder on the bench if needed
   const benchComposition = {
     GKP: 1,
     DEF: 1,
@@ -494,7 +504,6 @@ const saveTeamChanges = async () => {
       benchPlayers: benchPlayersRef.value.filter((p) => !p.id.startsWith("placeholder")),
     };
     await fantasyStore.saveTeam(teamData);
-    // Reset initial state after saving
     initialTeamState.value = {
       startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
       benchPlayers: JSON.parse(JSON.stringify(benchPlayersRef.value)),
@@ -514,12 +523,17 @@ const saveTeamChanges = async () => {
 async function createTeam() {
   try {
     if (!teamName.value.trim()) {
-      alert("Please enter a valid team name.");
+      errorMessage.value = "Please enter a valid team name.";
       return;
     }
-    await fantasyStore.createFantasyTeam(teamName.value);
+    if (!selectedFormation.value) {
+      errorMessage.value = "Please select a formation.";
+      return;
+    }
+    await fantasyStore.createFantasyTeam(teamName.value, selectedFormation.value);
     toggleModal();
     teamName.value = "";
+    selectedFormation.value = "";
     await fantasyStore.fetchUserFantasyTeam();
     await fantasyStore.fetchFantasyTeamPlayers();
     initializeTeamState();
@@ -529,7 +543,7 @@ async function createTeam() {
     }, 3000);
   } catch (error) {
     console.error("Error creating team:", error);
-    alert("Failed to create team. Please try again.");
+    errorMessage.value = "Failed to create team. Please try again.";
   }
 }
 
@@ -628,7 +642,7 @@ function addPlayerToStartingEleven(player: Player) {
 
 function replaceStartingWithBenchPlayer(startingPlayer: Player, benchPlayer: Player) {
   if (startingPlayer.position === "GKP" && benchPlayer.position === "GKP") {
-    const tempGoalkeeper = { ...startingElevenRefvenue.value.goalkeeper };
+    const tempGoalkeeper = { ...startingElevenRef.value.goalkeeper };
     startingElevenRef.value.goalkeeper = { ...benchPlayer, is_starter: true };
     const benchIndex = benchPlayersRef.value.findIndex((p) => p.id === benchPlayer.id);
     benchPlayersRef.value[benchIndex] = {
@@ -806,8 +820,10 @@ onMounted(async () => {
     router.push("/sign-in");
   }
   await fantasyStore.fetchUserFantasyTeam();
-  await fantasyStore.fetchFantasyTeamPlayers();
-  initializeTeamState();
+  if (fantasyStore.userTeam.length > 0) {
+    await fantasyStore.fetchFantasyTeamPlayers();
+    initializeTeamState();
+  }
 });
 </script>
 
