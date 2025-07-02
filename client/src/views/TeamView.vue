@@ -158,7 +158,7 @@ const createPlaceholderPlayer = (position: string, index: number, isStarter: boo
 
 const toggleModal = () => {
   showCreateTeamModal.value = !showCreateTeamModal.value;
-  errorMessage.value = null; 
+  errorMessage.value = null;
 };
 
 const closeSearchModal = () => {
@@ -819,9 +819,13 @@ onMounted(async () => {
   if (!authStore.isAuthenticated) {
     router.push("/sign-in");
   }
-  await fantasyStore.fetchUserFantasyTeam();
+  if (!fantasyStore.userTeam.length) {
+    await fantasyStore.fetchUserFantasyTeam();
+  }
   if (fantasyStore.userTeam.length > 0) {
-    await fantasyStore.fetchFantasyTeamPlayers();
+    if (!fantasyStore.fantasyPlayers.length) {
+      await fantasyStore.fetchFantasyTeamPlayers();
+    }
     initializeTeamState();
   }
 });
