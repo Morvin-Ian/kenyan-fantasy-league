@@ -23,7 +23,13 @@ class FantasyTeam(TimeStampedUUIDModel):
     )
     name = models.CharField(max_length=100, unique=True)
     budget = models.DecimalField(max_digits=6, decimal_places=2, default=100.00)
-    gameweek = models.PositiveIntegerField(default=1)
+    current_gameweek = models.ForeignKey(
+        Gameweek,
+        on_delete=models.CASCADE,
+        related_name="current_teams",
+        null=True,
+        blank=True,
+    )
     formation = models.CharField(
         max_length=10, choices=FORMATION_CHOICES, default="3-4-3"
     )
@@ -39,60 +45,96 @@ class FantasyTeam(TimeStampedUUIDModel):
     def __str__(self):
         return f"{self.name} (Owner: {self.user.username})"
 
-    # def clean(self):
-    #     formation_map = {
-    #         '3-4-3': {'DEF': 3, 'MID': 4, 'FWD': 3, 'GK': 1},
-    #         '3-5-2': {'DEF': 3, 'MID': 5, 'FWD': 2, 'GK': 1},
-    #         '4-4-2': {'DEF': 4, 'MID': 4, 'FWD': 2, 'GK': 1},
-    #         '4-3-3': {'DEF': 4, 'MID': 3, 'FWD': 3, 'GK': 1},
-    #         '5-3-2': {'DEF': 5, 'MID': 3, 'FWD': 2, 'GK': 1},
-    #         '5-4-1': {'DEF': 5, 'MID': 4, 'FWD': 1, 'GK': 1},
-    #     }
+    def clean(self):
+        """Validate team composition including starters and bench players"""
+        formation_map = {
+            "3-4-3": {"DEF": 3, "MID": 4, "FWD": 3, "GK": 1},
+            "3-5-2": {"DEF": 3, "MID": 5, "FWD": 2, "GK": 1},
+            "4-4-2": {"DEF": 4, "MID": 4, "FWD": 2, "GK": 1},
+            "4-3-3": {"DEF": 4, "MID": 3, "FWD": 3, "GK": 1},
+            "5-3-2": {"DEF": 5, "MID": 3, "FWD": 2, "GK": 1},
+            "5-4-1": {"DEF": 5, "MID": 4, "FWD": 1, "GK": 1},
+        }
 
-    #     if not self._state.adding and self.players.exists():
-    #         position_counts = {}
-    #         for player in self.players.all():
-    #             pos = player.player.position
-    #             position_counts[pos] = position_counts.get(pos, 0) + 1
+        bench_compositions = {
+            "3-4-3": {"DEF": 2, "MID": 1, "FWD": 0, "GK": 1},
+            "3-5-2": {"DEF": 2, "MID": 0, "FWD": 1, "GK": 1},
+            "4-4-2": {"DEF": 1, "MID": 1, "FWD": 1, "GK": 1},
+            "4-3-3": {"DEF": 1, "MID": 2, "FWD": 0, "GK": 1},
+            "5-3-2": {"DEF": 0, "MID": 2, "FWD": 1, "GK": 1},
+            "5-4-1": {"DEF": 0, "MID": 1, "FWD": 2, "GK": 1},
+        }
 
-    #         required = formation_map[self.formation]
-    #         for pos, required_count in required.items():
-    #             actual_count = position_counts.get(pos, 0)
-    #             if actual_count != required_count:
-    #                 raise ValidationError(f"Formation {self.formation} requires {required_count} {pos} players, you have {actual_count}")
+        if not self._state.adding and self.players.exists():
+            # Count starter positions
+            starter_counts = {}
+            bench_counts = {}
 
-    #     total_value = sum(
-    #         float(p.current_value)
-    #         for p in self.players.all()
-    #     )
-    #     if total_value > float(self.budget):
-    #         raise ValidationError("Team value exceeds budget")
+            for fantasy_player in self.players.all():
+                pos = fantasy_player.player.position
+                if fantasy_player.is_starter:
+                    starter_counts[pos] = starter_counts.get(pos, 0) + 1
+                else:
+                    bench_counts[pos] = bench_counts.get(pos, 0) + 1
+
+            # Validate starter formation
+            required_starters = formation_map[self.formation]
+            for pos, required_count in required_starters.items():
+                actual_count = starter_counts.get(pos, 0)
+                if actual_count != required_count:
+                    raise ValidationError(
+                        f"Formation {self.formation} requires {required_count} {pos} "
+                        f"starters, you have {actual_count}"
+                    )
+
+            # Validate bench composition
+            required_bench = bench_compositions[self.formation]
+            for pos, required_count in required_bench.items():
+                actual_count = bench_counts.get(pos, 0)
+                if actual_count != required_count:
+                    raise ValidationError(
+                        f"Formation {self.formation} requires {required_count} {pos} "
+                        f"bench players, you have {actual_count}"
+                    )
+
+            # Validate total squad size (11 starters + 4 bench = 15)
+            total_players = self.players.count()
+            if total_players != 15:
+                raise ValidationError(
+                    f"Squad must have exactly 15 players, you have {total_players}"
+                )
+
+            total_value = sum(float(p.current_value) for p in self.players.all())
+            if total_value > float(self.budget):
+                raise ValidationError("Team value exceeds budget")
 
 
 class FantasyPlayer(TimeStampedUUIDModel):
     fantasy_team = models.ForeignKey(
         FantasyTeam, on_delete=models.CASCADE, related_name="players"
     )
-    player = models.ForeignKey(Player, on_delete=models.DO_NOTHING)
-    gameweek = models.ForeignKey(
-        Gameweek, on_delete=models.CASCADE, related_name="fantasy_players"
-    )
+    player = models.ForeignKey(Player, on_delete=models.CASCADE)
     total_points = models.PositiveIntegerField(default=0)
-    gameweek_points = models.PositiveIntegerField(default=0)
     is_captain = models.BooleanField(default=False)
     is_vice_captain = models.BooleanField(default=False)
     is_starter = models.BooleanField(default=True)
     purchase_price = models.DecimalField(max_digits=6, decimal_places=2)
     current_value = models.DecimalField(max_digits=6, decimal_places=2)
+    gameweek_added = models.ForeignKey(
+        Gameweek,
+        on_delete=models.CASCADE,
+        related_name="players_added",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = "Fantasy Player"
         verbose_name_plural = "Fantasy Players"
+        unique_together = ["fantasy_team", "player"]
 
     def __str__(self):
-        return (
-            f"{self.player.name} - {self.fantasy_team.name} (GW {self.gameweek.number})"
-        )
+        return f"{self.player.name} - {self.fantasy_team.name}"
 
     def clean(self):
         if self.fantasy_team.players.count() >= 15 and not self.pk:
@@ -104,10 +146,28 @@ class FantasyPlayer(TimeStampedUUIDModel):
             player__team=self.player.team
         ).exclude(pk=self.pk)
 
-        if same_team_players.count() >= 3:
+        if same_team_players.count() > 3:
             raise ValidationError(
                 "You can't select more than 3 players from a single real team."
             )
+
+        # Validate captain/vice-captain rules
+        if self.is_captain:
+            other_captains = self.fantasy_team.players.filter(is_captain=True).exclude(
+                pk=self.pk
+            )
+            if other_captains.exists():
+                raise ValidationError("Only one player can be captain.")
+
+            if not self.is_starter:
+                raise ValidationError("Captain must be a starter.")
+
+        if self.is_vice_captain:
+            other_vice_captains = self.fantasy_team.players.filter(
+                is_vice_captain=True
+            ).exclude(pk=self.pk)
+            if other_vice_captains.exists():
+                raise ValidationError("Only one player can be vice-captain.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -151,8 +211,19 @@ class PlayerTransfer(TimeStampedUUIDModel):
 
 
 class PlayerPerformance(TimeStampedUUIDModel):
-    fantasy_player = models.ForeignKey(
-        FantasyPlayer, on_delete=models.CASCADE, related_name="performances"
+    player = models.ForeignKey(
+        Player,
+        on_delete=models.CASCADE,
+        related_name="performances",
+        null=True,
+        blank=True,
+    )
+    gameweek = models.ForeignKey(
+        Gameweek,
+        on_delete=models.CASCADE,
+        related_name="player_performances",
+        null=True,
+        blank=True,
     )
     yellow_cards = models.PositiveIntegerField(default=0)
     red_cards = models.PositiveIntegerField(default=0)
@@ -164,10 +235,50 @@ class PlayerPerformance(TimeStampedUUIDModel):
     penalties_saved = models.PositiveIntegerField(default=0)
     penalties_missed = models.PositiveIntegerField(default=0)
     minutes_played = models.PositiveIntegerField(default=0)
+    fantasy_points = models.PositiveIntegerField(default=0)
 
     class Meta:
         verbose_name = "Player Performance"
-        verbose_name_plural = "Players Performance"
+        verbose_name_plural = "Player Performances"
+        unique_together = ["player", "gameweek"]
 
     def __str__(self):
-        return f"{self.fantasy_player.player.name} - GW{self.fantasy_player.gameweek.number} ({self.goals_scored}G, {self.assists}A, {self.minutes_played}min)"
+        return f"{self.player.name} - GW{self.gameweek.number} ({self.goals_scored}G, {self.assists}A, {self.fantasy_points} pts)"
+
+
+class TeamSelection(TimeStampedUUIDModel):
+
+    fantasy_team = models.ForeignKey(
+        FantasyTeam, on_delete=models.CASCADE, related_name="selections"
+    )
+    gameweek = models.ForeignKey(
+        Gameweek, on_delete=models.CASCADE, related_name="team_selections"
+    )
+    formation = models.CharField(max_length=10, choices=FORMATION_CHOICES)
+    captain = models.ForeignKey(
+        FantasyPlayer, on_delete=models.CASCADE, related_name="captain_selections"
+    )
+    vice_captain = models.ForeignKey(
+        FantasyPlayer, on_delete=models.CASCADE, related_name="vice_captain_selections"
+    )
+    starters = models.ManyToManyField(FantasyPlayer, related_name="starter_selections")
+    is_finalized = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Team Selection"
+        verbose_name_plural = "Team Selections"
+        unique_together = ["fantasy_team", "gameweek"]
+
+    def __str__(self):
+        return f"{self.fantasy_team.name} - GW{self.gameweek.number} ({self.formation})"
+
+    def clean(self):
+        """Validate team selection for the gameweek"""
+        if self.starters.count() != 11:
+            raise ValidationError("Must select exactly 11 starters.")
+
+        if self.captain not in self.starters.all():
+            raise ValidationError("Captain must be in starting lineup.")
+
+        if self.vice_captain not in self.starters.all():
+            raise ValidationError("Vice-captain must be in starting lineup.")

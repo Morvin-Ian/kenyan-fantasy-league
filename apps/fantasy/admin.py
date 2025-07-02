@@ -18,9 +18,9 @@ class FantasyTeamAdmin(admin.ModelAdmin):
         "formation",
         "total_points",
         "budget_display",
-        "gameweek",
+        "current_gameweek",
     )
-    list_filter = ("formation", "gameweek")
+    list_filter = ("formation", "name")
     search_fields = ("name", "user__username", "user__email")
 
     def owner_display(self, obj):
@@ -60,12 +60,12 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
     list_display = (
         "player_name",
         "fantasy_team_name",
-        "gameweek_display",
+        "gameweek_added",
         "is_starter",
         "captain_status",
         "points_display",
     )
-    list_filter = ("is_starter", "is_captain", "is_vice_captain", "gameweek")
+    list_filter = ("is_starter", "is_captain", "is_vice_captain", "gameweek_added")
     search_fields = ("player__name", "fantasy_team__name")
 
     def player_name(self, obj):
@@ -78,11 +78,6 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
 
     fantasy_team_name.short_description = "Team"
 
-    def gameweek_display(self, obj):
-        return f"GW {obj.gameweek.number}"
-
-    gameweek_display.short_description = "Gameweek"
-
     def captain_status(self, obj):
         if obj.is_captain:
             return format_html('<span style="color: gold;">✦✦ Captain</span>')
@@ -93,7 +88,7 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
     captain_status.short_description = "Role"
 
     def points_display(self, obj):
-        return format_html("<b>{}</b>", obj.gameweek_points)
+        return format_html("<b>{}</b>", obj.gameweek_added)
 
     points_display.short_description = "Points"
 
@@ -116,14 +111,13 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
     list_display = (
         "player_name",
         "team_name",
-        "gameweek_display",
         "minutes_played",
         "goals_scored",
         "assists",
         "yellow_card_display",
         "red_card_display",
     )
-    list_filter = ("fantasy_player__gameweek", "yellow_cards", "red_cards")
+    list_filter = ("yellow_cards", "red_cards")
     search_fields = ("fantasy_player__player__name",)
 
     def player_name(self, obj):
@@ -135,11 +129,6 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
         return obj.fantasy_player.fantasy_team.name
 
     team_name.short_description = "Fantasy Team"
-
-    def gameweek_display(self, obj):
-        return f"GW {obj.fantasy_player.gameweek.number}"
-
-    gameweek_display.short_description = "Gameweek"
 
     def yellow_card_display(self, obj):
         if obj.yellow_cards > 0:
