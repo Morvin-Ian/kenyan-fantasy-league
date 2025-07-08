@@ -55,7 +55,8 @@
             <div class="flex items-center gap-2 sm:gap-3">
               <div
                 class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-50 rounded-full p-2 group-hover:scale-110 transition-transform duration-300">
-                <img src="../../assets/logo.png" alt="" class="w-full h-full object-contain" />
+                <img :src="game.home_team?.logo_url || require('../../assets/logo.png')"
+                  :alt="`${game.home_team.name} logo`" class="w-full h-full object-contain"/>
               </div>
               <span class="text-xs sm:text-sm font-light text-gray-700">{{ game.type }}</span>
             </div>
@@ -238,9 +239,9 @@ function getRandomFormResults(): string[] {
 }
 
 function getFormBadgeColor(result: string): string {
-    const formResults = ["W", "D", "L"];
-    if (!formResults.includes(result)) return "bg-gray-500"; // Default color for unexpected values
-    return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
+  const formResults = ["W", "D", "L"];
+  if (!formResults.includes(result)) return "bg-gray-500"; // Default color for unexpected values
+  return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
 }
 
 const formatDatePart = (dateStr?: string) => {

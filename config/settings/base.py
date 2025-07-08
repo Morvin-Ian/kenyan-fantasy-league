@@ -241,6 +241,9 @@ logging.config.dictConfig(
             "": {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
             "apps": {"level": "INFO", "handlers": ["console"], "propagate": False},
             "django.server": DEFAULT_LOGGING["loggers"]["django.server"],
+            "celery": {"handlers": [], "level": "WARNING", "propagate": False,},
+            "flower": {"handlers": [], "level": "WARNING","propagate": False,},
+            "kombu": {"handlers": [], "level": "WARNING","propagate": False,}
         },
     }
 )
