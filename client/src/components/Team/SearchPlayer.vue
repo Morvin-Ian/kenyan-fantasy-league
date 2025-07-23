@@ -243,7 +243,7 @@
 import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useKplStore } from "@/stores/kpl";
 import type { Player } from "@/helpers/types/team";
-import { FantasyPlayer } from "@/helpers/types/fantasy";
+import { type FantasyPlayer } from "@/helpers/types/fantasy";
 
 const props = defineProps<{
   showSearchModal: boolean;
@@ -259,6 +259,10 @@ const kplStore = useKplStore();
 
 watch(
   () => props.selectedPlayer,
+  (newVal) => {
+    if (newVal && newVal.isPlaceholder) {
+    }
+  },
   { immediate: true }
 );
 
@@ -266,7 +270,9 @@ watch(
   () => [props.showSearchModal, props.selectedPlayer],
   ([isOpen, selectedPlayer]) => {
     if (isOpen && selectedPlayer) {
-      filters.position = selectedPlayer.position || "";
+      filters.position = (selectedPlayer && typeof selectedPlayer === 'object' && 'position' in selectedPlayer)
+        ? selectedPlayer.position
+        : "";
       triggerAnimation();
     }
   },

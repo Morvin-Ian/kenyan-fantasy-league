@@ -17,8 +17,7 @@
           </button>
         </div>
       </div>
-      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-        :overall-rank="overallRank" :team="userTeamName" />
+      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints" :overall-rank="overallRank" :team="userTeamName" />
     </div>
     <div v-else class="max-w-3xl mx-auto text-center py-12">
       <h2 class="text-3xl font-bold text-gray-800 mb-4">You haven't created a team yet!</h2>
@@ -69,15 +68,6 @@
         </form>
       </div>
     </div>
-    <!-- <div v-if="showSavedNotification"
-      class="fixed bottom-7 left-1/2 transform -translate-x-1/2 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-md z-50 flex items-center">
-      <svg class="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        xmlns="http://www.w3.org/2000/svg">
-        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
-        </path>
-      </svg>
-      <span>Team changes saved successfully!</span>
-    </div> -->
   </div>
 </template>
 
@@ -109,7 +99,7 @@ const isBenchSwitch = ref(false);
 const showCreateTeamModal = ref(false);
 const teamName = ref("");
 const selectedFormation = ref("");
-const errorMessage = ref<string | null>(null);
+const errorMessage = ref<string>("");
 const hasUnsavedChanges = ref(false);
 const showSavedNotification = ref(false);
 const initialTeamState = ref<{
@@ -137,6 +127,18 @@ const userTeamName = computed(() => (userTeam.value.length ? userTeam.value[0].n
 const averagePoints = ref(52);
 const highestPoints = ref(121);
 
+type FormationKey = "3-4-3" | "3-5-2" | "4-4-2" | "4-3-3" | "5-3-2" | "5-4-1";
+type BenchComposition = { DEF: number; MID: number; FWD: number };
+
+const benchCompositions: Record<FormationKey, BenchComposition> = {
+  "3-4-3": { DEF: 2, MID: 1, FWD: 0 },
+  "3-5-2": { DEF: 2, MID: 0, FWD: 1 },
+  "4-4-2": { DEF: 1, MID: 1, FWD: 1 },
+  "4-3-3": { DEF: 1, MID: 2, FWD: 0 },
+  "5-3-2": { DEF: 0, MID: 2, FWD: 1 },
+  "5-4-1": { DEF: 0, MID: 1, FWD: 2 },
+};
+
 const createPlaceholderPlayer = (position: string, index: number, isStarter: boolean = true): Player => ({
   id: `placeholder-${position.toLowerCase()}-${index}`,
   name: `Add ${position}`,
@@ -154,11 +156,13 @@ const createPlaceholderPlayer = (position: string, index: number, isStarter: boo
   purchase_price: "0.00",
   current_value: "0.00",
   jersey_image: position === "GKP" ? goalkeeperJersey : defaultJersey,
+  isInjured: false,
+  isPlaceholder: true,
 });
 
 const toggleModal = () => {
   showCreateTeamModal.value = !showCreateTeamModal.value;
-  errorMessage.value = null;
+  errorMessage.value = "";
 };
 
 const closeSearchModal = () => {
@@ -168,8 +172,22 @@ const closeSearchModal = () => {
 
 function initializeTeamState() {
   const players = fantasyStore.fantasyPlayers || [];
-  const formationString = selectedFormation.value || fantasyStore.userTeam[0]?.formation || "4-4-2";
+  const rawFormation = selectedFormation.value || fantasyStore.userTeam[0]?.formation || "4-4-2";
+  const formationString = (Object.keys(benchCompositions).includes(rawFormation)
+    ? rawFormation
+    : "4-4-2") as FormationKey;
+
   const [def, mid, fwd] = formationString.split("-").map(Number);
+  const desiredBench = benchCompositions[formationString]; 
+
+  const requiredBenchPlayers = 4;
+
+  const positionsToAdd = [
+    { position: "DEF", count: desiredBench.DEF },
+    { position: "MID", count: desiredBench.MID },
+    { position: "FWD", count: desiredBench.FWD },
+  ];
+
 
   startingElevenRef.value = {
     goalkeeper: {} as Player,
@@ -203,26 +221,10 @@ function initializeTeamState() {
     startingElevenRef.value.forwards.push(createPlaceholderPlayer("FWD", startingElevenRef.value.forwards.length));
   }
 
-  const requiredBenchPlayers = 4;
-  const benchCompositions = {
-    "3-4-3": { DEF: 2, MID: 1, FWD: 0 },
-    "3-5-2": { DEF: 2, MID: 0, FWD: 1 },
-    "4-4-2": { DEF: 1, MID: 1, FWD: 1 },
-    "4-3-3": { DEF: 1, MID: 2, FWD: 0 },
-    "5-3-2": { DEF: 0, MID: 2, FWD: 1 },
-    "5-4-1": { DEF: 0, MID: 1, FWD: 2 },
-  };
-  const desiredBench = benchCompositions[formationString] || benchCompositions["4-4-2"];
 
   benchPlayersRef.value = [];
 
   benchPlayersRef.value.push(createPlaceholderPlayer("GKP", 0, false));
-
-  const positionsToAdd = [
-    { position: "DEF", count: desiredBench.DEF },
-    { position: "MID", count: desiredBench.MID },
-    { position: "FWD", count: desiredBench.FWD },
-  ];
 
   let benchIndex = 1;
   positionsToAdd.forEach(({ position, count }) => {
@@ -295,7 +297,12 @@ const handlePlayerClick = (player: Player) => {
   }
 };
 
-const initiateTransfer = (player: Player) => {
+const initiateTransfer = (player: Player | null | undefined) => {
+  if(player === null || player === undefined) {
+    console.warn("No player selected for transfer.");
+    return;
+  }
+
   if (player.id.startsWith("placeholder")) {
     console.warn("Cannot initiate transfer for placeholder player.");
     return;
@@ -370,6 +377,8 @@ const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) =
     is_starter: true,
     purchase_price: oldPlayer.purchase_price,
     current_value: oldPlayer.current_value,
+    isInjured: false,
+    isPlaceholder: false,
   };
 
   if (oldPlayer.position === "GKP" && newPlayer.position === "GKP") {
@@ -416,6 +425,8 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
       is_starter: false,
       purchase_price: oldPlayer.purchase_price,
       current_value: oldPlayer.current_value,
+      isInjured: false,
+      isPlaceholder: false,
     };
     benchPlayersRef.value.splice(index, 1, newFantasyPlayer);
   }
@@ -448,7 +459,12 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
   }
 };
 
-const initiateSwitch = (player: Player) => {
+const initiateSwitch = (player: Player | null | undefined) => {
+  if(player === null || player === undefined) {
+    console.warn("No player selected for switch.");
+    return;
+  }
+
   if (player.id.startsWith("placeholder")) {
     console.warn("Cannot initiate switch with placeholder player.");
     return;
@@ -503,7 +519,7 @@ const saveTeamChanges = async () => {
       },
       benchPlayers: benchPlayersRef.value.filter((p) => !p.id.startsWith("placeholder")),
     };
-    await fantasyStore.saveTeam(teamData);
+    // await fantasyStore.saveTeam(teamData);
     initialTeamState.value = {
       startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
       benchPlayers: JSON.parse(JSON.stringify(benchPlayersRef.value)),

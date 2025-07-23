@@ -8,8 +8,9 @@ export const useFantasyStore = defineStore("fantasy", {
     fantasyPlayers: [] as FantasyPlayer[],
     userTeam: [] as FantasyTeam[],
     isLoading: false,
-    error: null,
+    error: null as string | null,
   }),
+
   actions: {
     async fetchFantasyTeams() {
       try {
@@ -17,7 +18,7 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.get("/fantasy/teams/");
         this.fantasyTeams = response.data;
       } catch (error) {
-        this.error = error;
+        this.error = error instanceof Error ? error.message : String(error);
       } finally {
         this.isLoading = false;
       }
@@ -29,7 +30,7 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.get(`/fantasy/teams/user-team`);
         this.userTeam = response.data;
       } catch (error) {
-        this.error = error;
+        this.error = error instanceof Error ? error.message : String(error);
       } finally {
         this.isLoading = false;
       }
@@ -40,8 +41,8 @@ export const useFantasyStore = defineStore("fantasy", {
         this.isLoading = true;
         const response = await apiClient.post("/fantasy/teams/", { name, formation });
         this.userTeam = response.data;
-      } catch (error) {
-        const errorMessage = error.response?.data.name[0] || "Failed to create team. Please try again.";
+      } catch (error: any) {
+        const errorMessage = error.response?.data?.name?.[0] || "Failed to create team. Please try again.";
         this.error = errorMessage;
       } finally {
         this.isLoading = false;
@@ -54,7 +55,7 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.get(`/fantasy/players/team-players`);
         this.fantasyPlayers = response.data;
       } catch (error) {
-        this.error = error;
+        this.error = error instanceof Error ? error.message : String(error);
       } finally {
         this.isLoading = false;
       }

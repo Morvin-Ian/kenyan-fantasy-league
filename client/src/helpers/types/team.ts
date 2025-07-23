@@ -1,4 +1,4 @@
-import { FantasyPlayer } from "./fantasy";
+import { type FantasyPlayer } from "./fantasy";
 
 export interface Team {
   id: string;

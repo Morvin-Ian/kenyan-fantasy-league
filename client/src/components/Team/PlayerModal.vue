@@ -17,7 +17,12 @@
             </h3>
             <p class="text-blue-100 mt-2 flex items-center gap-3 text-sm">
               <PositionBadge :position="selectedPlayer?.position" />
-              <span class="text-white/90 font-medium">{{ selectedPlayer?.team.name }}</span>
+            <span v-if="typeof selectedPlayer?.team === 'object'" class="text-white/90 font-medium">
+              {{ selectedPlayer?.team.name }}
+            </span>
+            <span v-else class="text-white/90 font-medium">
+              {{ selectedPlayer?.team }}
+            </span>
             </p>
           </div>
           <button
@@ -34,7 +39,7 @@
 
       <div class="p-6 space-y-4 bg-gray-50">
         <ActionButton
-          v-if="!selectedPlayer.id.startsWith('placeholder')"
+          v-if="!selectedPlayer?.id.startsWith('placeholder')"
           @click="emitAction('initiate-switch')"
           color="blue"
           icon="SwitchHorizontalIcon"
@@ -47,11 +52,11 @@
           color="blue"
           icon="UserAddIcon"
         >
-          {{ selectedPlayer.id.startsWith('placeholder') ? 'Add Player' : 'Transfer Player' }}
+          {{ selectedPlayer?.id.startsWith('placeholder') ? 'Add Player' : 'Transfer Player' }}
         </ActionButton>
 
         <ActionButton
-          v-if="!selectedPlayer.id.startsWith('placeholder')"
+          v-if="!selectedPlayer?.id.startsWith('placeholder')"
           @click="emitAction('make-captain')"
           color="green"
           icon="StarIcon"
@@ -62,7 +67,7 @@
         </ActionButton>
 
         <ActionButton
-          v-if="!selectedPlayer.id.startsWith('placeholder')"
+          v-if="!selectedPlayer?.id.startsWith('placeholder')"
           @click="emitAction('make-vice-captain')"
           color="yellow"
           icon="BadgeCheckIcon"
@@ -74,7 +79,6 @@
 
         <button
           v-if="selectedPlayer?.isInjured"
-          @click="emitAction('view-injury')"
           class="w-full bg-red-100 text-red-700 py-3 px-4 rounded-lg text-sm font-semibold 
                 hover:bg-red-200 transition-colors duration-300 flex items-center justify-center gap-2"
         >
@@ -94,21 +98,16 @@ import ActionButton from "./ActionButton.vue";
 import PositionBadge from "./PositionBadge.vue";
 import { watch } from 'vue';
 
-// Icons (assuming Heroicons or similar)
-import { SwitchHorizontalIcon, UserAddIcon, StarIcon, BadgeCheckIcon } from '@heroicons/vue/outline';
-
 const props = defineProps<{
   showModal: boolean;
   selectedPlayer: Player | null;
 }>();
 
-const emit = defineEmits<{
-  (event: "close-modal"): void;
-  (event: "initiate-switch"): void;
-  (event: "make-captain"): void;
-  (event: "make-vice-captain"): void;
-  (event: "transfer-player"): void;
-}>();
+const emit = defineEmits<(
+  event: "close-modal" | "initiate-switch" | "make-captain" | "make-vice-captain" | "transfer-player",
+  payload?: Player | null
+) => void>();
+
 
 const emitAction = (action: "close-modal" | "initiate-switch" | "make-captain" | "make-vice-captain" | "transfer-player") => {
   emit(action, props.selectedPlayer);

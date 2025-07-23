@@ -151,8 +151,8 @@ const props = defineProps<{
   totalPoints: number;
   averagePoints: number;
   highestPoints: number;
-  overallRank: number;
-  team: string;
+  overallRank: number | null;
+  team: string | null;
   teamValue?: number;
   inBank?: number;
   currentGameweek?: number;
@@ -165,7 +165,7 @@ const inBank = computed(() => props.inBank || 0.5);
 const currentGameweek = computed(() => props.currentGameweek || 1);
 const recentForm = computed(() => props.recentForm || [65, 78, 45, 89, 56]);
 
-const formatRank = (rank: number) => {
+const formatRank = (rank: number | null) => {
   if (!rank) return "No rank";
   if (rank >= 1000000) return `${(rank / 1000000).toFixed(1)}M`;
   if (rank >= 1000) return `${(rank / 1000).toFixed(1)}K`;

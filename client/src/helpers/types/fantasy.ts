@@ -14,7 +14,7 @@ export interface FantasyPlayer {
   id: string;
   name: string;
   position: string;
-  team: string;
+  team: FantasyTeam | string;
   jersey_image: string;
   price: string;
   fantasy_team: string;
@@ -27,4 +27,6 @@ export interface FantasyPlayer {
   is_starter: boolean;
   purchase_price: string;
   current_value: string;
+  isInjured: boolean | null;
+  isPlaceholder: boolean | null;
 }

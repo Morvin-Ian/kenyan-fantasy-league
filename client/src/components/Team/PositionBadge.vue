@@ -14,6 +14,6 @@
 
 <script setup lang="ts">
 const props = defineProps<{
-  position: string  
+  position: string | undefined 
 }>();
 </script>

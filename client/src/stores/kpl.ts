@@ -1,14 +1,22 @@
 import { defineStore } from "pinia";
 import apiClient from "@/axios-interceptor";
-import  type {Fixture, TeamStanding, Team, Player } from "@/helpers/types/team";
+import type { Fixture, TeamStanding, Team, Player } from "@/helpers/types/team";
+
+
+type PaginatedResponse<T> = {
+  results: T[];
+  next: string | null;
+};
+
+
 
 export const useKplStore = defineStore({
   id: "kpl",
   state: () => ({
     teams: [] as Team[],
-    standings: [] as TeamStanding[], 
+    standings: [] as TeamStanding[],
     fixtures: [] as Fixture[],
-    players:[] as Player[]
+    players: [] as Player[]
   }),
   actions: {
     async fetchTeams() {
@@ -41,13 +49,13 @@ export const useKplStore = defineStore({
     async fetchPlayers() {
       try {
         let nextUrl: string | null = "/kpl/players/";
-    
+
         while (nextUrl) {
-          const response = await apiClient.get(nextUrl);
+          const response: { data: PaginatedResponse<Player> } = await apiClient.get(nextUrl);          
           this.players = this.players.concat(response.data.results);
-          nextUrl = response.data.next; 
+          nextUrl = response.data.next;
         }
-    
+
       } catch (error) {
         console.error("Error fetching players:", error);
       }
