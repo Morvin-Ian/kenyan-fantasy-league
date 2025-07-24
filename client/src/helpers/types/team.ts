@@ -23,6 +23,17 @@ export interface StartingEleven {
   forwards: FantasyPlayer[];
 }
 
+export interface StartingElevenRef {
+  goalkeeper: FantasyPlayer | null;
+  defenders: FantasyPlayer[];
+  midfielders: FantasyPlayer[];
+  forwards: FantasyPlayer[];
+}
+
+export interface TeamData {
+  startingEleven: StartingElevenRef;
+  benchPlayers: FantasyPlayer[];
+}
 export interface Fixture {
   id: string;
   status: string;

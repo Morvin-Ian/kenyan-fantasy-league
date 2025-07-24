@@ -35,7 +35,7 @@
                 </p>
             </div>
 
-            <div 
+            <!-- <div 
                 class="points-container relative mt-1 bg-gradient-to-b from-green-800/60 to-green-900/80 rounded-full py-1 px-1 backdrop-blur-sm border border-green-500/20">
                 <div
                     class="shine-effect absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300">
@@ -44,7 +44,7 @@
                     {{ player.gameweek_points }}
                     <span class="text-green-300 text-[0.6rem]">PTS</span>
                 </p>
-            </div>
+            </div> -->
 
             <div v-if="isActive"
                 class="absolute -top-2 -right-2 w-3 h-3 bg-green-400 rounded-full shadow-md border border-white"></div>

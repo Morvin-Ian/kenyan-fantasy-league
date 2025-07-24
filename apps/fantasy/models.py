@@ -45,68 +45,68 @@ class FantasyTeam(TimeStampedUUIDModel):
     def __str__(self):
         return f"{self.name} (Owner: {self.user.username})"
 
-    def clean(self):
-        """Validate team composition including starters and bench players"""
-        formation_map = {
-            "3-4-3": {"DEF": 3, "MID": 4, "FWD": 3, "GK": 1},
-            "3-5-2": {"DEF": 3, "MID": 5, "FWD": 2, "GK": 1},
-            "4-4-2": {"DEF": 4, "MID": 4, "FWD": 2, "GK": 1},
-            "4-3-3": {"DEF": 4, "MID": 3, "FWD": 3, "GK": 1},
-            "5-3-2": {"DEF": 5, "MID": 3, "FWD": 2, "GK": 1},
-            "5-4-1": {"DEF": 5, "MID": 4, "FWD": 1, "GK": 1},
-        }
+    # def clean(self):
+    #     """Validate team composition including starters and bench players"""
+    #     formation_map = {
+    #         "3-4-3": {"DEF": 3, "MID": 4, "FWD": 3, "GK": 1},
+    #         "3-5-2": {"DEF": 3, "MID": 5, "FWD": 2, "GK": 1},
+    #         "4-4-2": {"DEF": 4, "MID": 4, "FWD": 2, "GK": 1},
+    #         "4-3-3": {"DEF": 4, "MID": 3, "FWD": 3, "GK": 1},
+    #         "5-3-2": {"DEF": 5, "MID": 3, "FWD": 2, "GK": 1},
+    #         "5-4-1": {"DEF": 5, "MID": 4, "FWD": 1, "GK": 1},
+    #     }
 
-        bench_compositions = {
-            "3-4-3": {"DEF": 2, "MID": 1, "FWD": 0, "GK": 1},
-            "3-5-2": {"DEF": 2, "MID": 0, "FWD": 1, "GK": 1},
-            "4-4-2": {"DEF": 1, "MID": 1, "FWD": 1, "GK": 1},
-            "4-3-3": {"DEF": 1, "MID": 2, "FWD": 0, "GK": 1},
-            "5-3-2": {"DEF": 0, "MID": 2, "FWD": 1, "GK": 1},
-            "5-4-1": {"DEF": 0, "MID": 1, "FWD": 2, "GK": 1},
-        }
+    #     bench_compositions = {
+    #         "3-4-3": {"DEF": 2, "MID": 1, "FWD": 0, "GK": 1},
+    #         "3-5-2": {"DEF": 2, "MID": 0, "FWD": 1, "GK": 1},
+    #         "4-4-2": {"DEF": 1, "MID": 1, "FWD": 1, "GK": 1},
+    #         "4-3-3": {"DEF": 1, "MID": 2, "FWD": 0, "GK": 1},
+    #         "5-3-2": {"DEF": 0, "MID": 2, "FWD": 1, "GK": 1},
+    #         "5-4-1": {"DEF": 0, "MID": 1, "FWD": 2, "GK": 1},
+    #     }
 
-        if not self._state.adding and self.players.exists():
-            # Count starter positions
-            starter_counts = {}
-            bench_counts = {}
+    #     if not self._state.adding and self.players.exists():
+    #         # Count starter positions
+    #         starter_counts = {}
+    #         bench_counts = {}
 
-            for fantasy_player in self.players.all():
-                pos = fantasy_player.player.position
-                if fantasy_player.is_starter:
-                    starter_counts[pos] = starter_counts.get(pos, 0) + 1
-                else:
-                    bench_counts[pos] = bench_counts.get(pos, 0) + 1
+    #         for fantasy_player in self.players.all():
+    #             pos = fantasy_player.player.position
+    #             if fantasy_player.is_starter:
+    #                 starter_counts[pos] = starter_counts.get(pos, 0) + 1
+    #             else:
+    #                 bench_counts[pos] = bench_counts.get(pos, 0) + 1
 
-            # Validate starter formation
-            required_starters = formation_map[self.formation]
-            for pos, required_count in required_starters.items():
-                actual_count = starter_counts.get(pos, 0)
-                if actual_count != required_count:
-                    raise ValidationError(
-                        f"Formation {self.formation} requires {required_count} {pos} "
-                        f"starters, you have {actual_count}"
-                    )
+    #         # Validate starter formation
+    #         required_starters = formation_map[self.formation]
+    #         for pos, required_count in required_starters.items():
+    #             actual_count = starter_counts.get(pos, 0)
+    #             if actual_count != required_count:
+    #                 raise ValidationError(
+    #                     f"Formation {self.formation} requires {required_count} {pos} "
+    #                     f"starters, you have {actual_count}"
+    #                 )
 
-            # Validate bench composition
-            required_bench = bench_compositions[self.formation]
-            for pos, required_count in required_bench.items():
-                actual_count = bench_counts.get(pos, 0)
-                if actual_count != required_count:
-                    raise ValidationError(
-                        f"Formation {self.formation} requires {required_count} {pos} "
-                        f"bench players, you have {actual_count}"
-                    )
+    #         # Validate bench composition
+    #         required_bench = bench_compositions[self.formation]
+    #         for pos, required_count in required_bench.items():
+    #             actual_count = bench_counts.get(pos, 0)
+    #             if actual_count != required_count:
+    #                 raise ValidationError(
+    #                     f"Formation {self.formation} requires {required_count} {pos} "
+    #                     f"bench players, you have {actual_count}"
+    #                 )
 
-            # Validate total squad size (11 starters + 4 bench = 15)
-            total_players = self.players.count()
-            if total_players != 15:
-                raise ValidationError(
-                    f"Squad must have exactly 15 players, you have {total_players}"
-                )
+    #         # Validate total squad size (11 starters + 4 bench = 15)
+    #         total_players = self.players.count()
+    #         if total_players != 15:
+    #             raise ValidationError(
+    #                 f"Squad must have exactly 15 players, you have {total_players}"
+    #             )
 
-            total_value = sum(float(p.current_value) for p in self.players.all())
-            if total_value > float(self.budget):
-                raise ValidationError("Team value exceeds budget")
+    #         total_value = sum(float(p.current_value) for p in self.players.all())
+    #         if total_value > float(self.budget):
+    #             raise ValidationError("Team value exceeds budget")
 
 
 class FantasyPlayer(TimeStampedUUIDModel):
