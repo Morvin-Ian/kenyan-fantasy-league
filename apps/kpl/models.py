@@ -37,6 +37,7 @@ class Player(TimeStampedUUIDModel):
     position = models.CharField(max_length=50, choices=POSITION_CHOICES)
     jersey_number = models.PositiveIntegerField(null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
+    current_value = models.DecimalField(max_digits=6, decimal_places=2, default=4.00)
 
     class Meta:
         ordering = ["team"]
@@ -70,7 +71,7 @@ class Standing(TimeStampedUUIDModel):
 
 
 class Gameweek(TimeStampedUUIDModel):
-    number = models.PositiveIntegerField(unique=True)
+    number = models.PositiveIntegerField(default=1)
     start_date = models.DateField()
     end_date = models.DateField()
     transfer_deadline = models.DateTimeField()
@@ -78,6 +79,9 @@ class Gameweek(TimeStampedUUIDModel):
 
     class Meta:
         ordering = ["number"]
+        unique_together = ("number", "start_date")
+        verbose_name = "Gameweek"
+        verbose_name_plural = "Gameweeks"
 
     def __str__(self):
         return f"Gameweek {self.number}"

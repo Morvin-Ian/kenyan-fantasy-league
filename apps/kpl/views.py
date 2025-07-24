@@ -3,12 +3,8 @@ from rest_framework.viewsets import ReadOnlyModelViewSet
 
 from apps.kpl.models import Fixture, Player, Standing, Team
 
-from .serializers import (
-    FixtureSerializer,
-    PlayerSerializer,
-    StandingSerializer,
-    TeamSerializer,
-)
+from .serializers import (FixtureSerializer, PlayerSerializer,
+                          StandingSerializer, TeamSerializer)
 
 
 class TeamViewSet(ReadOnlyModelViewSet):

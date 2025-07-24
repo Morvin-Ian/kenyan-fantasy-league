@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from apps.fantasy.models import FantasyPlayer, FantasyTeam
 
 
@@ -31,7 +32,6 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
     )
     player = serializers.UUIDField(source="player.id", read_only=True)
     fantasy_team = serializers.UUIDField(source="fantasy_team.id", read_only=True)
-  
 
     class Meta:
         model = FantasyPlayer
@@ -68,8 +68,8 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
         - Max 15 players per fantasy team
         - Max 3 players from the same real team
         """
-        fantasy_team = data.get('fantasy_team')
-        player = data.get('player')
+        fantasy_team = data.get("fantasy_team")
+        player = data.get("player")
         instance = self.instance
 
         # Check max players in fantasy team
