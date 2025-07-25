@@ -55,7 +55,7 @@
                                         team.goal_differential }}</td>
                                     <td class="p-1 md:p-3 text-center font-bold text-green-700">{{ team.points }}</td>
 
-                                    <td class="p-1 md:p-3">
+                                    <!-- <td class="p-1 md:p-3">
                                         <div class="flex justify-center gap-0.5 md:gap-1">
                                             <span v-for="(result, index) in getRandomFormResults()" :key="index"
                                                 :class="getFormBadgeColor(result)"
@@ -63,7 +63,7 @@
                                                 {{ result }}
                                             </span>
                                         </div>
-                                    </td>
+                                    </td> -->
                                 </tr>
                             </tbody>
                         </table>
@@ -159,7 +159,7 @@ const tableHeaders: string[] = [
     "GA",
     "GD",
     "Pts",
-    "Form",
+    // "Form",
 ];
 
 const currentPage = ref(1);
@@ -304,13 +304,12 @@ onMounted(() => {
         router.push("/sign-in");
     }
 
-    itemsPerPage.value = window.innerWidth < 640 ? 5 : 9;
+    itemsPerPage.value = window.innerWidth < 640 ? 9 : 10;
 
     window.addEventListener('resize', () => {
-        itemsPerPage.value = window.innerWidth < 640 ? 5 : 9;
+        itemsPerPage.value = window.innerWidth < 640 ? 9 : 10;
     });
 
-    // Fetch standings if empty
     if (kplStore.standings.length === 0) {
         fetchStandings();
     }

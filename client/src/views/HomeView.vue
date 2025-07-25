@@ -5,8 +5,8 @@
     </div>
     <div v-else>
       <UpcomingGames :fixtures="kplStore.fixtures" :standings="kplStore.standings" />
-      <GameweekDetails />
       <Performance />
+      <GameweekDetails />
     </div>
   </div>
 </template>

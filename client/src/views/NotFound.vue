@@ -1,13 +1,14 @@
 <template>
   <div class="not-found-container">
     <div class="not-found-content">
-      <div class="error-code">404</div>
-      <h1 class="error-title">Page Not Found</h1>
-      <p class="error-message">The page you're looking for doesn't exist or has been moved.</p>
-      
-      <div class="action-buttons">
+      <div class="error-code animate-fade-in">404</div>
+      <h1 class="error-title animate-slide-up">Page Not Found</h1>
+      <p class="error-message animate-slide-up" :style="{ animationDelay: '100ms' }">
+        The KPL fantasy page you're looking for doesn't exist or has been moved.
+      </p>
+      <div class="action-buttons animate-slide-up" :style="{ animationDelay: '200ms' }">
         <router-link to="/" class="home-button">
-          Return Home
+          Return to KPL Home
         </router-link>
         <button @click="goBack" class="back-button">
           Go Back
@@ -17,25 +18,13 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "NotFound",
-  data() {
-    return {
-      searchQuery: "",
-      showSearch: false
-    };
-  },
-  methods: {
-    goBack() {
-      window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/');
-    },
-    performSearch() {
-      if (this.searchQuery.trim()) {
-        this.$router.push({ path: '/search', query: { q: this.searchQuery } });
-      }
-    }
-  }
+<script setup>
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
+const goBack = () => {
+  window.history.length > 1 ? router.go(-1) : router.push('/');
 };
 </script>
 
@@ -45,19 +34,19 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: 20px;
-  background-color: rgb(240, 255, 245);
+  padding: 16px;
+  background: linear-gradient(to bottom right, #f3f4f6, #e5e7eb);
 }
 
 .not-found-content {
   max-width: 500px;
   width: 100%;
   text-align: center;
-  background-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 16px;
-  padding: 40px 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(107, 212, 136, 0.2);
+  padding: 32px 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   transform: translateY(0);
   transition: transform 0.3s ease;
 }
@@ -67,18 +56,18 @@ export default {
 }
 
 .error-code {
-  font-size: 7rem;
+  font-size: 6rem;
   font-weight: 800;
-  background: linear-gradient(90deg, #2ecc71, #27ae60, #16a085, #1abc9c);
+  background: linear-gradient(90deg, #1f2937, #4b5563, #6b7280);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
   background-size: 300% 300%;
   animation: gradientText 5s ease infinite;
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   line-height: 1;
   letter-spacing: -2px;
-  text-shadow: 4px 4px 0px rgba(0, 0, 0, 0.05);
+  text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.05);
 }
 
 @keyframes gradientText {
@@ -88,86 +77,109 @@ export default {
 }
 
 .error-title {
-  font-size: 2.4rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: #333;
-  margin: 0 0 15px 0;
+  color: #1f2937;
+  margin: 0 0 16px 0;
 }
 
 .error-message {
-  font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 30px;
-  line-height: 1.6;
+  font-size: 1rem;
+  color: #4b5563;
+  margin-bottom: 24px;
+  line-height: 1.5;
 }
 
 .action-buttons {
   display: flex;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.home-button, .back-button {
-  padding: 14px 28px;
-  border-radius: 10px;
+.home-button,
+.back-button {
+  padding: 12px 24px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.9rem;
   transition: all 0.3s ease;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .home-button {
-  background: linear-gradient(45deg, #2ecc71, #27ae60);
+  background: #1f2937;
   color: white;
   border: none;
   text-decoration: none;
-  box-shadow: 0 6px 15px rgba(46, 204, 113, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .home-button:hover {
-  background: linear-gradient(45deg, #27ae60, #1e8449);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(46, 204, 113, 0.4);
+  background: #111827;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
 }
 
 .back-button {
-  background-color: white;
-  color: #27ae60;
-  border: 2px solid #27ae60;
-  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.1);
+  background: white;
+  color: #1f2937;
+  border: 2px solid #1f2937;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .back-button:hover {
-  background-color: rgba(46, 204, 113, 0.08);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(46, 204, 113, 0.2);
+  background: rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 @media (max-width: 640px) {
   .not-found-content {
-    padding: 30px 20px;
+    padding: 24px 16px;
   }
-  
+
   .error-code {
-    font-size: 5rem;
+    font-size: 4.5rem;
   }
-  
+
   .error-title {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
   }
-  
+
+  .error-message {
+    font-size: 0.9rem;
+  }
+
   .action-buttons {
     flex-direction: column;
     gap: 12px;
   }
-  
-  .home-button, .back-button {
+
+  .home-button,
+  .back-button {
     width: 100%;
+    padding: 10px 16px;
   }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
 }
 </style>

@@ -77,7 +77,6 @@ class FantasyPlayerViewSet(ModelViewSet):
             bench_players = request.data.get("benchPlayers", [])
             fantasy_team = FantasyTeam.objects.get(user=request.user)
 
-            # Delegate the complex logic to the service
             result = FantasyService.save_team_players(
                 fantasy_team=fantasy_team,
                 starting_eleven=starting_eleven,
@@ -87,7 +86,7 @@ class FantasyPlayerViewSet(ModelViewSet):
             return Response(
                 {
                     "detail": "Players updated successfully.",
-                    **result,  # includes players_created and players_updated counts
+                    **result,  
                 },
                 status=status.HTTP_200_OK,
             )

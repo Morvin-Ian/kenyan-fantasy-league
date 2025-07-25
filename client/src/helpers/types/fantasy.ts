@@ -5,6 +5,7 @@ export interface FantasyTeam {
   budget: string;
   gameweek: number;
   formation: string;
+  free_transfers: number;
   total_points: number;
   overall_rank: number | null;
   transfer_budget: string;

@@ -137,7 +137,7 @@
               <th class="py-3 px-4 text-center text-gray-600 font-medium">GA</th>
               <th class="py-3 px-4 text-center text-gray-600 font-medium">GD</th>
               <th class="py-3 px-4 text-center text-gray-600 font-medium">PTS</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">Form</th>
+              <!-- <th class="py-3 px-4 text-center text-gray-600 font-medium">Form</th> -->
             </tr>
           </thead>
           <tbody>
@@ -160,7 +160,7 @@
                 :class="{ 'text-green-500': team.goalDifference > 0, 'text-red-500': team.goalDifference < 0 }">{{
                   team.goal_differential }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-sm">{{ team.points }}</td>
-              <td class="p-1 md:p-3">
+              <!-- <td class="p-1 md:p-3">
                 <div class="flex justify-center gap-0.5 md:gap-1">
                   <span v-for="(result, index) in getRandomFormResults()" :key="index"
                     :class="getFormBadgeColor(result)"
@@ -168,7 +168,7 @@
                     {{ result }}
                   </span>
                 </div>
-              </td>
+              </td> -->
             </tr>
           </tbody>
         </table>

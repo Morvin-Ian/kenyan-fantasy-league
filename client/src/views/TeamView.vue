@@ -1,13 +1,22 @@
 <template>
-  <div class="p-4">
+  <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-      <div class="w-full lg:w-2/3 rounded-xl shadow-lg relative">
-        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
-          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
-          @player-click="handlePlayerClick" />
+      <div class="animate-fade-in w-full lg:w-2/3 rounded-xl shadow-xl bg-white border border-gray-100 relative team-card">
+        
+        <Pitch 
+          :goalkeeper="goalkeeper" 
+          :defenders="defenders" 
+          :midfielders="midfielders" 
+          :forwards="forwards"
+          :bench-players="benchPlayers" 
+          :switch-source="switchSource" 
+          :switch-active="switchActive"
+          @player-click="handlePlayerClick" 
+        />
+
         <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
           <button @click="saveTeamChanges"
-            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center">
+            class="animate-slide-up bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105">
             <span class="mr-2">Save Changes</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd"
@@ -17,37 +26,55 @@
           </button>
         </div>
       </div>
-      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-        :overall-rank="overallRank" :team="userTeamName" />
+      <Sidebar 
+        :total-points="totalPoints" 
+        :average-points="averagePoints" 
+        :highest-points="highestPoints"
+        :overall-rank="overallRank" 
+        :team="userTeamName" 
+      />
+
     </div>
-    <div v-else class="max-w-3xl mx-auto text-center py-12">
-      <h2 class="text-3xl font-bold text-gray-800 mb-4">You haven't created a team yet!</h2>
-      <p class="text-lg text-gray-600 mb-6">Start your fantasy football journey by creating your team now.</p>
+
+    <div v-else class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
+      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by creating your team now.</p>
       <button @click="toggleModal"
-        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition duration-300">Create
-        Your Team</button>
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create Your Team</button>
     </div>
-    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
-      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
-    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer" />
+
+    <PlayerModal v-if="userTeam && userTeam.length" 
+      :show-modal="showModal" 
+      :selected-player="selectedPlayer"
+      @close-modal="closeModal" 
+      @initiate-switch="initiateSwitch" 
+      @transfer-player="initiateTransfer" 
+      @make-captain="makeCaptain" 
+      @make-vice-captain="makeViceCaptain" 
+    />
+
+    <SearchPlayer 
+      :show-search-modal="showSearchModal" 
+      :selectedPlayer="selectedPlayer" 
+      @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer"
+    />
 
     <div v-if="showCreateTeamModal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 class="text-2xl font-bold text-gray-800 mb-4">Create Your Team</h3>
+      <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
+        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
         <form @submit.prevent="createTeam">
           <div class="mb-4">
             <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
             <input v-model="teamName" id="teamName" type="text"
-              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
               placeholder="Enter your team name" required />
           </div>
           <div class="mb-4">
             <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
             <select v-model="selectedFormation" id="formation"
-              class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500" required>
               <option value="" disabled>Select a formation</option>
               <option value="3-4-3">3-4-3</option>
               <option value="3-5-2">3-5-2</option>
@@ -62,9 +89,8 @@
           </div>
           <div class="flex justify-end gap-4">
             <button type="button" @click="showCreateTeamModal = false"
-              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded">Cancel</button>
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded">Create
-              Team</button>
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
+            <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create Team</button>
           </div>
         </form>
       </div>
@@ -866,5 +892,21 @@ onMounted(async () => {
 .team-card:hover {
   transform: scale(1.02);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
 }
 </style>

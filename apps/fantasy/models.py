@@ -179,7 +179,9 @@ class PlayerPerformance(TimeStampedUUIDModel):
         unique_together = ["player", "gameweek"]
 
     def __str__(self):
-        return f"{self.player.name} - GW{self.gameweek.number} ({self.goals_scored}G, {self.assists}A, {self.fantasy_points} pts)"
+        if self.player and self.gameweek:
+            return f"{self.player.name} - GW{self.gameweek.number} ({self.goals_scored}G, {self.assists}A, {self.fantasy_points} pts)"
+        return f"PlayerPerformance {self.id}"
 
 
 class TeamSelection(TimeStampedUUIDModel):

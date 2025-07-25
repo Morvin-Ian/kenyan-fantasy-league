@@ -36,7 +36,6 @@ class FantasyService:
         all_player_ids = []
         players_to_update = {}
 
-        # Process goalkeeper
         goalkeeper = starting_eleven.get("goalkeeper")
         if goalkeeper:
             player_id = goalkeeper.get("player") or goalkeeper.get("id")
@@ -45,7 +44,6 @@ class FantasyService:
                 goalkeeper, is_starter=True
             )
 
-        # Process outfield players (defenders, midfielders, forwards)
         for position in ["defenders", "midfielders", "forwards"]:
             position_players = starting_eleven.get(position, [])
             for player_data in position_players:
@@ -55,7 +53,6 @@ class FantasyService:
                     player_data, is_starter=True
                 )
 
-        # Process bench players
         for player_data in bench_players:
             player_id = player_data.get("player") or player_data.get("id")
             all_player_ids.append(player_id)
@@ -77,13 +74,11 @@ class FantasyService:
         additional_transfers = max(0, num_transfers - free_transfers)
         transfer_cost = additional_transfers * 4  # 4 points per additional transfer
 
-        # Validate transfer budget
         if transfer_cost > float(fantasy_team.transfer_budget):
             raise ValidationError(
                 f"Insufficient transfer budget. Required: {transfer_cost}, Available: {fantasy_team.transfer_budget}"
             )
 
-        # Create PlayerTransfer records
         current_gameweek = fantasy_team.current_gameweek
         if not current_gameweek:
             try:
@@ -105,7 +100,6 @@ class FantasyService:
                 transfer_cost=transfer_cost_per_player,
             )
 
-        # Update transfer budget and free transfers
         if num_transfers > free_transfers:
             fantasy_team.transfer_budget -= transfer_cost
             fantasy_team.free_transfers = 0
@@ -113,10 +107,8 @@ class FantasyService:
             fantasy_team.free_transfers -= num_transfers
         fantasy_team.save()
 
-        # Remove players no longer in the team
         fantasy_team.players.exclude(player__id__in=all_player_ids).delete()
 
-        # Get existing players
         existing_players = {
             str(fp.player.id): fp
             for fp in fantasy_team.players.filter(player__id__in=all_player_ids)
@@ -125,7 +117,6 @@ class FantasyService:
         players_to_create = []
         players_to_bulk_update = []
 
-        # Process updates and creates
         for player_id, update_data in players_to_update.items():
             player_id_str = str(player_id)
             if player_id_str in existing_players:
@@ -149,7 +140,6 @@ class FantasyService:
                 except Player.DoesNotExist:
                     continue
 
-        # Bulk operations
         if players_to_create:
             FantasyPlayer.objects.bulk_create(players_to_create)
 
@@ -165,7 +155,6 @@ class FantasyService:
                 ],
             )
 
-        # Validate the team after updates
         fantasy_team.clean()
 
         return {

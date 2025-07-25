@@ -83,7 +83,7 @@ class FantasyPlayerAdmin(admin.ModelAdmin):
     captain_status.short_description = "Role"
 
     def points_display(self, obj):
-        return format_html("<b>{}</b>", obj.gameweek_added)
+        return format_html("<b>{}</b>", obj.total_points)
 
     points_display.short_description = "Points"
 

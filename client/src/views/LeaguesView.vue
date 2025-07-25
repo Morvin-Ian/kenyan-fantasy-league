@@ -1,117 +1,65 @@
 <template>
-  <div class="p-2 sm:p-4">
-    <div class="max-w-7xl mx-auto space-y-4 sm:space-y-8">
-      <div class="text-center bg-white/80 backdrop-blur-sm p-4 sm:p-8 rounded-xl">
-        <h1
-          class="text-lg sm:text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-600 to-gray-700 mb-2 sm:mb-4">
-          Leagues & Cups
-        </h1>
-        <p class="text-sm sm:text-base text-gray-600 mx-auto max-w-md">
-          Elevate your competitive spirit by competing in diverse leagues, challenging players globally and locally.
+  <div class="p-6 mx-auto max-w-4xl">
+    
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-3xl font-semibold text-gray-800 mb-3">
+        Kenyan Leagues & Cups
+      </h1>
+      <p class="text-gray-600 max-w-lg mx-auto">
+        Compete in Kenya's top leagues and cups
+      </p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
+      
+      <!-- Section Title -->
+      <div class="text-center mb-6">
+        <h2 class="text-2xl font-medium text-gray-800 mb-2">
+          KPL Classic Leagues
+        </h2>
+        <p class="text-gray-600">
+          Compete where the highest point total crowns the champion
         </p>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
-        <div class="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-xl sm:rounded-2xl p-4 sm:p-6">
-          <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-700 mb-2 sm:mb-4">Classic Leagues</h2>
-          <p class="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4">
-            Compete where the highest point total determines the champion.
+      <!-- League Options -->
+      <div class="grid md:grid-cols-2 gap-6">
+        
+        <!-- Private Leagues -->
+        <div class="border border-gray-200 rounded-lg p-5">
+          <h3 class="text-lg font-medium text-gray-800 mb-3">
+            Private Leagues
+          </h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Create or join exclusive leagues with friends
           </p>
-          <div class="space-y-3 sm:space-y-4">
-            <div class="bg-blue-50/50 p-3 sm:p-4 rounded-lg">
-              <h3 class="font-semibold text-sm sm:text-base md:text-lg mb-2">Private Leagues</h3>
-              <div class="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2 sm:space-x-4">
-                <button
-                  class="bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition w-full xs:w-auto">
-                  Create League
-                </button>
-                <button
-                  class="border border-green-500 text-green-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-green-50 transition w-full xs:w-auto">
-                  Join League
-                </button>
-              </div>
-            </div>
-            <div class="bg-green-50/50 p-3 sm:p-4 rounded-lg">
-              <h3 class="font-semibold text-sm sm:text-base md:text-lg mb-2">Public Leagues</h3>
-              <div class="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2 sm:space-x-4">
-                <button
-                  class="bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition w-full xs:w-auto">
-                  Create League
-                </button>
-                <button
-                  class="border border-green-500 text-green-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-green-50 transition w-full xs:w-auto">
-                  Join League
-                </button>
-              </div>
-            </div>
+          <div class="space-y-3">
+            <button class="w-full bg-gray-800 text-white py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-900 transition-colors">
+              Create League
+            </button>
+            <button class="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">
+              Join League
+            </button>
           </div>
         </div>
 
-        <div class="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-xl sm:rounded-2xl p-4 sm:p-6">
-          <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-700 mb-2 sm:mb-4">Head-to-Head Leagues</h2>
-          <p class="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4">
-            Direct competition where weekly matchups determine progression.
+        <!-- Public Leagues -->
+        <div class="border border-gray-200 rounded-lg p-5">
+          <h3 class="text-lg font-medium text-gray-800 mb-3">
+            Public Leagues
+          </h3>
+          <p class="text-sm text-gray-600 mb-4">
+            Join open competitions with the community
           </p>
-          <div class="space-y-3 sm:space-y-4">
-            <div class="bg-purple-50/50 p-3 sm:p-4 rounded-lg">
-              <h3 class="font-semibold text-sm sm:text-base md:text-lg mb-2">Private Leagues</h3>
-              <div class="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2 sm:space-x-4">
-                <button
-                  class="bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition w-full xs:w-auto">
-                  Create League
-                </button>
-                <button
-                  class="border border-green-500 text-green-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-green-50 transition w-full xs:w-auto">
-                  Join League
-                </button>
-              </div>
-            </div>
-            <div class="bg-teal-50/50 p-3 sm:p-4 rounded-lg">
-              <h3 class="font-semibold text-sm sm:text-base md:text-lg mb-2">Public Leagues</h3>
-              <div class="flex flex-col xs:flex-row space-y-2 xs:space-y-0 xs:space-x-2 sm:space-x-4">
-                <button
-                  class="bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition w-full xs:w-auto">
-                  Create League
-                </button>
-                <button
-                  class="border border-green-500 text-green-600 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-green-50 transition w-full xs:w-auto">
-                  Join League
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          class="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 sm:col-span-2 lg:col-span-1">
-          <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-gray-700 mb-2 sm:mb-4">Global Leagues</h2>
-          <p class="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4">
-            Challenge players worldwide across multiple competitive arenas.
-          </p>
-          <div class="overflow-x-auto -mx-4 sm:mx-0">
-            <table class="w-full text-left text-xs sm:text-sm">
-              <thead>
-                <tr class="bg-gray-100">
-                  <th class="p-2 sm:p-4">League</th>
-                  <th class="p-2 sm:p-4">Current</th>
-                  <th class="p-2 sm:p-4">Previous</th>
-                  <th class="p-2 sm:p-4">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="league in globalLeagues" :key="league.name" class="border-b">
-                  <td class="p-2 sm:p-4">{{ league.name }}</td>
-                  <td class="p-2 sm:p-4">{{ league.current.toLocaleString() }}</td>
-                  <td class="p-2 sm:p-4">{{ league.previous.toLocaleString() }}</td>
-                  <td class="p-2 sm:p-4">
-                    <button
-                      class="bg-blue-500 text-white px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm rounded-lg hover:bg-blue-600 transition">
-                      View
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+          <div class="space-y-3">
+            <button class="w-full bg-gray-800 text-white py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-900 transition-colors">
+              Create League
+            </button>
+            <button class="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">
+              Join League
+            </button>
           </div>
         </div>
       </div>
@@ -127,12 +75,6 @@ import { useRouter } from 'vue-router';
 const authStore = useAuthStore();
 const router = useRouter();
 
-const globalLeagues = [
-  { name: "Challenge", current: 985724, previous: 985747 },
-  { name: "Kenya", current: 285416, previous: 277745 },
-  { name: "Overall", current: 274033, previous: 528166 }
-];
-
 onMounted(async () => {
   await authStore.initialize();
   if (!authStore.isAuthenticated) {
@@ -141,22 +83,83 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped>
-@media (min-width: 475px) {
-  .xs\:flex-row {
-    flex-direction: row;
+<style>
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
 
-  .xs\:space-y-0 {
-    margin-top: 0;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
   }
 
-  .xs\:space-x-2>*+* {
-    margin-left: 0.5rem;
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
+}
 
-  .xs\:w-auto {
-    width: auto;
-  }
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.6s ease-out;
+  animation-fill-mode: both;
+}
+
+.gradient-bg {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.glass-effect {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 </style>
