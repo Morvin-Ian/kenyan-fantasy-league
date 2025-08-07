@@ -1,5 +1,5 @@
 <template>
-  <div class="relative w-14 xs:w-16 sm:w-18 md:w-16 lg:w-18 xl:w-20 transition-all duration-300">
+  <div class="relative w-18 xs:w-18 sm:w-18 md:w-18 lg:w-18 xl:w-20 transition-all duration-300">
     <div
       @click="showDetails = !showDetails"
       class="player-card bg-gradient-to-br from-green-700 to-green-900 hover:from-green-600 hover:to-green-800 rounded-xl p-1 xs:p-1.5 sm:p-2 text-center cursor-pointer relative transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:-translate-y-1.5 overflow-hidden border border-green-600/20 hover:border-green-400/30"
@@ -35,14 +35,15 @@
         </div>
       </div>
 
-      <div class="px-1 min-h-[1rem] flex items-center justify-center">
+      <div
+      v-if="player.gameweek_points == null"
+      class="px-1 min-h-[1rem] flex items-center justify-center">
         <p class="text-white text-[0.6rem] xs:text-xs sm:text-sm font-semibold truncate max-w-full relative">
           <span class="name-gradient">{{ player.name }}</span>
         </p>
       </div>
 
       <div
-        v-if="player.gameweek_points != null"
         class="points-container relative mt-0.5 xs:mt-1 bg-gradient-to-b from-green-800/60 to-green-900/80 rounded-full py-0.5 xs:py-1 px-1 xs:px-1.5 backdrop-blur-sm border border-green-500/20 min-h-[0.75rem]"
       >
         <div

@@ -33,9 +33,10 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG")
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
+# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8080", "http://0.0.0.0:8080"]
+CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8080", "http://0.0.0.0:8080", 'http://localhost:8080', "http://api:8000", "http://nginx:80", "http://[::1]:8080"]
 
 
 SITE_ID = 1
