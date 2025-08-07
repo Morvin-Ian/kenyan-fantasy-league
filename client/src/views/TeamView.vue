@@ -1,18 +1,11 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-      <div class="animate-fade-in w-full lg:w-2/3 rounded-xl shadow-xl bg-white border border-gray-100 relative team-card">
-        
-        <Pitch 
-          :goalkeeper="goalkeeper" 
-          :defenders="defenders" 
-          :midfielders="midfielders" 
-          :forwards="forwards"
-          :bench-players="benchPlayers" 
-          :switch-source="switchSource" 
-          :switch-active="switchActive"
-          @player-click="handlePlayerClick" 
-        />
+      <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
+
+        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
+          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
+          @player-click="handlePlayerClick" />
 
         <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
           <button @click="saveTeamChanges"
@@ -26,39 +19,27 @@
           </button>
         </div>
       </div>
-      <Sidebar 
-        :total-points="totalPoints" 
-        :average-points="averagePoints" 
-        :highest-points="highestPoints"
-        :overall-rank="overallRank" 
-        :team="userTeamName" 
-      />
+      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+        :overall-rank="overallRank" :team="userTeamName" />
 
     </div>
 
-    <div v-else class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
+    <div v-else
+      class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
       <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
-      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by creating your team now.</p>
+      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
+        creating your team now.</p>
       <button @click="toggleModal"
-        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create Your Team</button>
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
+        Your Team</button>
     </div>
 
-    <PlayerModal v-if="userTeam && userTeam.length" 
-      :show-modal="showModal" 
-      :selected-player="selectedPlayer"
-      @close-modal="closeModal" 
-      @initiate-switch="initiateSwitch" 
-      @transfer-player="initiateTransfer" 
-      @make-captain="makeCaptain" 
-      @make-vice-captain="makeViceCaptain" 
-    />
+    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
 
-    <SearchPlayer 
-      :show-search-modal="showSearchModal" 
-      :selectedPlayer="selectedPlayer" 
-      @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer"
-    />
+    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" />
 
     <div v-if="showCreateTeamModal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
@@ -74,7 +55,8 @@
           <div class="mb-4">
             <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
             <select v-model="selectedFormation" id="formation"
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500" required>
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+              required>
               <option value="" disabled>Select a formation</option>
               <option value="3-4-3">3-4-3</option>
               <option value="3-5-2">3-5-2</option>
@@ -90,7 +72,9 @@
           <div class="flex justify-end gap-4">
             <button type="button" @click="showCreateTeamModal = false"
               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
-            <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create Team</button>
+            <button type="submit"
+              class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
+              Team</button>
           </div>
         </form>
       </div>
@@ -219,7 +203,7 @@ function initializeTeamState() {
 
   benchPlayersRef.value = [];
 
-  //  populate with actual players from your data
+  //  populate with actual players
   players.forEach((player: Player) => {
     if (player.is_starter) {
       if (player.position === "GKP") startingElevenRef.value.goalkeeper = player;
@@ -231,7 +215,7 @@ function initializeTeamState() {
     }
   });
 
-  // Fill remaining starting positions with placeholders
+  // Fill remaining starting positions with placeholders (If there is No team players for Starting 11)
   if (!startingElevenRef.value.goalkeeper.id || startingElevenRef.value.goalkeeper.id.startsWith("placeholder")) {
     startingElevenRef.value.goalkeeper = createPlaceholderPlayer("GKP", 0);
   }
@@ -249,11 +233,21 @@ function initializeTeamState() {
   if (!hasGoalkeeperOnBench) {
     benchPlayersRef.value.push(createPlaceholderPlayer("GKP", 0, false));
   }
+  
+  // Reduce the benchPlayersRef array to count how many players are on the bench for each position
+  const benchCounts = benchPlayersRef.value.reduce((accumulator, player) => {
+    // If the position already exists in the accumulator, increment its count
+    // Otherwise, initialize it to 1
+    accumulator[player.position] = (accumulator[player.position] || 0) + 1;
+    return accumulator;
+  }, {
+    // Initialize the count for each possible position to 0
+    GKP: 0, 
+    DEF: 0, 
+    MID: 0, 
+    FWD: 0  
+  } as Record<string, number>); 
 
-  const benchCounts = benchPlayersRef.value.reduce((acc, player) => {
-    acc[player.position] = (acc[player.position] || 0) + 1;
-    return acc;
-  }, { GKP: 0, DEF: 0, MID: 0, FWD: 0 } as Record<string, number>);
 
   let benchIndex = benchPlayersRef.value.length;
 
@@ -885,27 +879,32 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.team-card {
-  transition: all 0.3s ease;
-}
-
-.team-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-}
-
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
+
 .animate-fade-in {
   animation: fade-in 0.5s ease-out;
 }
 
 @keyframes slide-up {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
+
 .animate-slide-up {
   animation: slide-up 0.5s ease-out;
 }

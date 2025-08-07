@@ -1,65 +1,56 @@
 <template>
-  <div class="p-6 mx-auto max-w-4xl">
-    
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-semibold text-gray-800 mb-3">
-        Kenyan Leagues & Cups
-      </h1>
-      <p class="text-gray-600 max-w-lg mx-auto">
-        Compete in Kenya's top leagues and cups
-      </p>
-    </div>
+  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-5xl mx-auto">
 
-    <!-- Main Content -->
-    <div class="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
-      
-      <!-- Section Title -->
-      <div class="text-center mb-6">
-        <h2 class="text-2xl font-medium text-gray-800 mb-2">
-          KPL Classic Leagues
-        </h2>
-        <p class="text-gray-600">
-          Compete where the highest point total crowns the champion
-        </p>
-      </div>
 
-      <!-- League Options -->
-      <div class="grid md:grid-cols-2 gap-6">
-        
-        <!-- Private Leagues -->
-        <div class="border border-gray-200 rounded-lg p-5">
-          <h3 class="text-lg font-medium text-gray-800 mb-3">
-            Private Leagues
-          </h3>
-          <p class="text-sm text-gray-600 mb-4">
-            Create or join exclusive leagues with friends
+      <!-- Main Content -->
+      <div class="bg-white/90 rounded-2xl border border-gray-100 p-6 sm:p-8 lg:p-10 shadow-lg glass-effect animate-slide-in">
+        <!-- Section Title -->
+        <div class="text-center mb-8">
+          <h2 class="text-xl sm:text-2xl lg:text-3xl font-medium text-gray-800 mb-2">
+            KPL Classic Leagues
+          </h2>
+          <p class="text-sm sm:text-base text-gray-600">
+            Battle for the top spot where every point counts
           </p>
-          <div class="space-y-3">
-            <button class="w-full bg-gray-800 text-white py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-900 transition-colors">
-              Create League
-            </button>
-            <button class="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">
-              Join League
-            </button>
-          </div>
         </div>
 
-        <!-- Public Leagues -->
-        <div class="border border-gray-200 rounded-lg p-5">
-          <h3 class="text-lg font-medium text-gray-800 mb-3">
-            Public Leagues
-          </h3>
-          <p class="text-sm text-gray-600 mb-4">
-            Join open competitions with the community
-          </p>
-          <div class="space-y-3">
-            <button class="w-full bg-gray-800 text-white py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-900 transition-colors">
-              Create League
-            </button>
-            <button class="w-full border border-gray-300 text-gray-700 py-2.5 px-4 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">
-              Join League
-            </button>
+        <!-- League Options -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+          <!-- Private Leagues -->
+          <div class="border border-gray-100 rounded-xl p-5 sm:p-6 bg-white/80 glass-effect card">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
+              Private Leagues
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-600 mb-4">
+              Create or join exclusive leagues with friends and rivals
+            </p>
+            <div class="space-y-3">
+              <button class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-primary">
+                Create League
+              </button>
+              <button class="w-full border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-secondary">
+                Join League
+              </button>
+            </div>
+          </div>
+
+          <!-- Public Leagues -->
+          <div class="border border-gray-100 rounded-xl p-5 sm:p-6 bg-white/80 glass-effect card">
+            <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
+              Public Leagues
+            </h3>
+            <p class="text-xs sm:text-sm text-gray-600 mb-4">
+              Compete with the Kenyan football community
+            </p>
+            <div class="space-y-3">
+              <button class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-primary">
+                Create League
+              </button>
+              <button class="w-full border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-secondary">
+                Join League
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -83,13 +74,12 @@ onMounted(async () => {
 });
 </script>
 
-<style>
+<style scoped>
 @keyframes fadeIn {
   from {
     opacity: 0;
     transform: translateY(20px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -101,7 +91,6 @@ onMounted(async () => {
     opacity: 0;
     transform: translateX(-30px);
   }
-
   to {
     opacity: 1;
     transform: translateX(0);
@@ -117,10 +106,6 @@ onMounted(async () => {
   animation-fill-mode: both;
 }
 
-.gradient-bg {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
 .glass-effect {
   background: rgba(255, 255, 255, 0.25);
   backdrop-filter: blur(10px);
@@ -128,13 +113,13 @@ onMounted(async () => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, gray 0%, #000 100%);
   transition: all 0.3s ease;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 25px rgba(62, 67, 90, 0.3);
 }
 
 .btn-secondary {
@@ -161,5 +146,27 @@ onMounted(async () => {
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive font sizes */
+@media (max-width: 640px) {
+  .text-2xl {
+    font-size: 1.5rem;
+  }
+  .text-xl {
+    font-size: 1.125rem;
+  }
+  .text-lg {
+    font-size: 0.875rem;
+  }
+  .text-base {
+    font-size: 0.75rem;
+  }
+  .text-sm {
+    font-size: 0.7rem;
+  }
+  .text-xs {
+    font-size: 0.65rem;
+  }
 }
 </style>

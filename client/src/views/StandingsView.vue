@@ -14,62 +14,116 @@
                 </div>
 
                 <div class="p-2 md:p-6">
-                    <div class="overflow-x-auto rounded-lg shadow">
-                        <table class="w-full text-xs md:text-sm border-collapse table-fixed">
-                            <thead class="bg-green-100 text-green-800 sticky top-0 z-10">
-                                <tr>
-                                    <th v-for="header in tableHeaders" :key="header"
-                                        class="px-1 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors">
-                                        {{ getResponsiveHeader(header) }}
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr v-for="team in paginatedTeams" :key="team.team.id"
-                                    class="hover:bg-green-50 transition-all duration-300 transform hover:scale-[1.01] hover:shadow-lg rounded-xl">
-                                    <td class="p-1 md:p-3 text-center">
-                                        <span :class="getPositionClass(team.position)"
-                                            class="inline-block w-6 h-6 md:w-10 md:h-10 rounded-full shadow-md flex items-center justify-center font-bold text-dark transition-transform hover:scale-110">
-                                            {{ team.position }}
-                                        </span>
-                                    </td>
-
-                                    <td class="p-1 md:p-3 text-center">
-                                        <img v-if="team.team.logo_url" :src="team.team.logo_url"
-                                            :alt="`${team.team.name} logo`"
-                                            class="w-8 h-8 md:w-12 md:h-12 mx-auto object-contain transition-transform rounded-full hover:scale-125 hover:rotate-6" />
-                                    </td>
-
-                                    <td
-                                        class="p-1 md:p-3 font-semibold text-gray-800 hover:text-green-600 transition-colors max-w-[80px] md:max-w-none truncate">
-                                        {{ team.team.name }}
-                                    </td>
-
-                                    <td class="p-1 md:p-3 text-center font-medium text-gray-700">{{ team.played }}</td>
-                                    <td class="p-1 md:p-3 text-center text-green-600 font-bold">{{ team.wins }}</td>
-                                    <td class="p-1 md:p-3 text-center text-yellow-600 font-bold">{{ team.draws }}</td>
-                                    <td class="p-1 md:p-3 text-center text-red-600 font-bold">{{ team.losses }}</td>
-                                    <td class="p-1 md:p-3 text-center text-blue-600">{{ team.goals_for }}</td>
-                                    <td class="p-1 md:p-3 text-center text-red-500">{{ team.goals_against }}</td>
-                                    <td class="p-1 md:p-3 text-center font-bold text-purple-600">{{
-                                        team.goal_differential }}</td>
-                                    <td class="p-1 md:p-3 text-center font-bold text-green-700">{{ team.points }}</td>
-
-                                    <!-- <td class="p-1 md:p-3">
-                                        <div class="flex justify-center gap-0.5 md:gap-1">
-                                            <span v-for="(result, index) in getRandomFormResults()" :key="index"
-                                                :class="getFormBadgeColor(result)"
-                                                class="w-4 h-4 md:w-5 md:h-5 rounded-full flex text-white items-center justify-center text-[8px] md:text-xs font-bold transition-transform hover:scale-110 shadow-sm p-2">
-                                                {{ result }}
-                                            </span>
-                                        </div>
-                                    </td> -->
-                                </tr>
-                            </tbody>
-                        </table>
+                    <!-- Mobile swipe hint -->
+                    <div class="md:hidden mb-3 text-center">
+                        <div class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                            <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                            Swipe right for more stats
+                        </div>
                     </div>
 
-                    <!-- Pagination Controls - SimplifgetFormBadgeColoried for mobile -->
+                    <!-- Table Container with horizontal scroll -->
+                    <div class="overflow-x-auto rounded-lg shadow" style="scrollbar-width: thin; scrollbar-color: #10b981 #f0f0f0;">
+                        <div class="min-w-full inline-block">
+                            <table class="w-full text-xs md:text-sm border-collapse" style="min-width: 640px;">
+                                <thead class="bg-green-100 text-green-800 sticky top-0 z-10">
+                                    <tr>
+                                        <!-- Always visible columns on mobile -->
+                                        <th class="sticky left-0 bg-green-100 z-20 px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
+                                            Pos
+                                        </th>
+                                        <th class="sticky left-10 bg-green-100 z-20 px-1 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
+                                            
+                                        </th>
+                                        <th class="sticky left-20 bg-green-100 z-20 px-2 py-2 md:p-4 font-black uppercase tracking-wider text-left border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[120px] md:min-w-[150px]">
+                                            Team
+                                        </th>
+                                        
+                                        <!-- Scrollable columns -->
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[50px]">
+                                            Pts
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
+                                            P
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
+                                            W
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
+                                            D
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
+                                            L
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[45px]">
+                                            GF
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[45px]">
+                                            GA
+                                        </th>
+                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[45px]">
+                                            GD
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="team in paginatedTeams" :key="team.team.id"
+                                        class="hover:bg-green-50 transition-all duration-300 border-b border-gray-100">
+                                        <!-- Sticky columns -->
+                                        <td class="sticky left-0 bg-white z-10 p-2 text-center border-r border-gray-100">
+                                            <span :class="getPositionClass(team.position)"
+                                                class="inline-block w-6 h-6 md:w-8 md:h-8 rounded-full shadow-sm flex items-center justify-center font-bold text-xs transition-transform hover:scale-110">
+                                                {{ team.position }}
+                                            </span>
+                                        </td>
+
+                                        <td class="sticky left-10 bg-white z-10 p-1 text-center border-r border-gray-100">
+                                            <img v-if="team.team.logo_url" :src="team.team.logo_url"
+                                                :alt="`${team.team.name} logo`"
+                                                class="w-6 h-6 md:w-8 md:h-8 mx-auto object-contain transition-transform rounded-full hover:scale-110" />
+                                        </td>
+
+                                        <td class="sticky left-20 bg-white z-10 px-2 py-2 font-semibold text-gray-800 hover:text-green-600 transition-colors text-left border-r border-gray-100">
+                                            <div class="truncate max-w-[100px] md:max-w-[130px]" :title="team.team.name">
+                                                {{ team.team.name }}
+                                            </div>
+                                        </td>
+
+                                        <!-- Scrollable columns -->
+                                        <td class="px-2 py-2 text-center font-bold text-green-700 text-sm">
+                                            {{ team.points }}
+                                        </td>
+                                        <td class="px-2 py-2 text-center font-medium text-gray-700">{{ team.played }}</td>
+                                        <td class="px-2 py-2 text-center text-green-600 font-bold">{{ team.wins }}</td>
+                                        <td class="px-2 py-2 text-center text-yellow-600 font-bold">{{ team.draws }}</td>
+                                        <td class="px-2 py-2 text-center text-red-600 font-bold">{{ team.losses }}</td>
+                                        <td class="px-2 py-2 text-center text-blue-600 font-medium">{{ team.goals_for }}</td>
+                                        <td class="px-2 py-2 text-center text-red-500 font-medium">{{ team.goals_against }}</td>
+                                        <td class="px-2 py-2 text-center font-bold text-purple-600">{{ team.goal_differential }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Mobile legend for quick reference -->
+                    <div class="md:hidden mt-4 bg-gray-50 rounded-lg p-3">
+                        <h4 class="text-xs font-bold text-gray-700 mb-2">Legend:</h4>
+                        <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                            <div><span class="font-semibold">P:</span> Played</div>
+                            <div><span class="font-semibold">W:</span> Won</div>
+                            <div><span class="font-semibold">D:</span> Drawn</div>
+                            <div><span class="font-semibold">L:</span> Lost</div>
+                            <div><span class="font-semibold">GF:</span> Goals For</div>
+                            <div><span class="font-semibold">GA:</span> Goals Against</div>
+                            <div><span class="font-semibold">GD:</span> Goal Difference</div>
+                            <div><span class="font-semibold">Pts:</span> Points</div>
+                        </div>
+                    </div>
+
+                    <!-- Pagination Controls -->
                     <div class="flex justify-center items-center mt-4 md:mt-8 space-x-2 md:space-x-6">
                         <button @click="prevPage" :disabled="currentPage === 1"
                             class="group px-3 py-2 md:px-6 md:py-3 bg-green-500 text-white text-xs md:text-base rounded-full shadow-lg hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-300 flex items-center space-x-1 md:space-x-2">
@@ -98,7 +152,7 @@
                     </div>
                 </div>
 
-                <!-- League Insights with improved mobile layout -->
+                <!-- League Insights -->
                 <div class="bg-gray-50 p-3 md:p-6 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-6">
                     <div v-for="(insight, index) in leagueInsights" :key="index" :class="insight.cardClasses"
                         class="transform transition-all duration-500 hover:scale-105 hover:shadow-2xl">
@@ -135,6 +189,7 @@
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from "vue";
 import { useAuthStore } from '@/stores/auth';
@@ -146,21 +201,6 @@ import type { TeamStanding } from "@/helpers/types/team";
 const authStore = useAuthStore();
 const kplStore = useKplStore();
 const router = useRouter();
-
-const tableHeaders: string[] = [
-    "Pos",
-    "Team",
-    "",
-    "P",
-    "W",
-    "D",
-    "L",
-    "GF",
-    "GA",
-    "GD",
-    "Pts",
-    // "Form",
-];
 
 const currentPage = ref(1);
 const itemsPerPage = ref(window.innerWidth < 640 ? 5 : 9);
@@ -181,26 +221,6 @@ async function fetchStandings() {
     } finally {
         isLoading.value = false;
     }
-}
-
-function getResponsiveHeader(header: string): string {
-    if (window.innerWidth < 640) {
-        if (header === "Position") return "Pos";
-        if (header === "Goals For") return "GF";
-        if (header === "Goals Against") return "GA";
-        if (header === "Goal Differential") return "GD";
-        if (header === "Points") return "Pts";
-    }
-    return header;
-}
-
-function getRandomFormResults(): string[] {
-    const results = ['W', 'D', 'L'];
-    const form = [];
-    for (let i = 0; i < 3; i++) {
-        form.push(results[Math.floor(Math.random() * results.length)]);
-    }
-    return window.innerWidth < 640 ? form.slice(0, 3) : form;
 }
 
 const paginatedTeams = computed<TeamStanding[]>(() => {
@@ -224,12 +244,6 @@ function prevPage() {
     if (currentPage.value > 1) {
         currentPage.value--;
     }
-}
-
-function getFormBadgeColor(result: string): string {
-    const formResults = ["W", "D", "L"];
-    if (!formResults.includes(result)) return "bg-gray-500";
-    return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
 }
 
 function getPositionClass(position: number): string {
@@ -315,3 +329,29 @@ onMounted(() => {
     }
 });
 </script>
+
+<style scoped>
+/* Custom scrollbar for webkit browsers */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #059669;
+}
+
+/* Smooth scrolling */
+.overflow-x-auto {
+    scroll-behavior: smooth;
+}
+</style>

@@ -1,8 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import (FantasyLeague, FantasyPlayer, FantasyTeam,
-                     PlayerPerformance, PlayerTransfer)
+from .models import (
+    FantasyLeague,
+    FantasyPlayer,
+    FantasyTeam,
+    PlayerPerformance,
+    PlayerTransfer,
+)
 
 
 @admin.register(FantasyTeam)
@@ -13,7 +18,6 @@ class FantasyTeamAdmin(admin.ModelAdmin):
         "formation",
         "total_points",
         "budget_display",
-        "current_gameweek",
     )
     list_filter = ("formation", "name")
     search_fields = ("name", "user__username", "user__email")

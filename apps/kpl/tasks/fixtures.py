@@ -1,12 +1,13 @@
 import logging
 import os
 from datetime import datetime
+from django.utils import timezone
 
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
 
-from apps.kpl.models import Fixture, Team
+from apps.kpl.models import Fixture, Team, Gameweek
 from util.views import headers
 
 logger = logging.getLogger(__name__)
@@ -126,7 +127,70 @@ def extract_fixtures_data(headers) -> str:
         return (
             f"Failed to retrieve the web page. Status code: {web_content.status_code}"
         )
+        
 
+@shared_task
+def update_active_gameweek():
+    try:
+        current_datetime = timezone.now()
+        current_date = current_datetime.date()
+
+        Gameweek.objects.update(is_active=False)
+
+        # First, try to find the active gameweek based on Gameweek start_date and end_date
+        active_gameweek = Gameweek.objects.filter(
+            start_date__lte=current_date,
+            end_date__gte=current_date
+        ).first()
+
+        if active_gameweek:
+            active_gameweek.is_active = True
+            active_gameweek.save()
+            logger.info(f"Set Gameweek {active_gameweek.number} as active based on date range.")
+            return f"Active gameweek set: Gameweek {active_gameweek.number}"
+
+        # If no gameweek is found based on date range, check fixtures
+        upcoming_fixtures = Fixture.objects.filter(
+            match_date__gte=current_datetime,
+            status="upcoming"
+        ).order_by("match_date")
+
+        if not upcoming_fixtures:
+            logger.warning("No upcoming fixtures found to determine gameweek.")
+            return "No upcoming fixtures found to determine gameweek."
+
+        # Get the earliest upcoming fixture
+        earliest_fixture = upcoming_fixtures.first()
+
+        # Try to find or assign a gameweek for this fixture
+        if earliest_fixture.gameweek:
+            earliest_fixture.gameweek.is_active = True
+            earliest_fixture.gameweek.save()
+            logger.info(f"Set Gameweek {earliest_fixture.gameweek.number} as active based on earliest fixture.")
+            return f"Active gameweek set: Gameweek {earliest_fixture.gameweek.number}"
+
+        # If the fixture doesn't have a gameweek, find the closest gameweek by date
+        closest_gameweek = Gameweek.objects.filter(
+            start_date__lte=earliest_fixture.match_date.date(),
+            end_date__gte=earliest_fixture.match_date.date()
+        ).first()
+
+        if closest_gameweek:
+            closest_gameweek.is_active = True
+            closest_gameweek.save()
+            # Optionally, assign the fixture to this gameweek
+            earliest_fixture.gameweek = closest_gameweek
+            earliest_fixture.save()
+            logger.info(f"Set Gameweek {closest_gameweek.number} as active and assigned to fixture.")
+            return f"Active gameweek set: Gameweek {closest_gameweek.number}"
+
+        # If no gameweek matches, create a new one (optional, depending on your requirements)
+        logger.warning("No matching gameweek found for the earliest fixture.")
+        return "No matching gameweek found for the earliest fixture."
+
+    except Exception as e:
+        logger.error(f"Error updating active gameweek: {e}")
+        return f"Error updating active gameweek: {e}"
 
 @shared_task
 def get_kpl_fixtures():

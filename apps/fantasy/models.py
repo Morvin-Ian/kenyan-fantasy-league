@@ -22,13 +22,6 @@ class FantasyTeam(TimeStampedUUIDModel):
     )
     name = models.CharField(max_length=100, unique=True)
     budget = models.DecimalField(max_digits=6, decimal_places=2, default=100.00)
-    current_gameweek = models.ForeignKey(
-        Gameweek,
-        on_delete=models.CASCADE,
-        related_name="current_teams",
-        null=True,
-        blank=True,
-    )
     formation = models.CharField(
         max_length=10, choices=FORMATION_CHOICES, default="3-4-3"
     )
@@ -86,24 +79,6 @@ class FantasyPlayer(TimeStampedUUIDModel):
             raise ValidationError(
                 "You can't select more than 3 players from a single real team."
             )
-
-        # Validate captain/vice-captain rules
-        if self.is_captain:
-            other_captains = self.fantasy_team.players.filter(is_captain=True).exclude(
-                pk=self.pk
-            )
-            if other_captains.exists():
-                raise ValidationError("Only one player can be captain.")
-
-            if not self.is_starter:
-                raise ValidationError("Captain must be a starter.")
-
-        if self.is_vice_captain:
-            other_vice_captains = self.fantasy_team.players.filter(
-                is_vice_captain=True
-            ).exclude(pk=self.pk)
-            if other_vice_captains.exists():
-                raise ValidationError("Only one player can be vice-captain.")
 
     def save(self, *args, **kwargs):
         self.full_clean()
@@ -185,7 +160,6 @@ class PlayerPerformance(TimeStampedUUIDModel):
 
 
 class TeamSelection(TimeStampedUUIDModel):
-
     fantasy_team = models.ForeignKey(
         FantasyTeam, on_delete=models.CASCADE, related_name="selections"
     )

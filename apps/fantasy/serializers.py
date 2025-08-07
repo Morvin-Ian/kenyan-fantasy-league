@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
 from apps.fantasy.models import FantasyPlayer, FantasyTeam
+from apps.kpl.models import Gameweek
 
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
+    gameweek = serializers.SerializerMethodField()
 
     class Meta:
         model = FantasyTeam
@@ -18,6 +20,10 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             "free_transfers",
             "transfer_budget",
         )
+        
+    def get_gameweek(self, obj):
+        active_gameweek = Gameweek.objects.filter(is_active=True).first()
+        return active_gameweek.number if active_gameweek else None
 
 
 class FantasyPlayerSerializer(serializers.ModelSerializer):
@@ -63,11 +69,6 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
-        """
-        Custom validation to enforce model constraints:
-        - Max 15 players per fantasy team
-        - Max 3 players from the same real team
-        """
         fantasy_team = data.get("fantasy_team")
         player = data.get("player")
         instance = self.instance
@@ -89,18 +90,3 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
                 )
 
         return data
-
-    # def create(self, validated_data):
-    #     """
-    #     Create a new FantasyPlayer instance with validated data.
-    #     """
-    #     return FantasyPlayer.objects.create(**validated_data)
-
-    # def update(self, instance, validated_data):
-    #     """
-    #     Update an existing FantasyPlayer instance with validated data.
-    #     """
-    #     for attr, value in validated_data.items():
-    #         setattr(instance, attr, value)
-    #     instance.save()
-    #     return instance

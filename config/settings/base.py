@@ -271,4 +271,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.kpl.tasks.fixtures.get_kpl_fixtures",
         "schedule": timedelta(days=2).total_seconds(),  # Runs every 2 days
     },
+      "update-kpl-gameweek": {
+        "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
+        "schedule": timedelta(minutes=1).total_seconds(), 
+    },
 }

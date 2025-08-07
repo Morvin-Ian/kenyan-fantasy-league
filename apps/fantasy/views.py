@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.fantasy.models import FantasyPlayer, FantasyTeam
-
 from .serializers import FantasyPlayerSerializer, FantasyTeamSerializer
 from .services import FantasyService
 
@@ -80,21 +79,20 @@ class FantasyPlayerViewSet(ModelViewSet):
             result = FantasyService.save_team_players(
                 fantasy_team=fantasy_team,
                 starting_eleven=starting_eleven,
-                bench_players=bench_players
+                bench_players=bench_players,
             )
 
             return Response(
                 {
                     "detail": "Players updated successfully.",
-                    **result,  
+                    **result,
                 },
                 status=status.HTTP_200_OK,
             )
 
         except FantasyTeam.DoesNotExist:
             return Response(
-                {"detail": "Fantasy team not found."}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Fantasy team not found."}, status=status.HTTP_404_NOT_FOUND
             )
         except ValidationError as e:
             return Response(

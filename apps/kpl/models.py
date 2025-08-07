@@ -21,6 +21,7 @@ class Team(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
     logo_url = models.URLField()
     jersey_image = models.ImageField(upload_to="team_jerseys/", null=True, blank=True)
+    is_relagated = models.BooleanField(default=False, help_text="Indicates if the team has been relegated from the league")
 
     class Meta:
         ordering = ["name"]
@@ -85,6 +86,12 @@ class Gameweek(TimeStampedUUIDModel):
 
     def __str__(self):
         return f"Gameweek {self.number}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk and not self.number:
+            max_number = Gameweek.objects.aggregate(models.Max('number'))['number__max'] or 0
+            self.number = max_number + 1
+        super().save(*args, **kwargs)
 
 
 class Fixture(TimeStampedUUIDModel):
