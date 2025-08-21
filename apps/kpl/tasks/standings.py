@@ -10,8 +10,6 @@ from util.views import headers
 
 from .fixtures import find_team
 
-find_team
-
 
 def extract_table_standings_data(headers) -> str:
     url = os.getenv("TABLE_STANDINGS_URL")

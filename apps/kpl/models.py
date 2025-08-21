@@ -104,7 +104,7 @@ class Fixture(TimeStampedUUIDModel):
     match_date = models.DateTimeField()
     venue = models.CharField(max_length=255)
     gameweek = models.ForeignKey(
-        Gameweek, on_delete=models.CASCADE, null=True, blank=True
+        Gameweek, on_delete=models.SET_NULL, null=True, blank=True
     )
     status = models.CharField(
         max_length=20, choices=FIXTURE_STATUS, default=FIXTURE_STATUS[0][1]

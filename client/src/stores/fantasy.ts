@@ -62,17 +62,17 @@ export const useFantasyStore = defineStore("fantasy", {
       }
     },
 
-    async saveFantasyTeamPlayers(team: TeamData) {
-      try {
-        this.isLoading = true;
-        const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
-        this.fetchFantasyTeamPlayers(); 
-        return response.data; 
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : String(error);
-      } finally {
-        this.isLoading = false;
-      }
-    } 
+async saveFantasyTeamPlayers(team: TeamData) {
+  try {
+    this.isLoading = true;
+    const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
+    this.fetchFantasyTeamPlayers();
+    return response.data;
+  } catch (error) {
+    this.error = error.response?.data?.error || "Saving changes failed";
+  } finally {
+    this.isLoading = false;
+  }
+}
   },
 });

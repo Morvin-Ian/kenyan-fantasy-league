@@ -550,6 +550,11 @@ const saveTeamChanges = async () => {
     };
 
     await fantasyStore.saveFantasyTeamPlayers(teamData);
+    if(fantasyStore.error){
+        alert(fantasyStore.error)
+        return
+
+    }
 
     initialTeamState.value = {
       startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
