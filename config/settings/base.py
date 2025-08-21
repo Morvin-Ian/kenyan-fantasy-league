@@ -274,6 +274,6 @@ CELERY_BEAT_SCHEDULE = {
     },
       "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
-        "schedule": timedelta(minutes=1).total_seconds(), 
+        "schedule": timedelta(days=5).total_seconds(), 
     },
 }

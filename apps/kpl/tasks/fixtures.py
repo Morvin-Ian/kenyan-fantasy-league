@@ -137,7 +137,6 @@ def update_active_gameweek():
         
         Gameweek.objects.update(is_active=False)
         
-        # Priority 1: Look for upcoming fixtures to determine the next gameweek
         upcoming_fixtures = Fixture.objects.filter(
             match_date__gte=current_datetime,
             status="upcoming"
@@ -150,7 +149,7 @@ def update_active_gameweek():
             for fixture in upcoming_fixtures:
                 # Get the week start (Monday) for this fixture
                 fixture_date = fixture.match_date.date()
-                print(fixture_date)
+                
                 week_start = fixture_date - timedelta(days=fixture_date.weekday())
                 
                 if week_start not in fixtures_by_week:
@@ -169,11 +168,11 @@ def update_active_gameweek():
             existing_gameweek = None
             for fixture in earliest_week_fixtures:
                 if fixture.gameweek:
-                    existing_gameweek = fixture.gameweek
+                    existing_gameweek = fixture.gameweek            # Check if any fixture in this week already has a gameweek assigned
+
                     break
             
             if existing_gameweek:
-                # Use the existing gameweek for this week
                 existing_gameweek.is_active = True
                 existing_gameweek.transfer_deadline = transfer_deadline
                 existing_gameweek.save()
@@ -238,7 +237,7 @@ def update_active_gameweek():
                     logger.info(f"Created and set Gameweek {new_gameweek.number} as active for week starting {earliest_week}. Transfer deadline: {transfer_deadline}")
                     return f"Active gameweek set: Gameweek {new_gameweek.number}"
         
-        # Priority 2: If no upcoming fixtures, find current gameweek based on date range
+        # If no upcoming fixtures, find current gameweek based on date range
         current_gameweek = Gameweek.objects.filter(
             start_date__lte=current_date,
             end_date__gte=current_date
@@ -261,7 +260,7 @@ def update_active_gameweek():
             logger.info(f"Set Gameweek {current_gameweek.number} as active based on current date range.")
             return f"Active gameweek set: Gameweek {current_gameweek.number}"
         
-        # Priority 3: If no current gameweek, find the next upcoming gameweek
+        # If no current gameweek, find the next upcoming gameweek
         next_gameweek = Gameweek.objects.filter(
             start_date__gt=current_date
         ).order_by("start_date").first()
@@ -288,8 +287,7 @@ def update_active_gameweek():
         
     except Exception as e:
         logger.error(f"Error updating active gameweek: {e}")
-        return f"Error updating active gameweek: {e}"
-    
+        return f"Error updating active gameweek: {e}"    
 
 @shared_task
 def get_kpl_fixtures():
