@@ -89,7 +89,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
-import default_profile from "../assets/images/user.jpeg";
+import default_profile from "../../assets/images/user.jpeg";
 
 const isAccountOpen = ref(false);
 const isAuthenticated = ref(true);

@@ -3,9 +3,27 @@
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
 
-        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
-          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
-          @player-click="handlePlayerClick" />
+          <MessageAlert 
+            v-if="message.text" 
+            :type="message.type"
+            :text="message.text"
+            :dismissible="message.dismissible"
+            :auto-dismiss="message.autoDismiss"
+            @dismiss="clearMessage"
+            class="mb-4"
+          />
+
+           <Pitch 
+            :goalkeeper="goalkeeper" 
+            :defenders="defenders" 
+            :midfielders="midfielders" 
+            :forwards="forwards"
+            :bench-players="benchPlayers" 
+            :switch-source="switchSource" 
+            :switch-active="switchActive"
+            @player-click="handlePlayerClick"
+            @formation-change="handleFormationChange" 
+          />
 
         <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
           <button @click="saveTeamChanges"
@@ -19,8 +37,14 @@
           </button>
         </div>
       </div>
-      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-        :overall-rank="overallRank" :team="userTeamName" />
+
+      <Sidebar 
+        :total-points="totalPoints" 
+        :average-points="averagePoints" 
+        :highest-points="highestPoints"
+        :overall-rank="overallRank" 
+        :team="userTeamName" 
+      />
 
     </div>
 
@@ -34,16 +58,34 @@
         Your Team</button>
     </div>
 
-    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
-      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+    <PlayerModal v-if="userTeam && userTeam.length" 
+      :show-modal="showModal" 
+      :selected-player="selectedPlayer"
+      @close-modal="closeModal" 
+      @initiate-switch="initiateSwitch" 
+      @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" 
+      @make-vice-captain="makeViceCaptain" 
+    />
 
-    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer" />
+    <SearchPlayer 
+      :show-search-modal="showSearchModal" 
+      :selectedPlayer="selectedPlayer" 
+      @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" 
+    />
 
     <div v-if="showCreateTeamModal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
+          <MessageAlert 
+            v-if="modalMessage.text" 
+            :type="modalMessage.type"
+            :text="modalMessage.text"
+            :dismissible="modalMessage.dismissible"
+            @dismiss="clearModalMessage"
+            class="mb-4"
+          />
         <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
         <form @submit.prevent="createTeam">
           <div class="mb-4">
@@ -66,9 +108,7 @@
               <option value="5-4-1">5-4-1</option>
             </select>
           </div>
-          <div v-if="errorMessage" class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-            <span>{{ errorMessage }}</span>
-          </div>
+          
           <div class="flex justify-end gap-4">
             <button type="button" @click="showCreateTeamModal = false"
               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
@@ -88,6 +128,7 @@ import Pitch from "@/components/Team/Pitch.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import PlayerModal from "@/components/Team/PlayerModal.vue";
 import SearchPlayer from "@/components/Team/SearchPlayer.vue";
+import MessageAlert from "@/components/reusables/MessageAlert.vue";
 import type { StartingEleven, TeamData, Player as KplPlayer } from "@/helpers/types/team";
 import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
 import { useAuthStore } from "@/stores/auth";
@@ -110,13 +151,62 @@ const isBenchSwitch = ref(false);
 const showCreateTeamModal = ref(false);
 const teamName = ref("");
 const selectedFormation = ref("");
-const errorMessage = ref<string>("");
 const hasUnsavedChanges = ref(false);
-const showSavedNotification = ref(false);
 const initialTeamState = ref<{
   startingEleven: StartingEleven;
   benchPlayers: Player[];
 } | null>(null);
+
+// Message states
+const message = ref({
+  text: '',
+  type: 'info',
+  dismissible: true,
+  autoDismiss: 0
+});
+
+const modalMessage = ref({
+  text: '',
+  type: 'info',
+  dismissible: true,
+  autoDismiss: 0
+});
+
+const clearMessage = () => {
+  message.value = {
+    text: '',
+    type: 'info',
+    dismissible: true,
+    autoDismiss: 0
+  };
+};
+
+const clearModalMessage = () => {
+  modalMessage.value = {
+    text: '',
+    type: 'info',
+    dismissible: true,
+    autoDismiss: 0
+  };
+};
+
+const showMessage = (text: string, type: 'error' | 'success' | 'warning' | 'info' = 'info', autoDismiss: number = 5000) => {
+  message.value = {
+    text,
+    type,
+    dismissible: true,
+    autoDismiss
+  };
+};
+
+const showModalMessage = (text: string, type: 'error' | 'success' | 'warning' | 'info' = 'info', autoDismiss: number = 5000) => {
+  modalMessage.value = {
+    text,
+    type,
+    dismissible: true,
+    autoDismiss
+  };
+};
 
 const startingElevenRef = ref<StartingEleven>({
   goalkeeper: {} as Player,
@@ -131,6 +221,7 @@ const defenders = computed(() => startingElevenRef.value.defenders);
 const midfielders = computed(() => startingElevenRef.value.midfielders);
 const forwards = computed(() => startingElevenRef.value.forwards);
 const benchPlayers = computed(() => benchPlayersRef.value);
+const currentFormation = ref(fantasyStore.userTeam[0]?.formation || "4-4-2");
 
 const totalPoints = computed(() => (userTeam.value.length ? userTeam.value[0].total_points : 0));
 const overallRank = computed(() => (userTeam.value.length ? userTeam.value[0].overall_rank : null));
@@ -138,7 +229,7 @@ const userTeamName = computed(() => (userTeam.value.length ? userTeam.value[0].n
 const averagePoints = ref(52);
 const highestPoints = ref(121);
 
-type FormationKey = "3-4-3" | "3-5-2" | "4-4-2" | "4-3-3" | "5-3-2" | "5-4-1";
+type FormationKey = "3-4-3" | "3-5-2" | "4-4-2" | "4-3-3" | "5-3-2" | "5-4-1" | "5-2-3";
 type BenchComposition = { DEF: number; MID: number; FWD: number };
 
 const benchCompositions: Record<FormationKey, BenchComposition> = {
@@ -147,6 +238,7 @@ const benchCompositions: Record<FormationKey, BenchComposition> = {
   "4-4-2": { DEF: 1, MID: 1, FWD: 1 },
   "4-3-3": { DEF: 1, MID: 2, FWD: 0 },
   "5-3-2": { DEF: 0, MID: 2, FWD: 1 },
+  "5-2-3": { DEF: 0, MID: 3, FWD: 0 },
   "5-4-1": { DEF: 0, MID: 1, FWD: 2 },
 };
 
@@ -160,7 +252,7 @@ const createPlaceholderPlayer = (position: string, index: number, isStarter: boo
   player: "",
   gameweek: 1,
   total_points: 0,
-  gameweek_points: 0,
+  gameweek_points: null,
   is_captain: false,
   is_vice_captain: false,
   is_starter: isStarter,
@@ -173,14 +265,13 @@ const createPlaceholderPlayer = (position: string, index: number, isStarter: boo
 
 const toggleModal = () => {
   showCreateTeamModal.value = !showCreateTeamModal.value;
-  errorMessage.value = "";
+  clearModalMessage();
 };
 
 const closeSearchModal = () => {
   showSearchModal.value = false;
   closeModal();
 };
-
 
 function initializeTeamState() {
   const players = fantasyStore.fantasyPlayers || [];
@@ -241,7 +332,6 @@ function initializeTeamState() {
     accumulator[player.position] = (accumulator[player.position] || 0) + 1;
     return accumulator;
   }, {
-    // Initialize the count for each possible position to 0
     GKP: 0, 
     DEF: 0, 
     MID: 0, 
@@ -326,14 +416,19 @@ const handlePlayerClick = (player: Player) => {
   }
 };
 
+const handleFormationChange = (newFormation: string) => {
+  currentFormation.value = newFormation;
+  hasUnsavedChanges.value = true;
+};
+
 const initiateTransfer = (player: Player | null | undefined) => {
   if (player === null || player === undefined) {
-    console.warn("No player selected for transfer.");
+    showMessage("Please select a player to transfer.", "info");
     return;
   }
 
   if (player.id.startsWith("placeholder")) {
-    console.warn("Cannot initiate transfer for placeholder player.");
+    // showMessage("Please select a valid player to transfer.", "info");  
     return;
   }
   selectedPlayer.value = player;
@@ -342,14 +437,14 @@ const initiateTransfer = (player: Player | null | undefined) => {
 
 const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
   if (!selectedPlayer.value) {
-    console.error("No player selected for transfer");
+    showMessage("Please select a player to transfer.", "info");
     return;
   }
 
   const oldPlayer = selectedPlayer.value;
 
   if (oldPlayer.position !== newPlayer.position && !isValidFormationChange(oldPlayer, newPlayer)) {
-    alert("Invalid transfer: Formation constraints not met (min 3 DEF, 3 MID, 1 FWD).");
+    showMessage("Invalid transfer: Formation constraints not met (min 3 DEF, 3 MID, 1 FWD).", "error");
     closeSearchModal();
     return;
   }
@@ -362,13 +457,13 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
     ...benchPlayersRef.value,
   ].filter((p) => p.team === newPlayer.team.name && p.id !== oldPlayer.id && !p.id.startsWith("placeholder"));
   if (sameTeamPlayers.length >= 3) {
-    alert("Cannot select more than 3 players from the same team.");
+    showMessage("Cannot select more than 3 players from the same team.", "error");
     closeSearchModal();
     return;
   }
 
   if (isPlayerInTeam(newPlayer)) {
-    alert("This player is already in your team.");
+    showMessage("This player is already in your team.", "error");
     closeSearchModal();
     return;
   }
@@ -380,11 +475,7 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
   }
 
   hasUnsavedChanges.value = true;
-  showSavedNotification.value = true;
-  setTimeout(() => {
-    showSavedNotification.value = false;
-  }, 3000);
-
+  showMessage("Player transferred successfully!", "success");
   closeSearchModal();
 };
 
@@ -400,7 +491,7 @@ const replaceStartingWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) =
     player: newPlayer.id,
     gameweek: oldPlayer.gameweek,
     total_points: 0,
-    gameweek_points: 0,
+    gameweek_points: null,
     is_captain: oldPlayer.is_captain,
     is_vice_captain: oldPlayer.is_vice_captain,
     is_starter: true,
@@ -490,12 +581,12 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
 
 const initiateSwitch = (player: Player | null | undefined) => {
   if (player === null || player === undefined) {
-    console.warn("No player selected for switch.");
+    showMessage("Please select a player to switch.", "info");
     return;
   }
 
   if (player.id.startsWith("placeholder")) {
-    console.warn("Cannot initiate switch with placeholder player.");
+    showMessage("Cannot initiate switch with a non-existent player.", "info");
     return;
   }
   if (!selectedPlayer.value) {
@@ -512,14 +603,14 @@ function performSwitch(targetPlayer: Player) {
   const sourcePlayer = switchSource.value;
 
   if (targetPlayer.id.startsWith("placeholder")) {
-    alert("Cannot switch with a placeholder player. Please select a valid player.");
+    showMessage("Cannot switch with a placeholder player. Please select a valid player.", "error");
     resetSwitchState();
     return;
   }
 
   if (sourcePlayer.position !== targetPlayer.position) {
     if (!isValidFormationChange(sourcePlayer, targetPlayer)) {
-      alert("Invalid formation change. Must have at least 3 defenders, 3 midfielders, and 1 forward.");
+      showMessage("Invalid formation change. Must have at least 3 defenders, 3 midfielders, and 1 forward.", "error");
       resetSwitchState();
       return;
     }
@@ -535,11 +626,13 @@ function performSwitch(targetPlayer: Player) {
   }
   resetSwitchState();
   hasUnsavedChanges.value = true;
+  // showMessage("Players switched successfully!", "success");
 }
 
 const saveTeamChanges = async () => {
   try {
-    const teamData: TeamData = {
+     const teamData: TeamData = {
+      formation: currentFormation.value, 
       startingEleven: {
         goalkeeper: startingElevenRef.value.goalkeeper.id.startsWith("placeholder") ? null : startingElevenRef.value.goalkeeper,
         defenders: startingElevenRef.value.defenders.filter((p) => !p.id.startsWith("placeholder")),
@@ -551,9 +644,8 @@ const saveTeamChanges = async () => {
 
     await fantasyStore.saveFantasyTeamPlayers(teamData);
     if(fantasyStore.error){
-        alert(fantasyStore.error)
+      showMessage(fantasyStore.error, "error");
         return
-
     }
 
     initialTeamState.value = {
@@ -562,40 +654,41 @@ const saveTeamChanges = async () => {
     };
 
     hasUnsavedChanges.value = false;
-    showSavedNotification.value = true;
-    setTimeout(() => {
-      showSavedNotification.value = false;
-    }, 3000);
+    showMessage("Team changes saved successfully!", "success");
   } catch (error) {
-    console.error("Error saving team:", error);
-    alert("Failed to save team changes. Please try again.");
+    showMessage("Failed to save team changes. Please try again.", "error");
   }
 };
 
 async function createTeam() {
   try {
     if (!teamName.value.trim()) {
-      errorMessage.value = "Please enter a valid team name.";
+      showModalMessage("Please enter a valid team name.", "error");
       return;
     }
     if (!selectedFormation.value) {
-      errorMessage.value = "Please select a formation.";
+      showModalMessage("Please select a formation.", "error");
       return;
     }
     await fantasyStore.createFantasyTeam(teamName.value, selectedFormation.value);
+    
+    if(fantasyStore.error){
+      showModalMessage(fantasyStore.error, "error");
+      teamName.value = "";
+      selectedFormation.value = "";
+      fantasyStore.error = null; 
+      return
+    }
+
     toggleModal();
     teamName.value = "";
     selectedFormation.value = "";
     await fantasyStore.fetchUserFantasyTeam();
     await fantasyStore.fetchFantasyTeamPlayers();
     initializeTeamState();
-    showSavedNotification.value = true;
-    setTimeout(() => {
-      showSavedNotification.value = false;
-    }, 3000);
+    showMessage("Team created successfully!", "success");
   } catch (error) {
-    console.error("Error creating team:", error);
-    errorMessage.value = "Failed to create team. Please try again.";
+    showModalMessage("Failed to create team. Please try again.", "error");
   }
 }
 
@@ -830,15 +923,15 @@ const clearViceCaptaincy = () => {
 
 const makeCaptain = () => {
   if (!selectedPlayer.value) {
-    console.warn("No player selected to be captain.");
+    toast.info("No player selected to be captain.");
     return;
   }
   if (!isPlayerInStartingEleven(selectedPlayer.value)) {
-    console.warn("Cannot assign captaincy to a bench player.");
+    toast.info("Captain must be a starting player.");
     return;
   }
   if (selectedPlayer.value.is_captain) {
-    console.warn(`${selectedPlayer.value.name} is already the captain.`);
+    toast.info("Player is already captain.");
     return;
   }
   clearCaptaincy();
@@ -849,15 +942,15 @@ const makeCaptain = () => {
 
 const makeViceCaptain = () => {
   if (!selectedPlayer.value) {
-    console.warn("No player selected to be vice-captain.");
+    toast.info("No player selected to be vice-captain.");
     return;
   }
   if (!isPlayerInStartingEleven(selectedPlayer.value)) {
-    console.warn("Cannot assign vice-captaincy to a bench player.");
+    toast.info("Vice-captain must be a starting player.");
     return;
   }
   if (selectedPlayer.value.is_vice_captain) {
-    console.warn(`${selectedPlayer.value.name} is already the vice-captain.`);
+    toast.info("Player is already vice-captain.");
     return;
   }
   clearViceCaptaincy();

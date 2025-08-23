@@ -22,7 +22,7 @@ export interface FantasyPlayer {
   player: string;
   gameweek: number;
   total_points: number;
-  gameweek_points: number;
+  gameweek_points: number | null;
   is_captain: boolean;
   is_vice_captain: boolean;
   is_starter: boolean;

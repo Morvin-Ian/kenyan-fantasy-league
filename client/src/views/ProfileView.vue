@@ -3,7 +3,7 @@
         <div class="max-w-6xl mx-auto px-4 py-8 lg:px-8">
             <div class="text-center mb-12">
                 <h1 class="text-2xl lg:text-3xl font-semibold text-gray-900 mb-2">
-                    Profile Dashboard
+                    Personal Details
                 </h1>
                 <p class="text-base lg:text-lg text-gray-600">
                     Manage your personal information and settings

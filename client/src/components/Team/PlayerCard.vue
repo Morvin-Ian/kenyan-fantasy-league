@@ -44,6 +44,7 @@
       </div>
 
       <div
+      v-else
         class="points-container relative mt-0.5 xs:mt-1 bg-gradient-to-b from-green-800/60 to-green-900/80 rounded-full py-0.5 xs:py-1 px-1 xs:px-1.5 backdrop-blur-sm border border-green-500/20 min-h-[0.75rem]"
       >
         <div

@@ -26,13 +26,16 @@ class FantasyService:
     @staticmethod
     @transaction.atomic
     def save_team_players(
-        fantasy_team: FantasyTeam, starting_eleven: dict, bench_players: list
+        formation:str, fantasy_team: FantasyTeam, starting_eleven: dict, bench_players: list
     ) -> dict:
         # Validate formation and team composition
         FantasyService._validate_team_composition(
-            fantasy_team, starting_eleven, bench_players
+            formation, fantasy_team, starting_eleven, bench_players
         )
 
+        fantasy_team.formation = formation
+        fantasy_team.save()
+        
         all_player_ids = []
         players_to_update = {}
 
@@ -79,7 +82,7 @@ class FantasyService:
                 f"Insufficient transfer budget. Required: {transfer_cost}, Available: {fantasy_team.transfer_budget}"
             )
 
-        current_gameweek = fantasy_team.current_gameweek
+        current_gameweek = Gameweek.objects.filter(is_active=True).first()
         if not current_gameweek:
             try:
                 current_gameweek = Gameweek.objects.get(number=1)
@@ -133,7 +136,7 @@ class FantasyService:
                         fantasy_team=fantasy_team,
                         player=player_instance,
                         total_points=0,
-                        gameweek_added=fantasy_team.current_gameweek,
+                        gameweek_added=current_gameweek,
                         **update_data,
                     )
                     players_to_create.append(fantasy_player)
@@ -184,9 +187,8 @@ class FantasyService:
 
     @staticmethod
     def _validate_team_composition(
-        fantasy_team: FantasyTeam, starting_eleven: dict, bench_players: list
+        formation:str, fantasy_team: FantasyTeam, starting_eleven: dict, bench_players: list
     ) -> None:
-        formation = fantasy_team.formation
         formation_map = {
             "3-4-3": {"DEF": 3, "MID": 4, "FWD": 3, "GKP": 1},
             "3-5-2": {"DEF": 3, "MID": 5, "FWD": 2, "GKP": 1},
@@ -194,6 +196,7 @@ class FantasyService:
             "4-3-3": {"DEF": 4, "MID": 3, "FWD": 3, "GKP": 1},
             "5-3-2": {"DEF": 5, "MID": 3, "FWD": 2, "GKP": 1},
             "5-4-1": {"DEF": 5, "MID": 4, "FWD": 1, "GKP": 1},
+            "5-2-3": {"DEF": 5, "MID": 2, "FWD": 3, "GKP": 1},
         }
         bench_compositions = {
             "3-4-3": {"DEF": 2, "MID": 1, "FWD": 0, "GKP": 1},
@@ -202,6 +205,7 @@ class FantasyService:
             "4-3-3": {"DEF": 1, "MID": 2, "FWD": 0, "GKP": 1},
             "5-3-2": {"DEF": 0, "MID": 2, "FWD": 1, "GKP": 1},
             "5-4-1": {"DEF": 0, "MID": 1, "FWD": 2, "GKP": 1},
+            "5-2-3": {"DEF": 0, "MID": 3, "FWD": 0, "GKP": 1},
         }
 
         # Count starters

@@ -120,6 +120,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, watch, computed } from "vue";
 import PlayerCard from "@/components/Team/PlayerCard.vue";
 import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
 
@@ -135,6 +136,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "player-click", player: Player): void;
+  (e: "formation-change", formation: string): void;
 }>();
 
 const getPlayerClass = (player: Player) => ({
@@ -145,6 +147,18 @@ const getPlayerClass = (player: Player) => ({
   "mid-hover": player.position === "MID",
   "fwd-hover": player.position === "FWD",
 });
+
+
+const currentFormation = computed(() => {
+  return `${props.defenders.length}-${props.midfielders.length}-${props.forwards.length}`;
+});
+
+watch(currentFormation, (newFormation, oldFormation) => {
+  if (newFormation !== oldFormation) {
+    emit('formation-change', newFormation);
+  }
+});
+
 
 const isPlayerDisabled = (player: Player) => {
   if (player.id.startsWith("placeholder")) return true;

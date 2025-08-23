@@ -75,8 +75,11 @@ class FantasyPlayerViewSet(ModelViewSet):
             starting_eleven = request.data.get("startingEleven", {})
             bench_players = request.data.get("benchPlayers", [])
             fantasy_team = FantasyTeam.objects.get(user=request.user)
+            formation = request.data.get("formation", fantasy_team.formation)
+
 
             result = FantasyService.save_team_players(
+                formation=formation,
                 fantasy_team=fantasy_team,
                 starting_eleven=starting_eleven,
                 bench_players=bench_players,
@@ -84,7 +87,7 @@ class FantasyPlayerViewSet(ModelViewSet):
 
             return Response(
                 {
-                    "detail": "Players updated successfully.",
+                    "detail": "Team squad updated successfully.",
                     **result,
                 },
                 status=status.HTTP_200_OK,

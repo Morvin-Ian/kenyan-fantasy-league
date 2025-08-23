@@ -31,6 +31,7 @@ export interface StartingElevenRef {
 }
 
 export interface TeamData {
+  formation: string;
   startingEleven: StartingElevenRef;
   benchPlayers: FantasyPlayer[];
 }

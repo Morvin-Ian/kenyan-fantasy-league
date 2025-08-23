@@ -43,7 +43,7 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.post("/fantasy/teams/", { name, formation });
         this.userTeam = response.data;
       } catch (error: any) {
-        const errorMessage = error.response?.data?.name?.[0] || "Failed to create team. Please try again.";
+        const errorMessage = error.response?.data[0] || "Failed to create team. Please try again.";
         this.error = errorMessage;
       } finally {
         this.isLoading = false;
@@ -62,17 +62,35 @@ export const useFantasyStore = defineStore("fantasy", {
       }
     },
 
-async saveFantasyTeamPlayers(team: TeamData) {
-  try {
-    this.isLoading = true;
-    const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
-    this.fetchFantasyTeamPlayers();
-    return response.data;
-  } catch (error) {
-    this.error = error.response?.data?.error || "Saving changes failed";
-  } finally {
-    this.isLoading = false;
-  }
-}
+    async saveFantasyTeamPlayers(team: TeamData) {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
+        this.fetchFantasyTeamPlayers();
+        return response.data;
+      } catch (error) {
+        let errMsg = "Saving changes failed";
+        const rawError = error.response?.data?.error;
+
+        if (typeof rawError === "string") {
+          try {
+            // Convert Python-like list string into JSON
+            const parsed = JSON.parse(rawError.replace(/'/g, '"'));
+            console.log("Parsed error message:", parsed[0]);
+            errMsg = parsed[0] || errMsg;
+          } catch {
+            errMsg = rawError; 
+          }
+        } else if (Array.isArray(rawError)) {
+          errMsg = rawError[0];
+        }
+
+        console.error("Error saving fantasy team players:", errMsg);
+
+        this.error = errMsg;
+      } finally {
+        this.isLoading = false;
+      }
+    }
   },
 });
