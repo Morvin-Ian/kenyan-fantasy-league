@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
+import random
 
 from apps.accounts.models import User
 from apps.kpl.models import Player
@@ -31,10 +32,27 @@ class FantasyService:
         starting_eleven: dict,
         bench_players: list,
     ) -> dict:
-        # Validate formation and team composition
         FantasyService._validate_team_composition(
             formation, fantasy_team, starting_eleven, bench_players
         )
+
+        has_captain = False
+        has_vice_captain = False
+        
+        goalkeeper = starting_eleven.get("goalkeeper")
+        if goalkeeper:
+            has_captain = has_captain or goalkeeper.get("is_captain", False)
+            has_vice_captain = has_vice_captain or goalkeeper.get("is_vice_captain", False)
+        
+        for position in ["defenders", "midfielders", "forwards"]:
+            position_players = starting_eleven.get(position, [])
+            for player_data in position_players:
+                has_captain = has_captain or player_data.get("is_captain", False)
+                has_vice_captain = has_vice_captain or player_data.get("is_vice_captain", False)
+        
+        # If no captain or vice-captain assigned, assign them randomly
+        if not has_captain or not has_vice_captain:
+            starting_eleven = FantasyService._assign_captain_and_vice(starting_eleven, has_captain, has_vice_captain)
 
         fantasy_team.formation = formation
         fantasy_team.save()
@@ -171,6 +189,56 @@ class FantasyService:
             "remaining_free_transfers": fantasy_team.free_transfers,
             "remaining_transfer_budget": float(fantasy_team.transfer_budget),
         }
+
+    @staticmethod
+    def _assign_captain_and_vice(starting_eleven: dict, has_captain: bool, has_vice_captain: bool) -> dict:
+        """Assign captain and vice-captain randomly if not already assigned"""
+        all_starters = []
+        
+        goalkeeper = starting_eleven.get("goalkeeper")
+        if goalkeeper:
+            all_starters.append(("goalkeeper", goalkeeper))
+        
+        for position in ["defenders", "midfielders", "forwards"]:
+            position_players = starting_eleven.get(position, [])
+            for player_data in position_players:
+                all_starters.append((position, player_data))
+        
+        if not has_captain:
+            pos_idx, player_idx = random.randint(0, len(all_starters) - 1), 0
+            position_key, captain_player = all_starters[pos_idx]
+            
+            if position_key == "goalkeeper":
+                starting_eleven["goalkeeper"]["is_captain"] = True
+            else:
+                player_list = starting_eleven[position_key]
+                for i, player in enumerate(player_list):
+                    player_id = player.get("player") or player.get("id")
+                    captain_id = captain_player.get("player") or captain_player.get("id")
+                    if str(player_id) == str(captain_id):
+                        player_idx = i
+                        break
+                starting_eleven[position_key][player_idx]["is_captain"] = True
+            
+            all_starters.pop(pos_idx)
+        
+        if not has_vice_captain and all_starters:
+            pos_idx, player_idx = random.randint(0, len(all_starters) - 1), 0
+            position_key, vice_captain_player = all_starters[pos_idx]
+            
+            if position_key == "goalkeeper":
+                starting_eleven["goalkeeper"]["is_vice_captain"] = True
+            else:
+                player_list = starting_eleven[position_key]
+                for i, player in enumerate(player_list):
+                    player_id = player.get("player") or player.get("id")
+                    vice_captain_id = vice_captain_player.get("player") or vice_captain_player.get("id")
+                    if str(player_id) == str(vice_captain_id):
+                        player_idx = i
+                        break
+                starting_eleven[position_key][player_idx]["is_vice_captain"] = True
+        
+        return starting_eleven
 
     @staticmethod
     def _build_player_data(player_data: dict, is_starter: bool) -> dict:

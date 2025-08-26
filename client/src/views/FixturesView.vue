@@ -1,162 +1,113 @@
 <template>
-  <div class="min-h-screen p-6">
-    <div v-if="isLoading" class="flex justify-center items-center h-64">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-    </div>
-
-    <div v-else class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div class="lg:col-span-2">
-        <div class="bg-white shadow-md rounded-lg overflow-hidden">
-          <div class="border-b p-6 flex flex-col md:flex-row justify-between items-center">
-            <div>
-              <h1 class="text-3xl font-bold text-gray-800">Kenyan Premier League</h1>
-              <p class="text-gray-500 text-lg">Official Matchday Fixtures</p>
-            </div>
-            <div class="mt-4 md:mt-0">
-              <router-link to="/standings"
-                class="flex items-center bg-gray-100 text-gray-700 px-5 py-3 rounded-lg hover:bg-gray-200 transition-all">
-                <BarChart2Icon size="20" class="mr-2" />
-                League Table
-              </router-link>
-            </div>
-          </div>
-
-          <div v-if="fixtures.length > 0" class="p-6">
-            <div class="space-y-4">
-              <div v-for="match in paginatedFixtures" :key="match.id"
-                class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-all">
-                <div class="flex justify-between items-center">
-                  <!-- Home Team -->
-                  <div class="flex items-center space-x-3 w-1/3">
-                    <img :src="match.home_team.logo_url" :alt="match.home_team.name"
-                      class="w-12 h-12 rounded-full object-cover" />
-                    <span class="font-medium text-gray-800">{{ match.home_team.name }}</span>
-                  </div>
-
-                  <div class="text-center w-1/3">
-                    <span class="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">
-                      {{ formatDatePart(match.match_date) }}
-                    </span>
-                    <div class="text-sm text-gray-500 mt-2">
-                      {{ formatTimePart(match.match_date) }} | {{ match.venue }}
-                    </div>
-                  </div>
-
-                  <!-- Away Team -->
-                  <div class="flex items-center space-x-3 w-1/3 justify-end">
-                    <span class="font-medium text-gray-800">{{ match.away_team.name }}</span>
-                    <img :src="match.away_team.logo_url" :alt="match.away_team.name"
-                      class="w-12 h-12 rounded-full object-cover" />
-                  </div>
-                </div>
-
-                <!-- Betting Odds -->
-                <div class="mt-4 flex justify-between text-sm text-gray-500 border-t border-gray-100 pt-3">
-                  <div>
-                    <span class="font-medium">Home Stats:</span>
-                    12/5 Draw 11/5 Away 13/5
-                  </div>
-                  <div>
-                    <span class="font-medium">Away Stats:</span>
-                    12/5 Draw 11/5 Away 13/5
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="mt-6 flex justify-between items-center">
-              <button @click="prevPage" :disabled="currentPage === 1"
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all flex items-center space-x-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-                <span>Previous</span>
-              </button>
-              <span class="text-gray-600">
-                Page {{ currentPage }} of {{ totalPages }}
-              </span>
-              <button @click="nextPage" :disabled="currentPage === totalPages"
-                class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all flex items-center space-x-2">
-                <span>Next</span>
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <div v-else class="p-6 text-center text-gray-500">
-            No fixtures available
-          </div>
+  <div class="">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      <div v-if="isLoading" class="flex justify-center items-center h-64">
+        <div class="relative">
+          <div class="animate-spin rounded-full h-16 w-16 border-4 border-green-200"></div>
+          <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 absolute top-0"></div>
         </div>
       </div>
 
-      <!-- Sidebar Columns -->
-      <div class="space-y-6">
-        <div class="bg-white rounded-lg shadow-md p-5">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">Team Form</h2>
-          <div class="space-y-3">
-            <div v-for="team in topTeams" :key="team.name"
-              class="flex justify-between items-center border border-gray-100 rounded-lg p-3">
-              <div class="flex items-center space-x-3">
-                <img :src="team.logo" class="w-8 h-8 rounded-full" :alt="team.name" />
-                <span class="font-medium">{{ team.name }}</span>
-              </div>
-              <div class="flex space-x-1">
-                <span v-for="result in team.lastFiveResults" :key="result"
-                  class="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" :class="{
-                    'bg-green-500': result === 'W',
-                    'bg-gray-400': result === 'D',
-                    'bg-red-500': result === 'L'
-                  }">
-                  {{ result }}
-                </span>
-              </div>
-            </div>
+      <div v-else-if="fixtures.length > 0" class="space-y-4 sm:space-y-6">
+        <div class="flex justify-between items-center mb-6 sm:mb-8">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800">Upcoming Fixtures</h2>
+            <div class="w-20 h-1 bg-green-600 rounded-full mt-2"></div>
+          </div>
+          <div>
+            <router-link to="/standings"
+              class="inline-flex items-center bg-white text-gray-700 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-sm border border-gray-200 text-sm font-medium">
+              <BarChart2Icon size="16" class="mr-2 text-green-600" />
+              View Table
+            </router-link>
           </div>
         </div>
+        <div class="space-y-4">
+          <div v-for="match in paginatedFixtures" :key="match.id"
+            class="bg-white rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-green-200">
 
-        <!-- Top Scorers -->
-        <div class="bg-white rounded-lg shadow-md p-5">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">Top Scorers</h2>
-          <div class="space-y-3">
-            <div v-for="scorer in topScorers" :key="scorer.name"
-              class="flex justify-between items-center border border-gray-100 rounded-lg p-3">
-              <div class="flex items-center space-x-3">
-                <div>
-                  <span class="font-medium">{{ scorer.name }}</span>
-                  <span class="text-sm text-gray-500 ml-2">{{ scorer.team }}</span>
+            <div class="text-center mb-4">
+              <div
+                class="inline-flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium mb-2">
+                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                {{ formatDatePart(match.match_date) }}
+              </div>
+              <div class="text-gray-500 text-xs sm:text-sm">
+                {{ formatTimePart(match.match_date) }} • {{ match.venue }}
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3 sm:space-x-4 flex-1">
+                <div class="relative">
+                  <img :src="match.home_team.logo_url" :alt="match.home_team.name"
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" />
+                </div>
+                <div class="text-left">
+                  <div class="font-semibold text-gray-800 text-base sm:text-lg">{{ match.home_team.name }}</div>
+                  <div class="text-gray-500 text-xs sm:text-sm">Home</div>
                 </div>
               </div>
-              <span class="font-medium text-gray-700">{{ scorer.goals }} Goals</span>
+
+              <div class="flex-shrink-0 mx-2 sm:mx-4">
+                <div class="bg-gray-100 rounded-full p-2 sm:p-3">
+                  <div class="text-gray-600 font-bold text-xs sm:text-sm">VS</div>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 sm:space-x-4 flex-1 justify-end">
+                <div class="text-right">
+                  <div class="font-semibold text-gray-800 text-base sm:text-lg">{{ match.away_team.name }}</div>
+                  <div class="text-gray-500 text-xs sm:text-sm">Away</div>
+                </div>
+                <div class="relative">
+                  <img :src="match.away_team.logo_url" :alt="match.away_team.name"
+                    class="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover shadow-md" />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- League Statistics -->
-        <div class="bg-white rounded-lg shadow-md p-5">
-          <h2 class="text-xl font-bold text-gray-800 mb-4">League Stats</h2>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="border border-gray-100 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-gray-700">{{ leagueStats.totalGoals }}</div>
-              <div class="text-sm text-gray-500">Total Goals</div>
-            </div>
-            <div class="border border-gray-100 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-gray-700">{{ leagueStats.averageGoalsPerMatch }}</div>
-              <div class="text-sm text-gray-500">Avg Goals/Match</div>
-            </div>
-            <div class="border border-gray-100 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-gray-700">{{ leagueStats.homeWins }}%</div>
-              <div class="text-sm text-gray-500">Home Wins</div>
-            </div>
-            <div class="border border-gray-100 rounded-lg p-4 text-center">
-              <div class="text-2xl font-bold text-gray-700">{{ leagueStats.awayWins }}%</div>
-              <div class="text-sm text-gray-500">Away Wins</div>
-            </div>
+        <div class="mt-8 flex justify-center items-center space-x-3 sm:space-x-4">
+          <button @click="prevPage" :disabled="currentPage === 1"
+            class="flex items-center space-x-2 px-4 py-2 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span class="hidden sm:inline">Previous</span>
+          </button>
+
+          <div class="flex items-center space-x-2 text-sm">
+            <span class="text-gray-600 hidden sm:inline">Page</span>
+            <span class="bg-green-600 text-white px-3 py-1 rounded-full font-bold">{{ currentPage }}</span>
+            <span class="text-gray-600">of</span>
+            <span class="text-gray-600 font-medium">{{ totalPages }}</span>
           </div>
+
+          <button @click="nextPage" :disabled="currentPage === totalPages"
+            class="flex items-center space-x-2 px-4 py-2 bg-white text-gray-700 rounded-full border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm">
+            <span class="hidden sm:inline">Next</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="text-center py-16">
+        <div class="max-w-md mx-auto">
+          <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">No Fixtures Available</h3>
+          <p class="text-gray-500">Check back later for upcoming matches</p>
         </div>
       </div>
     </div>
@@ -164,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { BarChart2Icon } from 'lucide-vue-next';
 import { useKplStore } from '@/stores/kpl';
@@ -216,46 +167,21 @@ const prevPage = () => {
 const formatDatePart = (dateStr) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  return new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric" }).format(date);
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric"
+  }).format(date);
 };
 
 const formatTimePart = (dateStr) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
-  return new Intl.DateTimeFormat("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }).format(date);
-};
-
-// Mock Data for Sidebar
-const topTeams = [
-  {
-    name: 'Gor Mahia',
-    logo: '/path/to/gor-mahia-logo.png',
-    lastFiveResults: ['W', 'W', 'D', 'L', 'W']
-  },
-  {
-    name: 'AFC Leopards',
-    logo: '/path/to/afc-leopards-logo.png',
-    lastFiveResults: ['W', 'D', 'W', 'L', 'D']
-  }
-];
-
-const topScorers = [
-  {
-    name: 'Michael Olunga',
-    team: 'Gor Mahia',
-    goals: 15
-  },
-  {
-    name: 'Clifton Miheso',
-    team: 'AFC Leopards',
-    goals: 12
-  }
-];
-
-const leagueStats = {
-  totalGoals: 245,
-  averageGoalsPerMatch: 2.7,
-  homeWins: 62,
-  awayWins: 38
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  }).format(date);
 };
 </script>
+```

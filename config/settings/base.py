@@ -241,7 +241,7 @@ logging.config.dictConfig(
                 "level": "INFO",
                 "class": "logging.handlers.RotatingFileHandler",
                 "formatter": "file",
-                "filename": os.path.join("logs", "fantasy_league.log"),
+                "filename": filename,
                 "maxBytes": 10485760,
                 "backupCount": 5,
             },
@@ -275,14 +275,14 @@ from datetime import timedelta
 CELERY_BEAT_SCHEDULE = {
     "update-kpl-standings": {
         "task": "apps.kpl.tasks.standings.get_kpl_table",
-        "schedule": timedelta(days=1).total_seconds(),  # Runs every 24 hours
+        "schedule": timedelta(days=1).total_seconds(),  
     },
     "update-kpl-fixtures": {
         "task": "apps.kpl.tasks.fixtures.get_kpl_fixtures",
-        "schedule": timedelta(days=2).total_seconds(),  # Runs every 2 days
+        "schedule": timedelta(days=2).total_seconds(), 
     },
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
-        "schedule": timedelta(days=5).total_seconds(),
+        "schedule": timedelta(days=1).total_seconds(),
     },
 }

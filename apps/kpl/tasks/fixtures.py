@@ -8,6 +8,7 @@ from celery import shared_task
 from django.utils import timezone
 
 from apps.kpl.models import Fixture, Gameweek, Team
+from .live_games import setup_gameweek_monitoring
 from util.views import headers
 from difflib import get_close_matches
 
@@ -19,16 +20,13 @@ logger = logging.getLogger(__name__)
 
 def find_team(team_name: str) -> Team | None:
     team_name = team_name.strip().lower()
-
     all_teams = list(Team.objects.values_list("name", flat=True))
-
     match = get_close_matches(
         team_name, [t.lower() for t in all_teams], n=1, cutoff=0.6
     )
     if match:
         return Team.objects.get(name__iexact=match[0])
     return None
-
 
 def extract_fixtures_data(headers) -> str:
     url = os.getenv("TEAM_FIXTURES_URL")
@@ -48,8 +46,6 @@ def extract_fixtures_data(headers) -> str:
 
         table_rows = table.find_all("tr")[1:]
 
-        # Removed the line that deletes all fixtures
-        # Instead, we'll track new fixtures and update existing ones
         fixtures_updated = 0
         fixtures_created = 0
 
@@ -122,6 +118,7 @@ def extract_fixtures_data(headers) -> str:
                     logger.info(
                         f"Created new fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
                     )
+                    
             except Exception as e:
                 logger.error(f"Error creating or updating fixture: {e}")
 
@@ -152,9 +149,7 @@ def update_active_gameweek():
             fixtures_by_week = {}
 
             for fixture in upcoming_fixtures:
-                # Get the week start (Monday) for this fixture
                 fixture_date = fixture.match_date.date()
-
                 week_start = fixture_date - timedelta(days=fixture_date.weekday())
 
                 if week_start not in fixtures_by_week:
@@ -173,10 +168,7 @@ def update_active_gameweek():
             existing_gameweek = None
             for fixture in earliest_week_fixtures:
                 if fixture.gameweek:
-                    existing_gameweek = (
-                        fixture.gameweek
-                    )  # Check if any fixture in this week already has a gameweek assigned
-
+                    existing_gameweek = fixture.gameweek
                     break
 
             if existing_gameweek:
@@ -190,6 +182,9 @@ def update_active_gameweek():
                         fixture.gameweek = existing_gameweek
                         fixture.save()
 
+                # Set up monitoring for this gameweek's fixtures
+                setup_gameweek_monitoring.delay()
+
                 logger.info(
                     f"Set Gameweek {existing_gameweek.number} as active based on earliest week's fixtures. Transfer deadline: {transfer_deadline}"
                 )
@@ -197,15 +192,13 @@ def update_active_gameweek():
 
             else:
                 # Find or create a gameweek for this week
-                week_end = earliest_week + timedelta(days=6)  # Sunday of the same week
+                week_end = earliest_week + timedelta(days=6)
 
-                # Look for existing gameweek that covers this week
                 matching_gameweek = Gameweek.objects.filter(
                     start_date__lte=earliest_week, end_date__gte=week_end
                 ).first()
 
                 if not matching_gameweek:
-                    # Look for a gameweek that overlaps with any day in this week
                     matching_gameweek = Gameweek.objects.filter(
                         start_date__lte=week_end, end_date__gte=earliest_week
                     ).first()
@@ -219,6 +212,9 @@ def update_active_gameweek():
                     for fixture in earliest_week_fixtures:
                         fixture.gameweek = matching_gameweek
                         fixture.save()
+
+                    # Set up monitoring for this gameweek's fixtures
+                    setup_gameweek_monitoring.delay()
 
                     logger.info(
                         f"Set Gameweek {matching_gameweek.number} as active for week starting {earliest_week}. Transfer deadline: {transfer_deadline}"
@@ -243,18 +239,20 @@ def update_active_gameweek():
                         fixture.gameweek = new_gameweek
                         fixture.save()
 
+                    # Set up monitoring for this gameweek's fixtures
+                    setup_gameweek_monitoring.delay()
+
                     logger.info(
                         f"Created and set Gameweek {new_gameweek.number} as active for week starting {earliest_week}. Transfer deadline: {transfer_deadline}"
                     )
                     return f"Active gameweek set: Gameweek {new_gameweek.number}"
 
-        # If no upcoming fixtures, find current gameweek based on date range
+        # Rest of the existing logic for handling cases with no upcoming fixtures
         current_gameweek = Gameweek.objects.filter(
             start_date__lte=current_date, end_date__gte=current_date
         ).first()
 
         if current_gameweek:
-            # Update transfer deadline if there are fixtures for this gameweek
             gameweek_fixtures = Fixture.objects.filter(
                 gameweek=current_gameweek, status="upcoming"
             ).order_by("match_date")
@@ -266,12 +264,15 @@ def update_active_gameweek():
 
             current_gameweek.is_active = True
             current_gameweek.save()
+            
+            # Set up monitoring for this gameweek's fixtures
+            setup_gameweek_monitoring.delay()
+            
             logger.info(
                 f"Set Gameweek {current_gameweek.number} as active based on current date range."
             )
             return f"Active gameweek set: Gameweek {current_gameweek.number}"
 
-        # If no current gameweek, find the next upcoming gameweek
         next_gameweek = (
             Gameweek.objects.filter(start_date__gt=current_date)
             .order_by("start_date")
@@ -279,7 +280,6 @@ def update_active_gameweek():
         )
 
         if next_gameweek:
-            # Update transfer deadline if there are fixtures for this gameweek
             gameweek_fixtures = Fixture.objects.filter(
                 gameweek=next_gameweek, status="upcoming"
             ).order_by("match_date")
@@ -291,6 +291,10 @@ def update_active_gameweek():
 
             next_gameweek.is_active = True
             next_gameweek.save()
+            
+            # Set up monitoring for this gameweek's fixtures
+            setup_gameweek_monitoring.delay()
+            
             logger.info(
                 f"Set Gameweek {next_gameweek.number} as active (next upcoming gameweek)."
             )

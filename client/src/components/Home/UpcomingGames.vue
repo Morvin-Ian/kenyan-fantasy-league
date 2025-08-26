@@ -127,52 +127,42 @@
         <table class="w-full min-w-full table-auto">
           <thead>
             <tr class="border-b border-gray-100">
-              <th class="py-3 px-4 text-left text-gray-600 font-medium">Position</th>
-              <th class="py-3 px-4 text-left text-gray-600 font-medium">Team</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">MP</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">W</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">D</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">L</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">GF</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">GA</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">GD</th>
-              <th class="py-3 px-4 text-center text-gray-600 font-medium">PTS</th>
-              <!-- <th class="py-3 px-4 text-center text-gray-600 font-medium">Form</th> -->
+              <th class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">Pos</th>
+              <th class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">Team</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">MP</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">W</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">D</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">L</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">GF</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">GA</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">GD</th>
+              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">PTS</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(team, index) in firstFiveStandings" :key="team.id"
               class="border-b hover:bg-gray-50 transition-colors">
-              <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-sm"
+              <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-xs sm:text-sm"
                 :class="{ 'text-indigo-600': index < 4, 'text-red-500': index > 16 }">{{ index + 1 }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4">
                 <div class="flex items-center space-x-2 md:space-x-3">
-                  <span class="font-medium text-gray-900 text-sm">{{ team.team.name }}</span>
+                  <span class="font-medium text-gray-900 text-xs sm:text-sm">{{ team.team.name }}</span>
                 </div>
               </td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.played }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.wins }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.draws }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.losses }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.goals_for }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-sm">{{ team.goals_against }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center font-medium text-sm"
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.played }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.wins }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.draws }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.losses }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.goals_for }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.goals_against }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center font-medium text-xs sm:text-sm"
                 :class="{ 'text-green-500': team.goalDifference > 0, 'text-red-500': team.goalDifference < 0 }">{{
                   team.goal_differential }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-sm">{{ team.points }}</td>
-              <!-- <td class="p-1 md:p-3">
-                <div class="flex justify-center gap-0.5 md:gap-1">
-                  <span v-for="(result, index) in getRandomFormResults()" :key="index"
-                    :class="getFormBadgeColor(result)"
-                    class="w-4 h-4 md:w-5 md:h-5 rounded-full flex text-white items-center justify-center text-[8px] md:text-xs font-bold transition-transform hover:scale-110 shadow-sm p-2">
-                    {{ result }}
-                  </span>
-                </div>
-              </td> -->
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-xs sm:text-sm">{{ team.points }}</td>
             </tr>
           </tbody>
         </table>
-      </div>
+    </div>
 
       <!-- Visual indicator that table scrolls horizontally (mobile only) -->
       <div class="flex justify-center mt-3 md:hidden">

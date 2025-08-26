@@ -3,16 +3,6 @@
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
 
-          <MessageAlert 
-            v-if="message.text" 
-            :type="message.type"
-            :text="message.text"
-            :dismissible="message.dismissible"
-            :auto-dismiss="message.autoDismiss"
-            @dismiss="clearMessage"
-            class="mb-4"
-          />
-
            <Pitch 
             :goalkeeper="goalkeeper" 
             :defenders="defenders" 
@@ -23,6 +13,16 @@
             :switch-active="switchActive"
             @player-click="handlePlayerClick"
             @formation-change="handleFormationChange" 
+          />
+
+          <MessageAlert 
+            v-if="message.text" 
+            :type="message.type"
+            :text="message.text"
+            :dismissible="message.dismissible"
+            :auto-dismiss="message.autoDismiss"
+            @dismiss="clearMessage"
+            class="absolute top-4 left-0 right-0 z-20 mx-4"
           />
 
         <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
@@ -54,7 +54,7 @@
       <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
         creating your team now.</p>
       <button @click="toggleModal"
-        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
         Your Team</button>
     </div>
 
@@ -101,11 +101,8 @@
               required>
               <option value="" disabled>Select a formation</option>
               <option value="3-4-3">3-4-3</option>
-              <option value="3-5-2">3-5-2</option>
               <option value="4-4-2">4-4-2</option>
               <option value="4-3-3">4-3-3</option>
-              <option value="5-3-2">5-3-2</option>
-              <option value="5-4-1">5-4-1</option>
             </select>
           </div>
           
@@ -475,7 +472,6 @@ const handlePlayerTransfer = async (newPlayer: KplPlayer) => {
   }
 
   hasUnsavedChanges.value = true;
-  showMessage("Player transferred successfully!", "success");
   closeSearchModal();
 };
 
@@ -539,7 +535,7 @@ const replaceBenchWithNewPlayer = (oldPlayer: Player, newPlayer: KplPlayer) => {
       player: newPlayer.id,
       gameweek: oldPlayer.gameweek,
       total_points: 0,
-      gameweek_points: 0,
+      gameweek_points: null,
       is_captain: false,
       is_vice_captain: false,
       is_starter: false,
@@ -648,10 +644,9 @@ const saveTeamChanges = async () => {
         return
     }
 
-    initialTeamState.value = {
-      startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
-      benchPlayers: JSON.parse(JSON.stringify(benchPlayersRef.value)),
-    };
+    await fantasyStore.fetchUserFantasyTeam();
+    await fantasyStore.fetchFantasyTeamPlayers();
+    initializeTeamState();
 
     hasUnsavedChanges.value = false;
     showMessage("Team changes saved successfully!", "success");
