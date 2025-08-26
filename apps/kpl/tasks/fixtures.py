@@ -9,18 +9,24 @@ from django.utils import timezone
 
 from apps.kpl.models import Fixture, Gameweek, Team
 from util.views import headers
+from difflib import get_close_matches
 
+from config.settings import base
+
+logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
 
 def find_team(team_name: str) -> Team | None:
-    words = team_name.split()
-    words_sorted_by_length = sorted(words, key=len, reverse=True)
+    team_name = team_name.strip().lower()
 
-    for word in words_sorted_by_length:
-        team = Team.objects.filter(name__icontains=word).first()
-        if team:
-            return team
+    all_teams = list(Team.objects.values_list("name", flat=True))
+
+    match = get_close_matches(
+        team_name, [t.lower() for t in all_teams], n=1, cutoff=0.6
+    )
+    if match:
+        return Team.objects.get(name__iexact=match[0])
     return None
 
 

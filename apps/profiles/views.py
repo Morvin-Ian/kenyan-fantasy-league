@@ -19,8 +19,7 @@ class GetProfileAPIView(APIView):
 
     def get(self, request):
         user = self.request.user
-        print("Fetching profile for user:", user.username)
-        players.get_all_players.delay()
+        # players.get_all_players.delay()
         # standings.get_kpl_table.delay()
         # fixtures.get_kpl_fixtures.delay()
         user_profile = Profile.objects.get(user=user)

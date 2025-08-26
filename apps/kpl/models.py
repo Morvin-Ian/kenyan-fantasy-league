@@ -21,7 +21,7 @@ class Team(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
     logo_url = models.URLField()
     jersey_image = models.ImageField(upload_to="team_jerseys/", null=True, blank=True)
-    is_relagated = models.BooleanField(
+    is_relegated = models.BooleanField(
         default=False,
         help_text="Indicates if the team has been relegated from the league",
     )

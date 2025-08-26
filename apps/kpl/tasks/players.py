@@ -121,7 +121,9 @@ def get_players(team_name):
                 else:
                     logger.info(f"Updated player: {name} ({team_name})")
 
-        valid_teams = Team.objects.values_list("pkid", flat=True)
+        valid_teams = Team.objects.filter(is_relegated=False).values_list(
+            "pkid", flat=True
+        )
         removed_count, _ = Player.objects.filter(~Q(team_id__in=valid_teams)).delete()
         if removed_count:
             logger.info(

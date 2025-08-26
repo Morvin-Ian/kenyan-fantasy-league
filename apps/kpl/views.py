@@ -13,7 +13,7 @@ from .serializers import (
 
 class TeamViewSet(ReadOnlyModelViewSet):
     serializer_class = TeamSerializer
-    queryset = Team.objects.all()
+    queryset = Team.objects.filter(is_relegated=False)
     permission_classes = [IsAuthenticated]
 
 
@@ -31,5 +31,5 @@ class FixtureViewSet(ReadOnlyModelViewSet):
 
 class PlayerViewSet(ReadOnlyModelViewSet):
     serializer_class = PlayerSerializer
-    queryset = Player.objects.all()
+    queryset = Player.objects.filter(team__is_relegated=False)
     permission_classes = [IsAuthenticated]
