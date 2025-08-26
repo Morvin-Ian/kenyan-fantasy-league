@@ -17,6 +17,7 @@ FORMATION_CHOICES = [
     ("5-4-1", "5-4-1"),
 ]
 
+
 class FantasyTeam(TimeStampedUUIDModel):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="fantasy_teams"

@@ -923,15 +923,16 @@ const clearViceCaptaincy = () => {
 
 const makeCaptain = () => {
   if (!selectedPlayer.value) {
-    toast.info("No player selected to be captain.");
+    showMessage("No player selected to be captain.", "info");
+
     return;
   }
   if (!isPlayerInStartingEleven(selectedPlayer.value)) {
-    toast.info("Captain must be a starting player.");
+    showMessage("Captain must be a starting player.", "info");
     return;
   }
   if (selectedPlayer.value.is_captain) {
-    toast.info("Player is already captain.");
+    showMessage("Player is already captain.", "info");
     return;
   }
   clearCaptaincy();
@@ -942,15 +943,15 @@ const makeCaptain = () => {
 
 const makeViceCaptain = () => {
   if (!selectedPlayer.value) {
-    toast.info("No player selected to be vice-captain.");
+    showMessage("No player selected to be vice-captain.", "info");
     return;
   }
   if (!isPlayerInStartingEleven(selectedPlayer.value)) {
-    toast.info("Vice-captain must be a starting player.");
+    showMessage("Vice-captain must be a starting player.", "info");
     return;
   }
   if (selectedPlayer.value.is_vice_captain) {
-    toast.info("Player is already vice-captain.");
+    showMessage("Player is already vice-captain.", "info");
     return;
   }
   clearViceCaptaincy();

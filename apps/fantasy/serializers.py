@@ -20,7 +20,7 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             "free_transfers",
             "transfer_budget",
         )
-        
+
     def get_gameweek(self, obj):
         active_gameweek = Gameweek.objects.filter(is_active=True).first()
         return active_gameweek.number if active_gameweek else None

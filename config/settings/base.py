@@ -34,9 +34,16 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG")
 
 # ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ["*"]
 
-CSRF_TRUSTED_ORIGINS = ["http://127.0.0.1:8080", "http://0.0.0.0:8080", 'http://localhost:8080', "http://api:8000", "http://nginx:80", "http://[::1]:8080"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://127.0.0.1:8080",
+    "http://0.0.0.0:8080",
+    "http://localhost:8080",
+    "http://api:8000",
+    "http://nginx:80",
+    "http://[::1]:8080",
+]
 
 
 SITE_ID = 1
@@ -210,7 +217,9 @@ LOG_LEVEL = "INFO"
 
 import os
 
-os.makedirs("logs", exist_ok=True)
+LOG_DIR = BASE_DIR / "logs"
+os.makedirs(LOG_DIR, exist_ok=True)
+filename = LOG_DIR / "fantasy_league.log"
 
 logging.config.dictConfig(
     {
@@ -243,8 +252,8 @@ logging.config.dictConfig(
             "apps": {"level": "INFO", "handlers": ["console"], "propagate": False},
             "django.server": DEFAULT_LOGGING["loggers"]["django.server"],
             "celery": {
-                "handlers": [],
-                "level": "WARNING",
+                "handlers": ["console", "file"],
+                "level": "INFO",
                 "propagate": False,
             },
             "flower": {
@@ -272,8 +281,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.kpl.tasks.fixtures.get_kpl_fixtures",
         "schedule": timedelta(days=2).total_seconds(),  # Runs every 2 days
     },
-      "update-kpl-gameweek": {
+    "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
-        "schedule": timedelta(days=5).total_seconds(), 
+        "schedule": timedelta(days=5).total_seconds(),
     },
 }

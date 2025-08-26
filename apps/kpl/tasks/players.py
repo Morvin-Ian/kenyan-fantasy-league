@@ -1,18 +1,23 @@
+import logging
+import logging.config
 import os
 import re
-from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
+from django.db.models import Q
 
 from apps.kpl.models import Player, Team
+from config.settings import base
 from util.views import headers
+
+logging.config.dictConfig(base.DEFAULT_LOGGING)
+logger = logging.getLogger(__name__)
 
 TEAM_URLS = {
     "afc leopards": "AFC_LEOPARDS_URL",
     "bandari mtwara": "BANDARI_URL",
-    "bidco united": "BIDCO_UNITED_URL",
     "gor mahia": "GOR_MAHIA_URL",
     "kcb": "KCB_URL",
     "kakamega homeboyz": "KAKAMEGA_HOMEBOYZ_URL",
@@ -20,7 +25,6 @@ TEAM_URLS = {
     "mara sugar": "MARA_SUGAR_URL",
     "mathare united": "MATHARE_UNITED_URL",
     "murang'a seal fc": "MURANGA_SEAL_URL",
-    "nairobi city stars": "NAIROBI_CITY_URL",
     "police": "POLICE_URL",
     "posta rangers": "POSTA_RANGERS_URL",
     "shabana": "SHABANA_URL",
@@ -28,6 +32,7 @@ TEAM_URLS = {
     "talanta": "TALANTA_URL",
     "tusker": "TUSKER_URL",
     "ulinzi stars": "ULINZI_URL",
+    "nairobi united": "NAIROBI_UNITED_URL",
 }
 
 
@@ -61,16 +66,17 @@ def get_position_from_string(position_string):
 
 def get_players(team_name):
     env_var_name = TEAM_URLS.get(team_name.lower())
-
+    logger.error(f"Fetching players for team: {team_name}")
     if not env_var_name:
-        print(f"Team '{team_name}' not found in mapping.")
-        return
+        logger.info(f"Team '{team_name}' not found in mapping.")
+        return False
 
     team_url = os.getenv(env_var_name)
 
+    logger.info(f"Fetching players for team: {team_name} from URL: {team_url}")
     if not team_url:
-        print(f"URL for team '{team_name}' is not set in environment variables.")
-        return
+        logger.info(f"URL for team '{team_name}' is not set in environment variables.")
+        return False
 
     web_content = requests.get(team_url, headers=headers)
 
@@ -81,8 +87,8 @@ def get_players(team_name):
 
         team = Team.objects.filter(name=team_name).first()
         if not team:
-            print(f"Team '{team_name}' not found in the database.")
-            return
+            logger.info(f"Team '{team_name}' not found in the database.")
+            return False
 
         for player in players:
             name_tag = player.find("td", class_="hauptlink")
@@ -94,7 +100,7 @@ def get_players(team_name):
                 age = age_tag[1].text.strip()
                 position = position_tag.text.strip()
 
-                if age == "-" or age == "(-)" or age == "- (-)":
+                if age in ["-", "(-)", "- (-)"]:
                     age_value = None
                 else:
                     match = re.search(r"\((\d+)\)", age)
@@ -111,21 +117,31 @@ def get_players(team_name):
                 )
 
                 if created:
-                    print(f"Created new player: {name} ({team_name})")
+                    logger.info(f"Created new player: {name} ({team_name})")
                 else:
-                    print(f"Updated player: {name} ({team_name})")
+                    logger.info(f"Updated player: {name} ({team_name})")
+
+        valid_teams = Team.objects.values_list("pkid", flat=True)
+        removed_count, _ = Player.objects.filter(~Q(team_id__in=valid_teams)).delete()
+        if removed_count:
+            logger.info(
+                f"Deleted {removed_count} players not linked to any existing team."
+            )
+        return True
+
     else:
-        print(
+        logger.error(
             f"Failed to retrieve the web page. Status code: {web_content.status_code}"
         )
-
-
-def get_muranga_seal_players():
-    pass
 
 
 @shared_task
 def get_all_players():
     teams = Team.objects.all()
+    results = {}
+
     for team in teams:
-        get_players(team.name)
+        success = get_players(team.name)
+        results[team.name] = success
+
+    return results

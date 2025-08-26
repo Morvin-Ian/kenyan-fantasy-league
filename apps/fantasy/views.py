@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from apps.fantasy.models import FantasyPlayer, FantasyTeam
+
 from .serializers import FantasyPlayerSerializer, FantasyTeamSerializer
 from .services import FantasyService
 
@@ -76,7 +77,6 @@ class FantasyPlayerViewSet(ModelViewSet):
             bench_players = request.data.get("benchPlayers", [])
             fantasy_team = FantasyTeam.objects.get(user=request.user)
             formation = request.data.get("formation", fantasy_team.formation)
-
 
             result = FantasyService.save_team_players(
                 formation=formation,

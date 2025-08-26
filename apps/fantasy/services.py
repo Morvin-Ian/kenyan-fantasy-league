@@ -4,7 +4,7 @@ from django.db import transaction
 from apps.accounts.models import User
 from apps.kpl.models import Player
 
-from .models import FantasyPlayer, FantasyTeam, PlayerTransfer, Gameweek
+from .models import FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer
 
 
 class FantasyService:
@@ -26,7 +26,10 @@ class FantasyService:
     @staticmethod
     @transaction.atomic
     def save_team_players(
-        formation:str, fantasy_team: FantasyTeam, starting_eleven: dict, bench_players: list
+        formation: str,
+        fantasy_team: FantasyTeam,
+        starting_eleven: dict,
+        bench_players: list,
     ) -> dict:
         # Validate formation and team composition
         FantasyService._validate_team_composition(
@@ -35,7 +38,7 @@ class FantasyService:
 
         fantasy_team.formation = formation
         fantasy_team.save()
-        
+
         all_player_ids = []
         players_to_update = {}
 
@@ -187,7 +190,10 @@ class FantasyService:
 
     @staticmethod
     def _validate_team_composition(
-        formation:str, fantasy_team: FantasyTeam, starting_eleven: dict, bench_players: list
+        formation: str,
+        fantasy_team: FantasyTeam,
+        starting_eleven: dict,
+        bench_players: list,
     ) -> None:
         formation_map = {
             "3-4-3": {"DEF": 3, "MID": 4, "FWD": 3, "GKP": 1},
