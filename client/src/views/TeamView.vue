@@ -2,38 +2,45 @@
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
-
-           <Pitch 
-            :goalkeeper="goalkeeper" 
-            :defenders="defenders" 
-            :midfielders="midfielders" 
-            :forwards="forwards"
-            :bench-players="benchPlayers" 
-            :switch-source="switchSource" 
-            :switch-active="switchActive"
-            @player-click="handlePlayerClick"
-            @formation-change="handleFormationChange" 
-          />
-
-          <MessageAlert 
-            v-if="message.text" 
-            :type="message.type"
-            :text="message.text"
-            :dismissible="message.dismissible"
-            :auto-dismiss="message.autoDismiss"
-            @dismiss="clearMessage"
-            class="absolute top-4 left-0 right-0 z-20 mx-4"
-          />
-
-        <div v-if="hasUnsavedChanges" class="absolute bottom-4 right-4 z-10">
+      <div class="relative">
+        <div v-if="hasUnsavedChanges" 
+            class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
           <button @click="saveTeamChanges"
-            class="animate-slide-up bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105">
+            class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105">
+            <span class="mr-1">Save Changes</span>
+          </button>
+        </div>
+      </div>
+
+
+
+        <Pitch 
+          :goalkeeper="goalkeeper" 
+          :defenders="defenders" 
+          :midfielders="midfielders" 
+          :forwards="forwards"
+          :bench-players="benchPlayers" 
+          :switch-source="switchSource" 
+          :switch-active="switchActive"
+          @player-click="handlePlayerClick"
+          @formation-change="handleFormationChange" 
+        />
+
+        <MessageAlert 
+          v-if="message.text" 
+          :type="message.type"
+          :text="message.text"
+          :dismissible="message.dismissible"
+          :auto-dismiss="message.autoDismiss"
+          @dismiss="clearMessage"
+          class="absolute top-4 left-0 right-0 z-20 mx-4"
+        />
+
+        <!-- Save Changes Button for Larger Devices (Bottom) -->
+        <div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
+          <button @click="saveTeamChanges"
+            class="animate-slide-up bg-white hover:bg-white text-dark font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105">
             <span class="mr-2">Save Changes</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd"
-                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                clip-rule="evenodd" />
-            </svg>
           </button>
         </div>
       </div>
@@ -45,7 +52,6 @@
         :overall-rank="overallRank" 
         :team="userTeamName" 
       />
-
     </div>
 
     <div v-else

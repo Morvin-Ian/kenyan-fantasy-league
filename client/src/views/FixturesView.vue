@@ -3,32 +3,31 @@
     <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div v-if="isLoading" class="flex justify-center items-center h-64">
         <div class="relative">
-          <div class="animate-spin rounded-full h-16 w-16 border-4 border-green-200"></div>
-          <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-green-600 absolute top-0"></div>
+          <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
+          <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-gray-600 absolute top-0"></div>
         </div>
       </div>
 
       <div v-else-if="fixtures.length > 0" class="space-y-4 sm:space-y-6">
         <div class="flex justify-between items-center mb-6 sm:mb-8">
           <div>
-            <h2 class="text-xl sm:text-2xl font-semibold text-gray-800">Upcoming Fixtures</h2>
-            <div class="w-20 h-1 bg-green-600 rounded-full mt-2"></div>
+            <h2 class="text-2xl md:text-4xl font-black text-gray-600 flex items-center justify-center space-x-2 md:space-x-4"><span class="truncuate">Upcoming Fixtures</span></h2>
           </div>
           <div>
             <router-link to="/standings"
               class="inline-flex items-center bg-white text-gray-700 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-sm border border-gray-200 text-sm font-medium">
-              <BarChart2Icon size="16" class="mr-2 text-green-600" />
+              <BarChart2Icon size="16" class="mr-2 text-gray-600" />
               View Table
             </router-link>
           </div>
         </div>
         <div class="space-y-4">
           <div v-for="match in paginatedFixtures" :key="match.id"
-            class="bg-white rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-green-200">
+            class="bg-white rounded-2xl p-4 md:p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-gray-200">
 
             <div class="text-center mb-4">
               <div
-                class="inline-flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-sm font-medium mb-2">
+                class="inline-flex items-center bg-gray-50 text-gray-700 px-3 py-1.5 rounded-full text-sm font-medium mb-2">
                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -84,7 +83,7 @@
 
           <div class="flex items-center space-x-2 text-sm">
             <span class="text-gray-600 hidden sm:inline">Page</span>
-            <span class="bg-green-600 text-white px-3 py-1 rounded-full font-bold">{{ currentPage }}</span>
+            <span class="bg-gray-600 text-white px-3 py-1 rounded-full font-bold">{{ currentPage }}</span>
             <span class="text-gray-600">of</span>
             <span class="text-gray-600 font-medium">{{ totalPages }}</span>
           </div>

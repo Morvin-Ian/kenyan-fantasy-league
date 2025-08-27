@@ -276,12 +276,12 @@ const leagueInsights = computed(() => {
             value: `${leagueLeader.points} pts`,
             subtext: `${leagueLeader.wins}W, ${leagueLeader.draws}D, ${leagueLeader.losses}L`,
             icon: StarIcon,
-            cardClasses: "bg-gradient-to-br from-green-50 to-green-100 rounded-lg md:rounded-xl p-3 md:p-5 shadow-md border border-green-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg",
-            iconContainerClasses: "bg-green-600",
-            titleClasses: "text-green-700",
-            avatarClasses: "border-green-400",
-            valueClasses: "text-green-800",
-            subtextClasses: "text-green-600"
+            cardClasses: "bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg md:rounded-xl p-3 md:p-5 shadow-md border border-gray-200 transform transition-all duration-300 hover:scale-105 hover:shadow-lg",
+            iconContainerClasses: "bg-gray-600",
+            titleClasses: "text-gray-700",
+            avatarClasses: "border-dark-400",
+            valueClasses: "text-gray-800",
+            subtextClasses: "text-gray-600"
         },
         {
             title: "Top Scorer",
