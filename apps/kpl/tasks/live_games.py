@@ -14,6 +14,11 @@ from util.views import headers
 from uuid import UUID
 from config.settings import base
 
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
+
+
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
@@ -229,6 +234,20 @@ def monitor_fixture_score(fixture_id: UUID):
 def setup_gameweek_monitoring():
     """Set up monitoring tasks for all upcoming fixtures in the active gameweek"""
     try:
+        options = Options()
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--headless")  
+        
+        driver = webdriver.Remote(
+            command_executor="http://selenium:4444/wd/hub",
+            options=options
+        )
+        
+        driver.get("https://google.com")
+        print(driver.title)
+        driver.quit()
+        
         active_gameweek = Gameweek.objects.filter(is_active=True).first()
         if not active_gameweek:
             return "No active gameweek found"

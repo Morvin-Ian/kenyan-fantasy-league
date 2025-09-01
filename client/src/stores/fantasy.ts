@@ -68,9 +68,15 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
         this.fetchFantasyTeamPlayers();
         return response.data;
-      } catch (error) {
+      }catch(error) {
         let errMsg = "Saving changes failed";
-        const rawError = error.response?.data?.error;
+        let rawError: any;
+
+        if (error instanceof Error) {
+          // Axios errors usually have `response`
+          const axiosError = error as any;
+          rawError = axiosError.response?.data?.error;
+        }
 
         if (typeof rawError === "string") {
           try {
@@ -79,18 +85,18 @@ export const useFantasyStore = defineStore("fantasy", {
             console.log("Parsed error message:", parsed[0]);
             errMsg = parsed[0] || errMsg;
           } catch {
-            errMsg = rawError; 
+            errMsg = rawError;
           }
         } else if (Array.isArray(rawError)) {
           errMsg = rawError[0];
         }
 
         console.error("Error saving fantasy team players:", errMsg);
-
         this.error = errMsg;
-      } finally {
-        this.isLoading = false;
       }
+ finally {
+      this.isLoading = false;
     }
-  },
+  }
+},
 });
