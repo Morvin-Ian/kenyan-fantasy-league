@@ -270,6 +270,9 @@ logging.config.dictConfig(
     }
 )
 
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+
 from datetime import timedelta
 
 CELERY_BEAT_SCHEDULE = {
@@ -283,6 +286,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
-        "schedule": timedelta(days=1).total_seconds(),
+        "schedule": timedelta(minutes=1).total_seconds(),
     },
 }

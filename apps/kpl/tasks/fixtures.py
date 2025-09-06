@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from celery import shared_task
 from django.utils import timezone
 
-from apps.kpl.models import Fixture, Gameweek, Team
+from apps.kpl.models import Fixture, Gameweek, Team, Player
 from .live_games import setup_gameweek_monitoring
 from util.views import headers
 from difflib import get_close_matches
@@ -26,6 +26,16 @@ def find_team(team_name: str) -> Team | None:
     )
     if match:
         return Team.objects.get(name__iexact=match[0])
+    return None
+
+def find_player(player_name: str) -> Player | None:
+    player_name = player_name.strip().lower()
+    all_players = list(Player.objects.values_list("name", flat=True))
+    match = get_close_matches(
+        player_name, [p.lower() for p in all_players], n=1, cutoff=0.6
+    )
+    if match:
+        return Player.objects.get(name__iexact=match[0])
     return None
 
 def extract_fixtures_data(headers) -> str:
@@ -131,7 +141,6 @@ def extract_fixtures_data(headers) -> str:
             f"Failed to retrieve the web page. Status code: {web_content.status_code}"
         )
 
-
 @shared_task
 def update_active_gameweek():
     try:
@@ -145,12 +154,14 @@ def update_active_gameweek():
         ).order_by("match_date")
 
         if upcoming_fixtures.exists():
-            # Group upcoming fixtures by week
+            # Group upcoming fixtures by week (Monday to Monday)
             fixtures_by_week = {}
 
             for fixture in upcoming_fixtures:
                 fixture_date = fixture.match_date.date()
-                week_start = fixture_date - timedelta(days=fixture_date.weekday())
+                # Calculate week start as the Monday on or before the fixture date
+                days_since_monday = fixture_date.weekday()  # 0=Monday, 6=Sunday
+                week_start = fixture_date - timedelta(days=days_since_monday)
 
                 if week_start not in fixtures_by_week:
                     fixtures_by_week[week_start] = []
@@ -191,8 +202,8 @@ def update_active_gameweek():
                 return f"Active gameweek set: Gameweek {existing_gameweek.number}"
 
             else:
-                # Find or create a gameweek for this week
-                week_end = earliest_week + timedelta(days=6)
+                # Find or create a gameweek for this week (Monday to Monday)
+                week_end = earliest_week + timedelta(days=7)  # Changed from 6 to 7 for Monday-to-Monday
 
                 matching_gameweek = Gameweek.objects.filter(
                     start_date__lte=earliest_week, end_date__gte=week_end
@@ -222,14 +233,14 @@ def update_active_gameweek():
                     return f"Active gameweek set: Gameweek {matching_gameweek.number}"
 
                 else:
-                    # Create a new gameweek for this week
+                    # Create a new gameweek for this week (Monday to Monday)
                     last_gameweek = Gameweek.objects.order_by("-number").first()
                     next_number = (last_gameweek.number + 1) if last_gameweek else 1
 
                     new_gameweek = Gameweek.objects.create(
                         number=next_number,
                         start_date=earliest_week,
-                        end_date=week_end,
+                        end_date=week_end,  # This is now Monday to Monday
                         is_active=True,
                         transfer_deadline=transfer_deadline,
                     )
@@ -306,7 +317,6 @@ def update_active_gameweek():
     except Exception as e:
         logger.error(f"Error updating active gameweek: {e}")
         return f"Error updating active gameweek: {e}"
-
 
 @shared_task
 def get_kpl_fixtures():
