@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div v-if="isLoading" class="flex justify-center items-center h-64">
@@ -68,6 +68,19 @@
                 </div>
               </div>
             </div>
+            <div class="mt-3 flex items-center justify-between">
+              <div>
+                <span v-if="match.lineup_status" :class="badgeClass(match.lineup_status)" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold">
+                  <span class="w-2 h-2 rounded-full mr-2" :class="dotClass(match.lineup_status)"></span>
+                  {{ match.lineup_status.status }}
+                </span>
+              </div>
+              <div>
+                <button @click="openLineups(match.id)" class="inline-flex items-center bg-white text-gray-700 px-3 py-1.5 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-sm border border-gray-200 text-sm font-medium">
+                  View Lineups
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -111,17 +124,27 @@
       </div>
     </div>
   </div>
+  <FixtureLineupModal
+    v-if="showModal"
+    :open="showModal"
+    :lineups="activeFixtureId ? kplStore.fixtureLineups.get(activeFixtureId) || [] : []"
+    :isLoading="false"
+    @close="showModal = false"
+  />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
 import { BarChart2Icon } from 'lucide-vue-next';
 import { useKplStore } from '@/stores/kpl';
+import FixtureLineupModal from '@/components/reusables/FixtureLineupModal.vue';
 
 const kplStore = useKplStore();
 const { fixtures } = storeToRefs(kplStore);
 const isLoading = ref(false);
+const showModal = ref(false);
+const activeFixtureId = ref<string | null>(null);
 
 watch(() => fixtures.value, (newFixtures) => {
   if (newFixtures.length === 0) {
@@ -132,7 +155,7 @@ watch(() => fixtures.value, (newFixtures) => {
 async function fetchFixtures() {
   try {
     isLoading.value = true;
-    await kplStore.fetchFixtures();
+    await kplStore.fetchFixtures(true);
   } catch (error) {
     console.error("Failed to fetch fixtures:", error);
   } finally {
@@ -182,5 +205,30 @@ const formatTimePart = (dateStr) => {
     hour12: true
   }).format(date);
 };
+
+const openLineups = async (fixtureId: string) => {
+  try {
+    activeFixtureId.value = fixtureId;
+    await kplStore.fetchFixtureLineups(fixtureId);
+    showModal.value = true;
+  } catch (e) {
+    console.error('Failed to open lineups', e);
+  }
+};
+
+const badgeClass = (status) => ({
+  'bg-emerald-50 text-emerald-700 border border-emerald-200': status?.status === 'Confirmed',
+  'bg-amber-50 text-amber-700 border border-amber-200': status?.status === 'Predicted',
+  'bg-gray-50 text-gray-600 border border-gray-200': status?.status === 'NA',
+});
+
+const dotClass = (status) => ({
+  'bg-emerald-500': status?.status === 'Confirmed',
+  'bg-amber-500': status?.status === 'Predicted',
+  'bg-gray-400': status?.status === 'NA',
+});
 </script>
-```
+
+<style scoped>
+</style>
+

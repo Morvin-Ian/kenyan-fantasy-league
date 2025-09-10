@@ -19,10 +19,12 @@ class GetProfileAPIView(APIView):
 
     def get(self, request):
         user = self.request.user
-        # players.get_all_players.delay()
-        # standings.get_kpl_table.delay()
-        # fixtures.get_kpl_fixtures.delay()
-        user_profile = Profile.objects.get(user=user)
+        try:
+            user_profile = Profile.objects.get(user=user)
+        except Profile.DoesNotExist:
+            return Response(
+                {"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND
+            )
         serializer = ProfileSerializer(user_profile, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 

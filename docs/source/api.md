@@ -700,3 +700,4 @@ Future endpoint: `http://localhost:8080/api/v1/docs/`
 ---
 
 *This API documentation reflects the current implementation. For the latest updates, refer to the source code or contact the development team.*
+

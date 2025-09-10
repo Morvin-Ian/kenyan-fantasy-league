@@ -43,6 +43,7 @@ export interface Fixture {
   away_team: Team;
   match_date?: string;
   datetime?: string;
+  lineup_status?: LineupStatus | null;
 }
 
 export interface Result {
@@ -70,4 +71,31 @@ export interface TeamStanding {
   goal_differential: number;
   points: number;
   form: string[];
+}
+
+export interface LineupPlayer {
+  id: string;
+  player: Player | null;
+  position: "GKP" | "DEF" | "MID" | "FWD" | null;
+  order_index: number;
+  is_bench: boolean;
+}
+
+export interface Lineup {
+  id: string;
+  team: Team;
+  side: "home" | "away";
+  formation: string | null;
+  is_confirmed: boolean;
+  source: string;
+  published_at: string | null;
+  starters?: LineupPlayer[];
+  bench?: LineupPlayer[];
+  players?: LineupPlayer[];
+}
+
+export interface LineupStatus {
+  available: boolean;
+  confirmed: boolean;
+  status: "Predicted" | "Confirmed" | "NA";
 }

@@ -81,3 +81,4 @@ List endpoints use offset-based pagination with 30 items per page by default. Us
 ```
 GET /api/v1/kpl/players/?page=2
 ```
+

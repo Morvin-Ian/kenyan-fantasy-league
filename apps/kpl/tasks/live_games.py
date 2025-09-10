@@ -13,9 +13,7 @@ from apps.kpl.models import Fixture, Gameweek
 from util.views import headers
 from uuid import UUID
 from config.settings import base
-
 from selenium import webdriver
-from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
 
@@ -237,16 +235,19 @@ def setup_gameweek_monitoring():
         options = Options()
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--headless")  
-        
+        options.add_argument("--headless=new")
         driver = webdriver.Remote(
             command_executor="http://selenium:4444/wd/hub",
-            options=options
+            options=options,
         )
-        
-        driver.get("https://google.com")
-        print(driver.title)
-        driver.quit()
+        try:
+            driver.set_page_load_timeout(30)
+            driver.get("https://example.com")
+        finally:
+            try:
+                driver.quit()
+            except Exception:
+                pass
         
         active_gameweek = Gameweek.objects.filter(is_active=True).first()
         if not active_gameweek:
