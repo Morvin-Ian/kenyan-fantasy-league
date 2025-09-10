@@ -43,7 +43,7 @@
 
     <!-- Matches Container -->
     <div ref="scrollContainer" class="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-4 sm:pb-6 mt-4 hide-scrollbar">
-      <div v-for="(game, index) in firstTenFixtures" :key="game.id" :style="{ animationDelay: `${index * 100}ms` }"
+      <div v-for="(game, index) in activeStandings" :key="game.id" :style="{ animationDelay: `${index * 100}ms` }"
         class="animate-slide-up flex-shrink-0 w-56 sm:w-64 md:w-72 rounded-xl sm:rounded-2xl bg-white border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group"
         :class="[
           game.status === 'upcoming' ? 'border-gray-100 shadow-lg' : 'border-gray-100 shadow-md',
@@ -198,7 +198,10 @@ const props = defineProps({
   }
 });
 
-const firstTenFixtures = computed(() => props.fixtures.slice(-10));
+const activeStandings = computed(() => 
+  props.fixtures.filter(fixture => fixture.is_active)
+);
+
 const firstFiveStandings = computed(() => props.standings.slice(0, 5));
 
 const scrollContainer = ref<HTMLElement | null>(null);

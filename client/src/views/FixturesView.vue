@@ -146,6 +146,7 @@ const itemsPerPage = 5;
 const totalPages = computed(() => Math.ceil(fixtures.value.length / itemsPerPage) || 1);
 
 const paginatedFixtures = computed(() => {
+  console.log(fixtures.value.length)
   if (fixtures.value.length === 0) return [];
   const start = (currentPage.value - 1) * itemsPerPage;
   return fixtures.value.slice(start, start + itemsPerPage);

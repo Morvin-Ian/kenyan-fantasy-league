@@ -25,7 +25,7 @@ class StandingViewSet(ReadOnlyModelViewSet):
 
 class FixtureViewSet(ReadOnlyModelViewSet):
     serializer_class = FixtureSerializer
-    queryset = Fixture.objects.filter(gameweek__is_active=True)
+    queryset = Fixture.objects.all()
     permission_classes = [IsAuthenticated]
 
 

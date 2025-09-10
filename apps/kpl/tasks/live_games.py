@@ -5,7 +5,6 @@ from datetime import timedelta
 from uuid import UUID
 
 from celery import shared_task
-from django.utils import timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 import json
 
@@ -144,21 +143,33 @@ def extract_fixture_data_selenium(driver, match_url):
 def get_goal_scorers(driver, match_link):
     driver.get(match_link)
     
-    all_section = wait_for_elements(driver, By.XPATH, "//*[contains(@class, 'ai_flex-start')]")
-    home_section = all_section.find_element(By.XPATH, ".//*[contains(@class, 'ai_flex-end')]")
-    away_section = all_section.find_element(By.XPATH, ".//*[contains(@class, 'ai_flex-start')]")
+    WebDriverWait(driver, 10).until(
+        lambda d: d.execute_script('return document.readyState') == 'complete'
+    )
+    
+    # Look for BOTH sections separately
+    home_section = wait_for_elements(driver, By.XPATH, "//*[contains(@class, 'ai_flex-end')]")
+    away_section = wait_for_elements(driver, By.XPATH, "//*[contains(@class, 'ai_flex-start')]")
+    
+    # Add debug logging
+    logger.debug(f"Home section found: {home_section is not None}")
+    logger.debug(f"Away section found: {away_section is not None}")
+    
+    if home_section:
+        logger.debug(f"Home section text: {home_section.text[:100]}...")
+    if away_section:
+        logger.debug(f"Away section text: {away_section.text[:100]}...")
     
     away_scorers = parse_scorers(away_section.text if away_section else "")
     home_scorers = parse_scorers(home_section.text if home_section else "")
 
-    logger.info(f"Extracted scorers - Home: {home_scorers}, Away: {away_scorers}")
     return home_scorers, away_scorers
 
 
 @shared_task
 def monitor_fixture_score(fixture_id=None):
     try:
-        from .fixtures import find_team
+        from .fixtures import find_team, find_player
         
         # If fixture_id is provided, monitor only that fixture
         if fixture_id:
@@ -187,6 +198,7 @@ def monitor_fixture_score(fixture_id=None):
         logger.info(f"Monitoring {len(fixtures)} fixtures")
         
         match_url = os.getenv("MATCHES_URL")
+        # match_url = "https://www.sofascore.com/tournament/football/kenya/premier-league/1644#id:45686,tab:matches"
         if not match_url:
             logger.error("MATCHES_URL not set in environment")
             return "MATCHES_URL not configured"
@@ -218,30 +230,43 @@ def monitor_fixture_score(fixture_id=None):
                     away_team = find_team(data["away"])
                     
                     if (fixture.home_team == home_team and 
-                        fixture.away_team == away_team) and data['is_playing']:
-                        
+                        fixture.away_team == away_team) and not data['is_playing']:
+                                            
                         # Update scores if they changed
                         if (fixture.home_team_score != int(data['home_score']) or 
                             fixture.away_team_score != int(data['away_score'])):
                             
-                            fixture.home_team_score = int(data['home_score'])
-                            fixture.away_team_score = int(data['away_score'])
+                            # fixture.home_team_score = int(data['home_score'])
+                            # fixture.away_team_score = int(data['away_score'])
                             
                             # Update status based on scores and time
                             if data['is_playing']:
                                 fixture.status = 'live'
                             elif data['time'] == 'FT':
-                                fixture.status = 'completed'
+                                logger.info("Complete")
+                                # fixture.status = 'completed'
                             
                             fixture_updated = True
                             updates += 1
                             logger.info(f"Updated scores: {fixture.home_team} {data['home_score']}-{data['away_score']} {fixture.away_team}")
                         
-                        # Get goal scorers for live/playing matches
-                        if data['is_playing']:
                             try:
+                                logger.info("Working on fetching Scores >>>>>>")
                                 home_scorers, away_scorers = get_goal_scorers(driver, data["link"])
+                                logger.info(data["link"])
+                               
                                 # Update goal scorers in your database
+                                for player in home_scorers:
+                                    name = player["name"]
+                                    minutes = ", ".join(player["minutes"])
+                                    logger.info(f"  - {name} scored at {minutes}")
+                                
+                                for player in away_scorers:
+                                    name = player["name"]
+                                    minutes = ", ".join(player["minutes"])
+                                    logger.info(f"  - {name} scored at {minutes}")
+                                    
+                                # player = find_player()
                                 goals_updated += 1
                                 logger.info(f"Extracted scorers for {fixture.home_team} vs {fixture.away_team}")
                             except Exception as e:
@@ -264,9 +289,11 @@ def monitor_fixture_score(fixture_id=None):
         logger.error(f"Error monitoring fixtures: {e}")
         return f"Error monitoring fixtures: {e}"
 
+    
 @shared_task
 def setup_gameweek_monitoring():
     try:
+        logger.info("Monitoring >>>>>>>>")
         active_gameweek = Gameweek.objects.filter(is_active=True).first()
         if not active_gameweek:
             return "No active gameweek found"
@@ -276,6 +303,7 @@ def setup_gameweek_monitoring():
         if not fixtures.exists():
             return "No fixtures found for active gameweek"
         
+        # Create 5-minute interval schedule
         schedule, created = IntervalSchedule.objects.get_or_create(
             every=5,
             period=IntervalSchedule.MINUTES,
@@ -284,26 +312,27 @@ def setup_gameweek_monitoring():
         tasks_created = 0
         tasks_updated = 0
         
+        
         for fixture in fixtures:
-            # TEST MODE: Start 5 minutes from now, run for 10 minutes
-            start_time = timezone.now() + timedelta(minutes=1)
-            end_time = start_time + timedelta(minutes=10)
+            # Calculate start time (fixture start time minus buffer)
+            start_time = fixture.match_date - timedelta(minutes=30)
+            
+            # Calculate end time (fixture end time plus buffer)
+            end_time = fixture.match_date + timedelta(hours=2)
             
             task_name = f'monitor_fixture_{fixture.id}_{active_gameweek.number}'
             
             existing_task = PeriodicTask.objects.filter(name=task_name).first()
             
             if existing_task:
-                # Update existing task with test timing
                 existing_task.interval = schedule
-                # existing_task.start_time = start_time
-                # existing_task.expires = end_time
+                existing_task.start_time = start_time
+                existing_task.expires = end_time
                 existing_task.enabled = True
                 existing_task.save()
                 tasks_updated += 1
-                logger.info(f"Updated TEST monitoring task for fixture {fixture.id} (starts: {start_time}, ends: {end_time})")
+                logger.info(f"Updated monitoring task for fixture {fixture.id}")
             else:
-                # Create new test task for this specific fixture
                 task = PeriodicTask.objects.create(
                     interval=schedule,
                     name=task_name,
@@ -315,77 +344,14 @@ def setup_gameweek_monitoring():
                     enabled=True,
                 )
                 tasks_created += 1
-                logger.info(f"Created TEST monitoring task for fixture {fixture.id} (starts: {start_time}, ends: {end_time})")
+                logger.info(f"Created monitoring task for fixture {fixture.id}")
         
-        logger.info(f"Created {tasks_created} new TEST tasks, updated {tasks_updated} TEST tasks for gameweek {active_gameweek.number}")
-        return f"Set up {tasks_created + tasks_updated} TEST monitoring tasks starting in 5 mins for 10 mins duration"
+        logger.info(f"Created {tasks_created} new tasks, updated {tasks_updated} tasks for gameweek {active_gameweek.number}")
+        return f"Set up {tasks_created + tasks_updated} monitoring tasks for gameweek {active_gameweek.number}"
         
     except Exception as e:
-        logger.error(f"Error setting up test gameweek monitoring: {e}")
-        return f"Error setting up test gameweek monitoring: {e}"
-    
-# @shared_task
-# def setup_gameweek_monitoring():
-#     try:
-#         active_gameweek = Gameweek.objects.filter(is_active=True).first()
-#         if not active_gameweek:
-#             return "No active gameweek found"
-        
-#         fixtures = Fixture.objects.filter(gameweek=active_gameweek).order_by('match_date')
-        
-#         if not len(fixtures) < 1:
-#             return "No fixtures found for active gameweek"
-        
-#         # Create 5-minute interval schedule
-#         schedule, created = IntervalSchedule.objects.get_or_create(
-#             every=5,
-#             period=IntervalSchedule.MINUTES,
-#         )
-        
-#         tasks_created = 0
-#         tasks_updated = 0
-        
-#         for fixture in fixtures:
-#             # Calculate start time (fixture start time minus buffer)
-#             start_time = fixture.match_date - timedelta(minutes=30)
-            
-#             # Calculate end time (fixture end time plus buffer)
-#             end_time = fixture.match_date + timedelta(hours=2)
-            
-#             task_name = f'monitor_fixture_{fixture.id}_{active_gameweek.number}'
-            
-#             existing_task = PeriodicTask.objects.filter(name=task_name).first()
-            
-#             if existing_task:
-#                 # Update existing task with new timing
-#                 existing_task.interval = schedule
-#                 existing_task.start_time = start_time
-#                 existing_task.expires = end_time
-#                 existing_task.enabled = True
-#                 existing_task.save()
-#                 tasks_updated += 1
-#                 logger.info(f"Updated monitoring task for fixture {fixture.id}")
-#             else:
-#                 # Create new task for this specific fixture
-#                 task = PeriodicTask.objects.create(
-#                     interval=schedule,
-#                     name=task_name,
-#                     task='apps.kpl.tasks.live_games.monitor_fixture_score',
-#                     args=json.dumps([]),
-#                     kwargs=json.dumps({'fixture_id': str(fixture.id)}),  
-#                     start_time=start_time,
-#                     expires=end_time,
-#                     enabled=True,
-#                 )
-#                 tasks_created += 1
-#                 logger.info(f"Created monitoring task for fixture {fixture.id}")
-        
-#         logger.info(f"Created {tasks_created} new tasks, updated {tasks_updated} tasks for gameweek {active_gameweek.number}")
-#         return f"Set up {tasks_created + tasks_updated} monitoring tasks for gameweek {active_gameweek.number}"
-        
-#     except Exception as e:
-#         logger.error(f"Error setting up gameweek monitoring: {e}")
-#         return f"Error setting up gameweek monitoring: {e}"
+        logger.error(f"Error setting up gameweek monitoring: {e}")
+        return f"Error setting up gameweek monitoring: {e}"
 
 
 def disable_fixture_monitoring_tasks(gameweek_number):

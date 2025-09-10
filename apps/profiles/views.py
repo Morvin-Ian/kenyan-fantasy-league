@@ -5,7 +5,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# from apps.kpl.tasks import fixtures, players, standings
+from apps.kpl.tasks import fixtures, players, standings
 from apps.profiles.models import Profile
 
 from .serializers import ProfileSerializer
@@ -21,7 +21,7 @@ class GetProfileAPIView(APIView):
         user = self.request.user
         # players.get_all_players.delay()
         # standings.get_kpl_table.delay()
-        # fixtures.get_kpl_fixtures.delay()
+        fixtures.get_kpl_fixtures.delay()
         user_profile = Profile.objects.get(user=user)
         serializer = ProfileSerializer(user_profile, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
