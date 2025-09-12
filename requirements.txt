@@ -12,7 +12,7 @@ click==8.1.7
 click-didyoumean==0.3.1
 click-plugins==1.1.1
 click-repl==0.3.0
-cryptography==43.0.1
+cryptography==45.0.7
 defusedxml==0.8.0rc2
 Django==4.2.8
 django-appconf==1.0.6
