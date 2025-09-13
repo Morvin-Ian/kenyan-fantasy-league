@@ -62,7 +62,7 @@ six==1.16.0
 social-auth-app-django==5.4.2
 social-auth-core==4.5.4
 soupsieve==2.6
-sqlparse==0.5.1
+sqlparse==0.5.3
 tornado==6.4.1
 typing-extensions==4.14.0
 tzdata==2024.2
