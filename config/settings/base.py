@@ -274,6 +274,7 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
 from datetime import timedelta
+from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "update-kpl-standings": {
@@ -286,6 +287,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
-        "schedule": timedelta(minutes=1).total_seconds(),
+        "schedule": crontab(day_of_week=4, hour=0, minute=0),  # Thursday at midnight
     },
 }
