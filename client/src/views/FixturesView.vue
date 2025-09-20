@@ -18,7 +18,6 @@
           <div>
             <router-link to="/standings"
               class="inline-flex items-center bg-white text-gray-700 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-sm border border-gray-200 text-sm font-medium">
-              <BarChart2Icon size="16" class="mr-2 text-gray-600" />
               View Table
             </router-link>
           </div>
@@ -276,7 +275,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { BarChart2Icon } from 'lucide-vue-next';
 import { useKplStore } from '@/stores/kpl';
 
 const kplStore = useKplStore();
@@ -351,7 +349,7 @@ const prevPage = () => {
   }
 };
 
-const formatDatePart = (dateStr) => {
+const formatDatePart = (dateStr:string) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat("en-US", {
@@ -361,7 +359,7 @@ const formatDatePart = (dateStr) => {
   }).format(date);
 };
 
-const formatTimePart = (dateStr) => {
+const formatTimePart = (dateStr:string) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat("en-US", {
