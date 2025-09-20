@@ -5,7 +5,7 @@ from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-# from apps.kpl.tasks import fixtures, players, standings
+from apps.kpl.tasks import fixtures, players, standings
 from apps.profiles.models import Profile
 
 from .serializers import ProfileSerializer

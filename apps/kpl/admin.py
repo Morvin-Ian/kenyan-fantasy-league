@@ -5,7 +5,7 @@ from .models import Fixture, Gameweek, Player, Standing, Team, FixtureLineup, Fi
 
 @admin.register(Team)
 class TeamAdmin(admin.ModelAdmin):
-    list_display = ("name", "logo_url")
+    list_display = ("name", "logo_url", "is_relegated")
     search_fields = ("name",)
 
 
@@ -45,7 +45,7 @@ class FixtureAdmin(admin.ModelAdmin):
         "status",
         "home_team_score",
         "away_team_score",
-        "created_at",
+        "gameweek",
     )
     list_filter = ("status", "match_date")
     search_fields = ("home_team__name", "away_team__name", "venue")

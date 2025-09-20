@@ -198,7 +198,6 @@ const userFields = {
     first_name: { label: "First Name", type: "text" },
     last_name: { label: "Last Name", type: "text" },
     gender: { label: "Gender", type: "select", options: ["Male", "Female", "Other"] },
-    country: { label: "Country", type: "text" },
     city: { label: "City", type: "text" },
 };
 

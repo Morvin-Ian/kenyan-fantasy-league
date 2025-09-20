@@ -41,6 +41,9 @@ export interface Fixture {
   type: string;
   home_team: Team;
   away_team: Team;
+  home_team_score: string;
+  away_team_score: string;
+  is_active:boolean;
   match_date?: string;
   datetime?: string;
   lineup_status?: LineupStatus | null;

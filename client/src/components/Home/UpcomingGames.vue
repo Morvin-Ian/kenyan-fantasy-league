@@ -43,11 +43,12 @@
 
     <!-- Matches Container -->
     <div ref="scrollContainer" class="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-4 sm:pb-6 mt-4 hide-scrollbar">
-      <div v-for="(game, index) in firstTenFixtures" :key="game.id" :style="{ animationDelay: `${index * 100}ms` }"
+      <div v-for="(game, index) in activeStandings" :key="game.id" :style="{ animationDelay: `${index * 100}ms` }"
         class="animate-slide-up flex-shrink-0 w-56 sm:w-64 md:w-72 rounded-xl sm:rounded-2xl bg-white border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group"
         :class="[
           game.status === 'upcoming' ? 'border-gray-100 shadow-lg' : 'border-gray-100 shadow-md',
           game.status === 'postponed' ? 'opacity-75' : '',
+          game.status === 'live' ? '' : '',
         ]">
         <div class="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
           <!-- League & Status -->
@@ -55,15 +56,16 @@
             <div class="flex items-center gap-2 sm:gap-3">
               <div
                 class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-50 rounded-full p-2 group-hover:scale-110 transition-transform duration-300">
-                  <img :src="game.home_team?.logo_url || defaultLogo" :alt="`${game.home_team.name} logo`"
-                class="w-full h-full object-contain" />              </div>
-              <span class="text-xs sm:text-sm font-light text-gray-700">{{ game.type }}</span>
+                <img :src="game.home_team?.logo_url || defaultLogo" :alt="`${game.home_team.name} logo`"
+                  class="w-full h-full object-contain" />
+              </div>
             </div>
             <div :class="[
               'px-2 sm:px-3 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-300',
               {
                 'bg-blue-100 text-blue-700 group-hover:bg-blue-200': game.status === 'upcoming',
-                'bg-gray-100 text-gray-600 group-hover:bg-gray-200': game.status === 'completed',
+                'bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200': game.status === 'completed',
+                'bg-red-100 text-red-700 animate-pulse': game.status === 'live',
                 'bg-red-50 text-red-600 group-hover:bg-red-100': game.status === 'postponed',
               },
             ]">
@@ -73,12 +75,37 @@
 
           <!-- Teams -->
           <div class="space-y-1">
-            <div class="text-xs sm:text-sm font-medium text-gray-900">
-              {{ game.home_team.name }}
-            </div>
-            <div class="text-xs sm:text-sm font-medium text-gray-900">
-              {{ game.away_team.name }}
-            </div>
+            <!-- Live Match (with scores) -->
+            <template v-if="game.status === 'live' || game.status === 'completed'">
+              <div class="flex items-center justify-between text-sm sm:text-base font-bold">
+                <span class="text-gray-900">{{ game.home_team.name }}</span>
+                <span class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold" :class="{
+                  'bg-red-100 text-red-600': game.status === 'live',
+                  'bg-indigo-50 text-indigo-600': game.status === 'completed'
+                }">
+                  {{ game.home_team_score }}
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-sm sm:text-base font-bold">
+                <span class="text-gray-900">{{ game.away_team.name }}</span>
+                <span class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold" :class="{
+                  'bg-red-100 text-red-600': game.status === 'live',
+                  'bg-indigo-50 text-indigo-600': game.status === 'completed'
+                }">
+                  {{ game.away_team_score }}
+                </span>
+              </div>
+            </template>
+
+            <!-- Non-live Match -->
+            <template v-else>
+              <div class="text-xs sm:text-sm font-medium text-gray-900">
+                {{ game.home_team.name }}
+              </div>
+              <div class="text-xs sm:text-sm font-medium text-gray-900">
+                {{ game.away_team.name }}
+              </div>
+            </template>
           </div>
 
           <!-- Date & Time -->
@@ -127,16 +154,36 @@
         <table class="w-full min-w-full table-auto">
           <thead>
             <tr class="border-b border-gray-100">
-              <th class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">Pos</th>
-              <th class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">Team</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">MP</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">W</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">D</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">L</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">GF</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">GA</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">GD</th>
-              <th class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">PTS</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                Pos</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                Team</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                MP</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                W</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                D</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                L</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                GF</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                GA</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                GD</th>
+              <th
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
+                PTS</th>
             </tr>
           </thead>
           <tbody>
@@ -153,16 +200,21 @@
               <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.wins }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.draws }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.losses }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.goals_for }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.goals_against }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.goals_for }}
+              </td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm">{{ team.goals_against
+              }}
+              </td>
               <td class="py-3 md:py-4 px-2 md:px-4 text-center font-medium text-xs sm:text-sm"
                 :class="{ 'text-green-500': team.goalDifference > 0, 'text-red-500': team.goalDifference < 0 }">{{
                   team.goal_differential }}</td>
-              <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-xs sm:text-sm">{{ team.points }}</td>
+              <td class="py-3 md:py-4 px-2 md:px-4 text-center font-bold text-gray-900 text-xs sm:text-sm">{{
+                team.points }}
+              </td>
             </tr>
           </tbody>
         </table>
-    </div>
+      </div>
 
       <!-- Visual indicator that table scrolls horizontally (mobile only) -->
       <div class="flex justify-center mt-3 md:hidden">
@@ -179,9 +231,9 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import type { Fixture, TeamStanding } from "src/helpers/types/team";
@@ -198,7 +250,10 @@ const props = defineProps({
   }
 });
 
-const firstTenFixtures = computed(() => props.fixtures.slice(-10));
+const activeStandings = computed(() =>
+  props.fixtures.filter(fixture => fixture.is_active)
+);
+
 const firstFiveStandings = computed(() => props.standings.slice(0, 5));
 
 const scrollContainer = ref<HTMLElement | null>(null);

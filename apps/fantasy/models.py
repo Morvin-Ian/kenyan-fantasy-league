@@ -53,7 +53,7 @@ class FantasyPlayer(TimeStampedUUIDModel):
     current_value = models.DecimalField(max_digits=6, decimal_places=2)
     gameweek_added = models.ForeignKey(
         Gameweek,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="players_added",
         null=True,
         blank=True,
@@ -112,7 +112,9 @@ class PlayerTransfer(TimeStampedUUIDModel):
     player_out = models.ForeignKey(
         Player, on_delete=models.CASCADE, related_name="transfers_out"
     )
-    gameweek = models.ForeignKey(Gameweek, on_delete=models.CASCADE)
+    gameweek = models.ForeignKey(
+        Gameweek, on_delete=models.PROTECT, null=True, blank=True 
+    )
     transfer_cost = models.DecimalField(max_digits=4, decimal_places=1, default=0)
 
     class Meta:
@@ -133,7 +135,7 @@ class PlayerPerformance(TimeStampedUUIDModel):
     )
     gameweek = models.ForeignKey(
         Gameweek,
-        on_delete=models.CASCADE,
+        on_delete=models.PROTECT,
         related_name="player_performances",
         null=True,
         blank=True,
@@ -166,14 +168,14 @@ class TeamSelection(TimeStampedUUIDModel):
         FantasyTeam, on_delete=models.CASCADE, related_name="selections"
     )
     gameweek = models.ForeignKey(
-        Gameweek, on_delete=models.CASCADE, related_name="team_selections"
+        Gameweek, on_delete=models.PROTECT, related_name="team_selections"
     )
     formation = models.CharField(max_length=10, choices=FORMATION_CHOICES)
     captain = models.ForeignKey(
-        FantasyPlayer, on_delete=models.CASCADE, related_name="captain_selections"
+        FantasyPlayer, on_delete=models.PROTECT, related_name="captain_selections"
     )
     vice_captain = models.ForeignKey(
-        FantasyPlayer, on_delete=models.CASCADE, related_name="vice_captain_selections"
+        FantasyPlayer, on_delete=models.PROTECT, related_name="vice_captain_selections"
     )
     starters = models.ManyToManyField(FantasyPlayer, related_name="starter_selections")
     is_finalized = models.BooleanField(default=False)

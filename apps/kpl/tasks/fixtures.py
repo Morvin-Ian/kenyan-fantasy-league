@@ -1,14 +1,15 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
 from django.utils import timezone
 
-from apps.kpl.models import Fixture, Gameweek, Team
+from apps.kpl.models import Fixture, Gameweek, Team, Player
 from .live_games import setup_gameweek_monitoring
+from .gameweeks import check_current_active_gameweek, set_active_gameweek_from_date_ranges, set_active_gameweek_from_fixtures
 from util.views import headers
 from difflib import get_close_matches
 
@@ -20,29 +21,75 @@ logger = logging.getLogger(__name__)
 
 def find_team(team_name: str) -> Team | None:
     team_name = team_name.strip().lower()
+    
+    cleaned_name = clean_team_name(team_name)
+    
     all_teams = list(Team.objects.values_list("name", flat=True))
+    
+    for db_team in all_teams:
+        if cleaned_name == clean_team_name(db_team):
+            return Team.objects.get(name=db_team)
+    
     match = get_close_matches(
-        team_name, [t.lower() for t in all_teams], n=1, cutoff=0.6
+        cleaned_name, [clean_team_name(t) for t in all_teams], n=1, cutoff=0.4
     )
+    
     if match:
-        return Team.objects.get(name__iexact=match[0])
+        for db_team in all_teams:
+            if clean_team_name(db_team) == match[0]:
+                return Team.objects.get(name=db_team)
+    
     return None
 
-def extract_fixtures_data(headers) -> str:
+def clean_team_name(name: str) -> str:
+    """Clean and normalize team names for better matching"""
+    name = name.strip().lower()
+    
+    replacements = {
+        'k-': 'kariobangi ',
+        'fc ': '',
+        ' fc': '',
+        'afc ': '',
+        ' afc': '',
+        ' united': '',
+        ' city': '',
+        ' stars': '',
+        ' sugar': '',
+        ' ': '',  
+        '-': '',  
+    }
+    
+    cleaned = name
+    for old, new in replacements.items():
+        cleaned = cleaned.replace(old, new)
+    
+    return cleaned
+
+def find_player(player_name: str) -> Player | None:
+    player_name = player_name.strip().lower()
+    all_players = list(Player.objects.values_list("name", flat=True))
+    match = get_close_matches(
+        player_name, [p.lower() for p in all_players], n=1, cutoff=0.6
+    )
+    if match:
+        return Player.objects.get(name__iexact=match[0])
+    return None
+
+def extract_fixtures_data(headers) -> bool:
     url = os.getenv("TEAM_FIXTURES_URL")
 
     try:
         web_content = requests.get(url, headers=headers, verify=False)
     except requests.RequestException as e:
         logger.error(f"Error fetching fixtures: {e}")
-        return "Request to fetch fixtures failed"
+        return False
 
     if web_content.status_code == 200:
         soup = BeautifulSoup(web_content.text, "lxml")
         table = soup.find("table", class_="sp-event-blocks")
         if not table:
             logger.error("No fixtures table found on the page.")
-            return "No fixture table found"
+            return False
 
         table_rows = table.find_all("tr")[1:]
 
@@ -94,43 +141,62 @@ def extract_fixtures_data(headers) -> str:
             venue = venue_div.text.strip() if venue_div else "Unknown"
 
             try:
+                match_datetime = datetime.strptime(match_datetime_str, "%B %d, %Y %H:%M")
+            except ValueError:
+                try:
+                    match_datetime = datetime.strptime(match_datetime_str, "%b %d, %Y %H:%M")
+                except ValueError:
+                    logger.error(f"Date parsing failed for: {match_datetime_str}")
+                    continue
+
+            if timezone.is_naive(match_datetime):
+                match_datetime = timezone.make_aware(match_datetime)
+
+            try:
                 existing_fixture = Fixture.objects.filter(
                     home_team=home_team, away_team=away_team, venue=venue
                 ).first()
 
                 if existing_fixture:
-                    if existing_fixture.match_date != match_datetime:
+                    updated = False
+                    if match_datetime == "Postponed":
+                        existing_fixture.status = "postponed"
+                        updated = True
+                                            
+                    if match_datetime != "Postponed"and existing_fixture.match_date != match_datetime:
                         existing_fixture.match_date = match_datetime
+                        updated = True
+                    
+                    if updated:
                         existing_fixture.save()
                         fixtures_updated += 1
                         logger.info(
                             f"Updated fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
                         )
                 else:
+                    status = "upcoming" if match_datetime >= timezone.now() else "completed"
+                    
                     Fixture.objects.create(
                         home_team=home_team,
                         away_team=away_team,
                         match_date=match_datetime,
                         venue=venue,
-                        status="upcoming",
+                        status=status,
                     )
                     fixtures_created += 1
                     logger.info(
                         f"Created new fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
                     )
-                    
+                                    
             except Exception as e:
                 logger.error(f"Error creating or updating fixture: {e}")
-
-        return f"Successfully processed KPL fixtures: {fixtures_created} created, {fixtures_updated} updated"
+        logger.info(f"Successfully processed KPL fixtures: {fixtures_created} created, {fixtures_updated} updated")
+        return True
     else:
         logger.error(
             f"Failed to retrieve the web page. Status code: {web_content.status_code}"
         )
-        return (
-            f"Failed to retrieve the web page. Status code: {web_content.status_code}"
-        )
-
+        return False
 
 @shared_task
 def update_active_gameweek():
@@ -138,176 +204,28 @@ def update_active_gameweek():
         current_datetime = timezone.now()
         current_date = current_datetime.date()
 
+        if check_current_active_gameweek(current_datetime):
+            setup_gameweek_monitoring.delay()
+            return True
+
         Gameweek.objects.update(is_active=False)
 
-        upcoming_fixtures = Fixture.objects.filter(
-            match_date__gte=current_datetime, status="upcoming"
-        ).order_by("match_date")
-
-        if upcoming_fixtures.exists():
-            # Group upcoming fixtures by week
-            fixtures_by_week = {}
-
-            for fixture in upcoming_fixtures:
-                fixture_date = fixture.match_date.date()
-                week_start = fixture_date - timedelta(days=fixture_date.weekday())
-
-                if week_start not in fixtures_by_week:
-                    fixtures_by_week[week_start] = []
-                fixtures_by_week[week_start].append(fixture)
-
-            # Get the earliest week with fixtures
-            earliest_week = min(fixtures_by_week.keys())
-            earliest_week_fixtures = fixtures_by_week[earliest_week]
-
-            # Find the first match of the week to set transfer deadline
-            first_match = min(earliest_week_fixtures, key=lambda x: x.match_date)
-            transfer_deadline = first_match.match_date - timedelta(hours=2)
-
-            # Check if any fixture in this week already has a gameweek assigned
-            existing_gameweek = None
-            for fixture in earliest_week_fixtures:
-                if fixture.gameweek:
-                    existing_gameweek = fixture.gameweek
-                    break
-
-            if existing_gameweek:
-                existing_gameweek.is_active = True
-                existing_gameweek.transfer_deadline = transfer_deadline
-                existing_gameweek.save()
-
-                # Assign all fixtures in this week to the same gameweek
-                for fixture in earliest_week_fixtures:
-                    if not fixture.gameweek:
-                        fixture.gameweek = existing_gameweek
-                        fixture.save()
-
-                # Set up monitoring for this gameweek's fixtures
-                setup_gameweek_monitoring.delay()
-
-                logger.info(
-                    f"Set Gameweek {existing_gameweek.number} as active based on earliest week's fixtures. Transfer deadline: {transfer_deadline}"
-                )
-                return f"Active gameweek set: Gameweek {existing_gameweek.number}"
-
-            else:
-                # Find or create a gameweek for this week
-                week_end = earliest_week + timedelta(days=6)
-
-                matching_gameweek = Gameweek.objects.filter(
-                    start_date__lte=earliest_week, end_date__gte=week_end
-                ).first()
-
-                if not matching_gameweek:
-                    matching_gameweek = Gameweek.objects.filter(
-                        start_date__lte=week_end, end_date__gte=earliest_week
-                    ).first()
-
-                if matching_gameweek:
-                    matching_gameweek.is_active = True
-                    matching_gameweek.transfer_deadline = transfer_deadline
-                    matching_gameweek.save()
-
-                    # Assign all fixtures in this week to this gameweek
-                    for fixture in earliest_week_fixtures:
-                        fixture.gameweek = matching_gameweek
-                        fixture.save()
-
-                    # Set up monitoring for this gameweek's fixtures
-                    setup_gameweek_monitoring.delay()
-
-                    logger.info(
-                        f"Set Gameweek {matching_gameweek.number} as active for week starting {earliest_week}. Transfer deadline: {transfer_deadline}"
-                    )
-                    return f"Active gameweek set: Gameweek {matching_gameweek.number}"
-
-                else:
-                    # Create a new gameweek for this week
-                    last_gameweek = Gameweek.objects.order_by("-number").first()
-                    next_number = (last_gameweek.number + 1) if last_gameweek else 1
-
-                    new_gameweek = Gameweek.objects.create(
-                        number=next_number,
-                        start_date=earliest_week,
-                        end_date=week_end,
-                        is_active=True,
-                        transfer_deadline=transfer_deadline,
-                    )
-
-                    # Assign all fixtures in this week to the new gameweek
-                    for fixture in earliest_week_fixtures:
-                        fixture.gameweek = new_gameweek
-                        fixture.save()
-
-                    # Set up monitoring for this gameweek's fixtures
-                    setup_gameweek_monitoring.delay()
-
-                    logger.info(
-                        f"Created and set Gameweek {new_gameweek.number} as active for week starting {earliest_week}. Transfer deadline: {transfer_deadline}"
-                    )
-                    return f"Active gameweek set: Gameweek {new_gameweek.number}"
-
-        # Rest of the existing logic for handling cases with no upcoming fixtures
-        current_gameweek = Gameweek.objects.filter(
-            start_date__lte=current_date, end_date__gte=current_date
-        ).first()
-
-        if current_gameweek:
-            gameweek_fixtures = Fixture.objects.filter(
-                gameweek=current_gameweek, status="upcoming"
-            ).order_by("match_date")
-
-            if gameweek_fixtures.exists():
-                first_match = gameweek_fixtures.first()
-                transfer_deadline = first_match.match_date - timedelta(hours=2)
-                current_gameweek.transfer_deadline = transfer_deadline
-
-            current_gameweek.is_active = True
-            current_gameweek.save()
-            
-            # Set up monitoring for this gameweek's fixtures
+        if set_active_gameweek_from_fixtures(current_datetime, current_date):
             setup_gameweek_monitoring.delay()
-            
-            logger.info(
-                f"Set Gameweek {current_gameweek.number} as active based on current date range."
-            )
-            return f"Active gameweek set: Gameweek {current_gameweek.number}"
+            return True
 
-        next_gameweek = (
-            Gameweek.objects.filter(start_date__gt=current_date)
-            .order_by("start_date")
-            .first()
-        )
-
-        if next_gameweek:
-            gameweek_fixtures = Fixture.objects.filter(
-                gameweek=next_gameweek, status="upcoming"
-            ).order_by("match_date")
-
-            if gameweek_fixtures.exists():
-                first_match = gameweek_fixtures.first()
-                transfer_deadline = first_match.match_date - timedelta(hours=2)
-                next_gameweek.transfer_deadline = transfer_deadline
-
-            next_gameweek.is_active = True
-            next_gameweek.save()
-            
-            # Set up monitoring for this gameweek's fixtures
+        # Fallback: try to set active gameweek based on date ranges
+        if set_active_gameweek_from_date_ranges(current_datetime, current_date):
             setup_gameweek_monitoring.delay()
-            
-            logger.info(
-                f"Set Gameweek {next_gameweek.number} as active (next upcoming gameweek)."
-            )
-            return f"Active gameweek set: Gameweek {next_gameweek.number}"
+            return True
 
         logger.warning("No suitable gameweek found to set as active.")
-        return "No suitable gameweek found to set as active."
+        return False
 
     except Exception as e:
         logger.error(f"Error updating active gameweek: {e}")
-        return f"Error updating active gameweek: {e}"
-
-
+        return False
+    
 @shared_task
 def get_kpl_fixtures():
     response = extract_fixtures_data(headers)

@@ -21,10 +21,18 @@ class FixtureSerializer(serializers.ModelSerializer):
     home_team = TeamSerializer(read_only=True)
     away_team = TeamSerializer(read_only=True)
     lineup_status = serializers.SerializerMethodField(read_only=True)
+    is_active = serializers.SerializerMethodField(read_only=True)
+
 
     class Meta:
         model = Fixture
         exclude = ("pkid", "created_at", "updated_at")
+        
+    def get_is_active(self, obj):
+        if obj.gameweek:
+            if obj.gameweek.is_active:
+                return True
+        return False
 
     def get_lineup_status(self, obj: Fixture):
         request = self.context.get("request") if hasattr(self, "context") else None
