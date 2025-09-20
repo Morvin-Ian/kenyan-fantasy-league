@@ -72,3 +72,6 @@ watchdog==5.0.2
 wcwidth==0.2.13
 webencodings==0.5.1
 selenium==4.35.0
+pytest==8.3.2
+pytest-django==4.9.0
+pytest-cov==5.0.0

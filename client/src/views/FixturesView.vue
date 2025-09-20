@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div v-if="isLoading" class="flex justify-center items-center h-64">
@@ -18,7 +18,6 @@
           <div>
             <router-link to="/standings"
               class="inline-flex items-center bg-white text-gray-700 px-4 py-2 rounded-full hover:bg-gray-100 transition-colors duration-200 shadow-sm border border-gray-200 text-sm font-medium">
-              <BarChart2Icon size="16" class="mr-2 text-gray-600" />
               View Table
             </router-link>
           </div>
@@ -273,10 +272,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import { BarChart2Icon } from 'lucide-vue-next';
 import { useKplStore } from '@/stores/kpl';
 
 const kplStore = useKplStore();
@@ -293,7 +291,7 @@ watch(() => fixtures.value, (newFixtures) => {
 async function fetchFixtures() {
   try {
     isLoading.value = true;
-    await kplStore.fetchFixtures();
+    await kplStore.fetchFixtures(true);
   } catch (error) {
     console.error("Failed to fetch fixtures:", error);
   } finally {
@@ -351,7 +349,7 @@ const prevPage = () => {
   }
 };
 
-const formatDatePart = (dateStr) => {
+const formatDatePart = (dateStr:string) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat("en-US", {
@@ -361,7 +359,7 @@ const formatDatePart = (dateStr) => {
   }).format(date);
 };
 
-const formatTimePart = (dateStr) => {
+const formatTimePart = (dateStr:string) => {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return new Intl.DateTimeFormat("en-US", {

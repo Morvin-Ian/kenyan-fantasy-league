@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Fixture, Gameweek, Player, Standing, Team
+from .models import Fixture, Gameweek, Player, Standing, Team, FixtureLineup, FixtureLineupPlayer, ExternalTeamMapping, ExternalFixtureMapping
 
 
 @admin.register(Team)
@@ -49,6 +49,25 @@ class FixtureAdmin(admin.ModelAdmin):
     )
     list_filter = ("status", "match_date")
     search_fields = ("home_team__name", "away_team__name", "venue")
+    actions = [
+        "filter_missing_lineups_near_ko",
+    ]
+
+    def filter_missing_lineups_near_ko(self, request, queryset):
+        from django.utils import timezone
+        from datetime import timedelta
+        now = timezone.now()
+        window_start = now
+        window_end = now + timedelta(hours=3)
+        qs = queryset.filter(match_date__gte=window_start, match_date__lte=window_end)
+        ids = []
+        for f in qs.prefetch_related("lineups"):
+            has_home = any(l.side == "home" for l in f.lineups.all())
+            has_away = any(l.side == "away" for l in f.lineups.all())
+            if not (has_home and has_away):
+                ids.append(str(f.id))
+        self.message_user(request, f"Fixtures missing lineups in next 3h: {', '.join(ids) if ids else 'None'}")
+    filter_missing_lineups_near_ko.short_description = "Report fixtures missing lineups (next 3h)"
 
 
 @admin.register(Gameweek)
@@ -62,3 +81,30 @@ class Gameweekdmin(admin.ModelAdmin):
     )
     list_filter = ("number", "is_active")
     search_fields = ("number", "is_active")
+
+
+class FixtureLineupPlayerInline(admin.TabularInline):
+    model = FixtureLineupPlayer
+    extra = 0
+
+
+@admin.register(FixtureLineup)
+class FixtureLineupAdmin(admin.ModelAdmin):
+    list_display = ("fixture", "team", "side", "formation", "is_confirmed", "source", "published_at")
+    list_filter = ("is_confirmed", "source", "side")
+    search_fields = ("fixture__home_team__name", "fixture__away_team__name", "team__name")
+    inlines = [FixtureLineupPlayerInline]
+
+
+@admin.register(ExternalTeamMapping)
+class ExternalTeamMappingAdmin(admin.ModelAdmin):
+    list_display = ("provider", "provider_team_id", "team")
+    list_filter = ("provider",)
+    search_fields = ("provider", "provider_team_id", "team__name")
+
+
+@admin.register(ExternalFixtureMapping)
+class ExternalFixtureMappingAdmin(admin.ModelAdmin):
+    list_display = ("provider", "provider_fixture_id", "fixture")
+    list_filter = ("provider",)
+    search_fields = ("provider", "provider_fixture_id", "fixture__home_team__name", "fixture__away_team__name")

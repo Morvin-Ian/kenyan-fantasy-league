@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import apiClient from "@/axios-interceptor";
-import type { Fixture, TeamStanding, Team, Player } from "@/helpers/types/team";
+import type { Fixture, TeamStanding, Team, Player, Lineup } from "@/helpers/types/team";
 
 
 type PaginatedResponse<T> = {
@@ -16,7 +16,8 @@ export const useKplStore = defineStore({
     teams: [] as Team[],
     standings: [] as TeamStanding[],
     fixtures: [] as Fixture[],
-    players: [] as Player[]
+    players: [] as Player[],
+    fixtureLineups: new Map<string, Lineup[]>()
   }),
   actions: {
     async fetchTeams() {
@@ -37,12 +38,27 @@ export const useKplStore = defineStore({
       }
     },
 
-    async fetchFixtures() {
+    async fetchFixtures(includeLineups: boolean = true) {
       try {
-        const response = await apiClient.get("/kpl/fixtures/");
+        const query = includeLineups ? "?include=lineups=true" : "";
+        const response = await apiClient.get(`/kpl/fixtures/${query}`);
         this.fixtures = response.data.results;
       } catch (error) {
         console.error("Error fetching fixtures:", error);
+      }
+    },
+    async fetchFixtureLineups(fixtureId: string, { force }: { force?: boolean } = {}) {
+      try {
+        if (!force && this.fixtureLineups.has(fixtureId)) {
+          return this.fixtureLineups.get(fixtureId)!;
+        }
+        const response = await apiClient.get(`/kpl/fixtures/${fixtureId}/lineups/`);
+        const data: Lineup[] = response.data;
+        this.fixtureLineups.set(fixtureId, data);
+        return data;
+      } catch (error) {
+        console.error(`Error fetching lineups for fixture ${fixtureId}:`, error);
+        throw error;
       }
     },
 
@@ -65,7 +81,7 @@ export const useKplStore = defineStore({
       await Promise.all([
         this.fetchTeams(),
         this.fetchStandings(),
-        this.fetchFixtures()
+        this.fetchFixtures(true)
       ]);
     },
   },

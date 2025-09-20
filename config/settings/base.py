@@ -33,6 +33,13 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG")
 
+# Feature flags
+LINEUPS_SCRAPING_ENABLED = os.getenv("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
+PRIMARY_LINEUP_SOURCE = os.getenv("PRIMARY_LINEUP_SOURCE", "fkf")
+SELENIUM_REMOTE_URL = os.getenv("SELENIUM_REMOTE_URL", "http://selenium:4444/wd/hub")
+LINEUP_SCRAPER_MAX_CONCURRENCY = int(os.getenv("LINEUP_SCRAPER_MAX_CONCURRENCY", "2"))
+SCRAPER_USER_AGENT = os.getenv("SCRAPER_USER_AGENT", "kenyan-fantasy-league/lineups-scraper")
+
 # ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
 ALLOWED_HOSTS = ["*"]
 
@@ -288,5 +295,9 @@ CELERY_BEAT_SCHEDULE = {
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
         "schedule": crontab(day_of_week=4, hour=0, minute=0),  # Thursday at midnight
+    },
+    "scan-upcoming-fixtures-for-lineups": {
+        "task": "apps.kpl.tasks.lineups.scan_upcoming_fixtures_for_lineups",
+        "schedule": timedelta(minutes=10).total_seconds(),
     },
 }

@@ -572,3 +572,4 @@ docker compose logs redis
 ---
 
 *Proper configuration is crucial for application security, performance, and maintainability.*
+

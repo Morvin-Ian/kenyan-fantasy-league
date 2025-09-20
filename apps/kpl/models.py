@@ -1,3 +1,6 @@
+# pyright: reportMissingImports=false, reportMissingTypeStubs=false, reportAttributeAccessFromUnknown=false
+# pyright: reportMissingImports=false, reportMissingTypeStubs=false
+# pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 from django.db import models
 
 from util.models import TimeStampedUUIDModel
@@ -31,7 +34,7 @@ class Team(TimeStampedUUIDModel):
         verbose_name = "Team"
         verbose_name_plural = "Teams"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -48,8 +51,8 @@ class Player(TimeStampedUUIDModel):
         verbose_name = "Player"
         verbose_name_plural = "Players"
 
-    def __str__(self):
-        return f"{self.name} ({self.team.name}) - {self.get_position_display()}"
+    def __str__(self) -> str:
+        return f"{self.name} ({self.team.name}) - {self.get_position_display()}"  # type: ignore[attr-defined]
 
 
 class Standing(TimeStampedUUIDModel):
@@ -70,7 +73,7 @@ class Standing(TimeStampedUUIDModel):
         verbose_name = "Standing"
         verbose_name_plural = "Standings"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.position}. {self.team.name} - {self.points} pts"
 
 
@@ -87,13 +90,13 @@ class Gameweek(TimeStampedUUIDModel):
         verbose_name = "Gameweek"
         verbose_name_plural = "Gameweeks"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Gameweek {self.number}"
 
     def save(self, *args, **kwargs):
         if not self.pk and not self.number:
             max_number = (
-                Gameweek.objects.aggregate(models.Max("number"))["number__max"] or 0
+                Gameweek.objects.aggregate(models.Max("number")).get("number__max") or 0
             )
             self.number = max_number + 1
         super().save(*args, **kwargs)
@@ -123,5 +126,103 @@ class Fixture(TimeStampedUUIDModel):
         verbose_name = "Fixture"
         verbose_name_plural = "Fixtures"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.home_team} vs {self.away_team} on {self.match_date}"
+
+
+# Lineups and provider mappings
+class ExternalTeamMapping(TimeStampedUUIDModel):
+    provider = models.CharField(max_length=50)
+    provider_team_id = models.CharField(max_length=100)
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="external_ids")
+
+    class Meta:
+        unique_together = ("provider", "provider_team_id")
+        verbose_name = "External Team Mapping"
+        verbose_name_plural = "External Team Mappings"
+
+    def __str__(self):
+        return f"{self.provider}:{self.provider_team_id} -> {self.team.name}"
+
+
+class ExternalFixtureMapping(TimeStampedUUIDModel):
+    provider = models.CharField(max_length=50)
+    provider_fixture_id = models.CharField(max_length=100)
+    fixture = models.ForeignKey(
+        Fixture, on_delete=models.CASCADE, related_name="external_ids"
+    )
+
+    class Meta:
+        unique_together = ("provider", "provider_fixture_id")
+        verbose_name = "External Fixture Mapping"
+        verbose_name_plural = "External Fixture Mappings"
+
+    def __str__(self):
+        return f"{self.provider}:{self.provider_fixture_id} -> {self.fixture}"
+
+
+SIDE_CHOICES = [
+    ("home", "Home"),
+    ("away", "Away"),
+]
+
+
+class FixtureLineup(TimeStampedUUIDModel):
+    fixture = models.ForeignKey(
+        Fixture, on_delete=models.CASCADE, related_name="lineups"
+    )
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="lineups")
+    side = models.CharField(max_length=10, choices=SIDE_CHOICES)
+    formation = models.CharField(max_length=20, null=True, blank=True)
+    is_confirmed = models.BooleanField(default=False)
+    source = models.CharField(max_length=50, default="manual")
+    published_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("fixture", "team", "side")
+        verbose_name = "Fixture Lineup"
+        verbose_name_plural = "Fixture Lineups"
+
+    def __str__(self) -> str:
+        return f"{self.team.name} lineup ({self.side}) for {self.fixture}"
+
+
+class FixtureLineupPlayer(TimeStampedUUIDModel):
+    lineup = models.ForeignKey(
+        FixtureLineup, on_delete=models.CASCADE, related_name="players"
+    )
+    player = models.ForeignKey(
+        Player, on_delete=models.SET_NULL, null=True, blank=True, related_name="lineup_entries"
+    )
+    position = models.CharField(max_length=3, choices=POSITION_CHOICES, null=True, blank=True)
+    order_index = models.PositiveIntegerField()
+    is_bench = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("lineup", "order_index")
+        ordering = ["lineup", "is_bench", "order_index"]
+        verbose_name = "Fixture Lineup Player"
+        verbose_name_plural = "Fixture Lineup Players"
+
+    def __str__(self) -> str:
+        return f"{self.player or 'Unknown'} ({'Bench' if self.is_bench else 'XI'})"
+
+
+class PlayerAlias(TimeStampedUUIDModel):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="player_aliases")
+    canonical_player = models.ForeignKey(
+        Player, on_delete=models.CASCADE, related_name="aliases"
+    )
+    normalized_name = models.CharField(max_length=120)
+    jersey_number = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("team", "normalized_name")
+        indexes = [
+            models.Index(fields=["team", "normalized_name"]),
+        ]
+        verbose_name = "Player Alias"
+        verbose_name_plural = "Player Aliases"
+
+    def __str__(self) -> str:
+        return f"{self.normalized_name} -> {self.canonical_player.name} ({self.team.name})"
