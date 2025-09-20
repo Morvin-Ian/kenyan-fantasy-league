@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
@@ -55,8 +55,8 @@ def clean_team_name(name: str) -> str:
         ' city': '',
         ' stars': '',
         ' sugar': '',
-        ' ': '',  # Remove all spaces for better matching
-        '-': '',  # Remove hyphens
+        ' ': '',  
+        '-': '',  
     }
     
     cleaned = name
@@ -159,14 +159,12 @@ def extract_fixtures_data(headers) -> bool:
 
                 if existing_fixture:
                     updated = False
-                    
-                    if existing_fixture.match_date != match_datetime:
-                        existing_fixture.match_date = match_datetime
+                    if match_datetime == "Postponed":
+                        existing_fixture.status = "postponed"
                         updated = True
-                    
-                    # Update status to upcoming if the match date hasn't passed yet
-                    if match_datetime > timezone.now() and existing_fixture.status != "upcoming":
-                        existing_fixture.status = "upcoming"
+                                            
+                    if match_datetime != "Postponed"and existing_fixture.match_date != match_datetime:
+                        existing_fixture.match_date = match_datetime
                         updated = True
                     
                     if updated:
@@ -176,7 +174,7 @@ def extract_fixtures_data(headers) -> bool:
                             f"Updated fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
                         )
                 else:
-                    status = "upcoming" if match_datetime > timezone.now() else "completed"
+                    status = "upcoming" if match_datetime >= timezone.now() else "completed"
                     
                     Fixture.objects.create(
                         home_team=home_team,

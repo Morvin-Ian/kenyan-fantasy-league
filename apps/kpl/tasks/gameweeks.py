@@ -40,7 +40,6 @@ def set_active_gameweek_from_fixtures(current_datetime, current_date):
     if not upcoming_fixtures.exists():
         return False
 
-    # Group fixtures by week and get earliest week
     fixtures_by_week = group_fixtures_by_week(upcoming_fixtures)
     if not fixtures_by_week:
         return False
@@ -48,17 +47,14 @@ def set_active_gameweek_from_fixtures(current_datetime, current_date):
     earliest_week = min(fixtures_by_week.keys())
     earliest_week_fixtures = fixtures_by_week[earliest_week]
 
-    # Calculate transfer deadline
     transfer_deadline = calculate_transfer_deadline(earliest_week_fixtures, current_datetime)
     if not transfer_deadline:
         return False
 
-    # Find or create gameweek for this week
     gameweek = find_or_create_gameweek_for_week(earliest_week, earliest_week_fixtures, transfer_deadline)
     if not gameweek:
         return False
 
-    # Assign fixtures to gameweek and activate it
     return activate_gameweek_with_fixtures(gameweek, earliest_week_fixtures, transfer_deadline)
 
 
@@ -67,7 +63,6 @@ def group_fixtures_by_week(fixtures):
     if not fixtures:
         return {}
     
-    # Sort fixtures by date
     sorted_fixtures = sorted(fixtures, key=lambda x: x.match_date)
     
     fixtures_by_week = {}
@@ -96,7 +91,7 @@ def calculate_transfer_deadline(fixtures, current_datetime):
     if not fixtures:
         return None
 
-    # Find the LAST match of the gameweek (not the first)
+    # Find the LAST match of the gameweek
     last_match = max(fixtures, key=lambda x: x.match_date)
     
     # Set deadline to 2 hours before the LAST match
@@ -115,7 +110,6 @@ def calculate_transfer_deadline(fixtures, current_datetime):
 
 def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
     """Find existing gameweek for week or create a new one"""
-    # Check if any fixture already has a gameweek assigned
     existing_gameweek = None
     for fixture in fixtures:
         if fixture.gameweek:
@@ -125,7 +119,6 @@ def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
     if existing_gameweek:
         return existing_gameweek
 
-    # Use the last fixture date instead of arbitrary +7 days
     week_end = max(f.match_date.date() for f in fixtures)
 
     # Try to find a gameweek that covers this range
@@ -136,7 +129,6 @@ def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
     if matching_gameweek:
         return matching_gameweek
 
-    # Create new gameweek
     last_gameweek = Gameweek.objects.order_by("-number").first()
     next_number = (last_gameweek.number + 1) if last_gameweek else 1
 
@@ -144,8 +136,8 @@ def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
         new_gameweek = Gameweek.objects.create(
             number=next_number,
             start_date=week_start,
-            end_date=week_end,  # <-- FIXED: last fixture date, not +7 days
-            is_active=False,  # Will be activated later
+            end_date=week_end, 
+            is_active=False, 
             transfer_deadline=transfer_deadline,
         )
         return new_gameweek
@@ -162,7 +154,6 @@ def activate_gameweek_with_fixtures(gameweek, fixtures, transfer_deadline):
         gameweek.transfer_deadline = transfer_deadline
         gameweek.save()
 
-        # Assign all fixtures to this gameweek
         for fixture in fixtures:
             if not fixture.gameweek:
                 fixture.gameweek = gameweek
@@ -179,7 +170,6 @@ def activate_gameweek_with_fixtures(gameweek, fixtures, transfer_deadline):
 
 def set_active_gameweek_from_date_ranges(current_datetime, current_date):
     """Set active gameweek based on date ranges (fallback)"""
-    # Try current date range
     current_gameweek = Gameweek.objects.filter(
         start_date__lte=current_date, end_date__gte=current_date
     ).first()
@@ -187,7 +177,6 @@ def set_active_gameweek_from_date_ranges(current_datetime, current_date):
     if current_gameweek:
         return activate_existing_gameweek(current_gameweek, current_datetime)
 
-    # Try next gameweek
     next_gameweek = Gameweek.objects.filter(
         start_date__gt=current_date
     ).order_by("start_date").first()
@@ -201,13 +190,11 @@ def set_active_gameweek_from_date_ranges(current_datetime, current_date):
 def activate_existing_gameweek(gameweek, current_datetime):
     """Activate an existing gameweek and set its transfer deadline based on LAST game"""
     try:
-        # Set transfer deadline based on fixtures - use LAST match
         gameweek_fixtures = Fixture.objects.filter(
             gameweek=gameweek
         ).order_by("match_date")
 
         if gameweek_fixtures.exists():
-            # Get the LAST match instead of the first
             last_match = gameweek_fixtures.last()
             transfer_deadline = last_match.match_date - timedelta(hours=2)
             gameweek.transfer_deadline = transfer_deadline
