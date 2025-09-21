@@ -81,7 +81,7 @@
             <div v-else>
               <div v-for="match in paginatedUpcomingFixtures" :key="match.id"
                 class="bg-white  p-4 md:p-5 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 hover:border-gray-200"
-                :class="{ 'ring-2 ring-red-500 ring-opacity-50 bg-red-50': match.status === 'live' }">
+                :class="{ 'bg-red-50': match.status === 'live' }">
 
                 <div class="text-center mb-4">
                   <div class="flex items-center justify-center space-x-2 mb-2">

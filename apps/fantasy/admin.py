@@ -117,15 +117,15 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
         "red_card_display",
     )
     list_filter = ("yellow_cards", "red_cards")
-    search_fields = ("fantasy_player__player__name",)
+    search_fields = ("player__name",)
 
     def player_name(self, obj):
-        return obj.fantasy_player.player.name
+        return obj.player.name
 
     player_name.short_description = "Player"
 
     def team_name(self, obj):
-        return obj.fantasy_player.fantasy_team.name
+        return obj.player.team.name
 
     team_name.short_description = "Fantasy Team"
 

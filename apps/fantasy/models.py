@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.kpl.models import Gameweek, Player
+from apps.kpl.models import Gameweek, Player, Fixture
 from util.models import TimeStampedUUIDModel
 
 User = get_user_model()
@@ -140,6 +140,13 @@ class PlayerPerformance(TimeStampedUUIDModel):
         null=True,
         blank=True,
     )
+    fixture = models.ForeignKey(   
+        Fixture,
+        on_delete=models.PROTECT,
+        related_name="performances",
+        null=True,
+        blank=True,
+    )
     yellow_cards = models.PositiveIntegerField(default=0)
     red_cards = models.PositiveIntegerField(default=0)
     goals_scored = models.PositiveIntegerField(default=0)
@@ -150,16 +157,16 @@ class PlayerPerformance(TimeStampedUUIDModel):
     penalties_saved = models.PositiveIntegerField(default=0)
     penalties_missed = models.PositiveIntegerField(default=0)
     minutes_played = models.PositiveIntegerField(default=0)
-    fantasy_points = models.PositiveIntegerField(default=0)
+    fantasy_points = models.IntegerField(default=0)
 
     class Meta:
         verbose_name = "Player Performance"
         verbose_name_plural = "Player Performances"
-        unique_together = ["player", "gameweek"]
+        unique_together = ["player", "fixture"]
 
     def __str__(self):
-        if self.player and self.gameweek:
-            return f"{self.player.name} - GW{self.gameweek.number} ({self.goals_scored}G, {self.assists}A, {self.fantasy_points} pts)"
+        if self.player and self.fixture:
+            return f"{self.player.name} - GW{self.fixture.gameweek.number} vs {self.fixture.away_team.name if self.player.team == self.fixture.home_team else self.fixture.home_team.name} ({self.goals_scored}G, {self.assists}A, {self.fantasy_points} pts)"
         return f"PlayerPerformance {self.id}"
 
 

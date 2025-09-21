@@ -66,14 +66,22 @@ def clean_team_name(name: str) -> str:
     return cleaned
 
 def find_player(player_name: str) -> Player | None:
-    player_name = player_name.strip().lower()
+    player_name = player_name.strip()
+
+    exact_match = Player.objects.filter(name__iexact=player_name).first()
+    if exact_match:
+        return exact_match
+
     all_players = list(Player.objects.values_list("name", flat=True))
     match = get_close_matches(
-        player_name, [p.lower() for p in all_players], n=1, cutoff=0.6
+        player_name.lower(), [p.lower() for p in all_players], n=1, cutoff=0.9
     )
+
     if match:
-        return Player.objects.get(name__iexact=match[0])
+        return Player.objects.filter(name__iexact=match[0]).first()
+
     return None
+
 
 def extract_fixtures_data(headers) -> bool:
     url = os.getenv("TEAM_FIXTURES_URL")

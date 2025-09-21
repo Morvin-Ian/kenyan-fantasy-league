@@ -42,9 +42,7 @@
                                         </th>
                                         
                                         <!-- Scrollable columns -->
-                                        <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[50px]">
-                                            Pts
-                                        </th>
+                                       
                                         <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[40px]">
                                             P
                                         </th>
@@ -65,6 +63,9 @@
                                         </th>
                                         <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[45px]">
                                             GD
+                                        </th>
+                                         <th class="px-2 py-2 md:p-4 font-black uppercase tracking-wider text-center border-b-2 border-green-200 hover:bg-green-200 transition-colors min-w-[50px]">
+                                            Pts
                                         </th>
                                     </tr>
                                 </thead>
@@ -92,9 +93,7 @@
                                         </td>
 
                                         <!-- Scrollable columns -->
-                                        <td class="px-2 py-2 text-center font-bold text-green-700 text-sm">
-                                            {{ team.points }}
-                                        </td>
+                                       
                                         <td class="px-2 py-2 text-center font-medium text-gray-700">{{ team.played }}</td>
                                         <td class="px-2 py-2 text-center text-green-600 font-bold">{{ team.wins }}</td>
                                         <td class="px-2 py-2 text-center text-yellow-600 font-bold">{{ team.draws }}</td>
@@ -102,6 +101,9 @@
                                         <td class="px-2 py-2 text-center text-blue-600 font-medium">{{ team.goals_for }}</td>
                                         <td class="px-2 py-2 text-center text-red-500 font-medium">{{ team.goals_against }}</td>
                                         <td class="px-2 py-2 text-center font-bold text-purple-600">{{ team.goal_differential }}</td>
+                                         <td class="px-2 py-2 text-center font-bold text-green-700 text-sm">
+                                            {{ team.points }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>

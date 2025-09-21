@@ -64,7 +64,7 @@
               'px-2 sm:px-3 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-300',
               {
                 'bg-blue-100 text-blue-700 group-hover:bg-blue-200': game.status === 'upcoming',
-                'bg-indigo-100 text-indigo-600 group-hover:bg-indigo-200': game.status === 'completed',
+                'bg-gray-100 text-gray-600 group-hover:bg-gray-200': game.status === 'completed',
                 'bg-red-100 text-red-700 animate-pulse': game.status === 'live',
                 'bg-red-50 text-red-600 group-hover:bg-red-100': game.status === 'postponed',
               },
@@ -81,7 +81,7 @@
                 <span class="text-gray-900">{{ game.home_team.name }}</span>
                 <span class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold" :class="{
                   'bg-red-100 text-red-600': game.status === 'live',
-                  'bg-indigo-50 text-indigo-600': game.status === 'completed'
+                  'bg-gray-50 text-gray-600': game.status === 'completed'
                 }">
                   {{ game.home_team_score }}
                 </span>
@@ -90,7 +90,7 @@
                 <span class="text-gray-900">{{ game.away_team.name }}</span>
                 <span class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold" :class="{
                   'bg-red-100 text-red-600': game.status === 'live',
-                  'bg-indigo-50 text-indigo-600': game.status === 'completed'
+                  'bg-gray-50 text-gray-600': game.status === 'completed'
                 }">
                   {{ game.away_team_score }}
                 </span>
@@ -190,7 +190,7 @@
             <tr v-for="(team, index) in firstFiveStandings" :key="team.id"
               class="border-b hover:bg-gray-50 transition-colors">
               <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-xs sm:text-sm"
-                :class="{ 'text-indigo-600': index < 4, 'text-red-500': index > 16 }">{{ index + 1 }}</td>
+                :class="{ 'text-gray-600': index < 4, 'text-red-500': index > 16 }">{{ index + 1 }}</td>
               <td class="py-3 md:py-4 px-2 md:px-4">
                 <div class="flex items-center space-x-2 md:space-x-3">
                   <span class="font-medium text-gray-900 text-xs sm:text-sm">{{ team.team.name }}</span>

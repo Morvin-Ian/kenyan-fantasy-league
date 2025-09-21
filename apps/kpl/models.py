@@ -1,6 +1,3 @@
-# pyright: reportMissingImports=false, reportMissingTypeStubs=false, reportAttributeAccessFromUnknown=false
-# pyright: reportMissingImports=false, reportMissingTypeStubs=false
-# pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 from django.db import models
 
 from util.models import TimeStampedUUIDModel

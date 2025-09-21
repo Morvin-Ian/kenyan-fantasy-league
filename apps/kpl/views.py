@@ -33,7 +33,7 @@ class StandingViewSet(ReadOnlyModelViewSet):
 class FixtureViewSet(ReadOnlyModelViewSet):
     serializer_class = FixtureSerializer
     # Allow all fixtures for detail routes; filter to active GW in list via get_queryset
-    queryset = Fixture.objects.all()
+    queryset = Fixture.objects.exclude(status="postponed")
     lookup_field = "id"
     permission_classes = [IsAuthenticated]
 
