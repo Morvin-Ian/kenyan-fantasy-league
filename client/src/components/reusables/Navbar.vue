@@ -32,12 +32,13 @@
                                 class="flex items-center px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors duration-200">
                                 <img :src="getProfilePhotoUrl()" alt="Avatar"
                                     class="h-10 w-10 rounded-full object-cover" />
-                                <span class="ml-2">
+                                <span class="ml-2 flex items-center">
                                     <span class="font-bold text-xs">Hello, {{ authStore.user?.username }}</span>
                                     <ChevronDownIcon class="ml-1 h-4 w-4 transition-transform duration-200"
                                         :class="{ 'rotate-180': isAccountOpen }" />
                                 </span>
                             </button>
+
                             <transition enter-active-class="transition ease-out duration-100"
                                 enter-from-class="transform opacity-0 scale-95"
                                 enter-to-class="transform opacity-100 scale-100"
