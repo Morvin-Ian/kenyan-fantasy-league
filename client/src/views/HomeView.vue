@@ -21,10 +21,12 @@ import Performance from "@/components/Home/Performance.vue";
 import { onMounted, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useKplStore } from "@/stores/kpl";
+import { useFantasyStore } from "@/stores/fantasy";
 import { useRouter } from "vue-router";
 
 const authStore = useAuthStore();
 const kplStore = useKplStore();
+const fantasyStore = useFantasyStore();
 const router = useRouter();
 const isLoading = ref(true);
 

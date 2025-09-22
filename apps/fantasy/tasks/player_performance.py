@@ -68,5 +68,5 @@ def update_player_performance(fixture, home_scorers, away_scorers):
         process_scorers(home_scorers, fixture.home_team, fixture.away_team)
         process_scorers(away_scorers, fixture.away_team, fixture.home_team)
 
-    logger.info(f"✅ Player performances updated for fixture {fixture.id} ({fixture.home_team} vs {fixture.away_team})")
+    logger.info(f"Player performances updated for fixture {fixture.id} ({fixture.home_team} vs {fixture.away_team})")
 

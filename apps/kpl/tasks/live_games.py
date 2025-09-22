@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 def extract_fixture_data_selenium(selenium_manager, match_url):
     try:
         from .fixtures import find_team  
-        
+        logger.info(">>>>>", match_url)
         if not selenium_manager.safe_get(match_url):
             logger.error("Failed to load match URL")
             return []

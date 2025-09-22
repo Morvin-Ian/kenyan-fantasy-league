@@ -31,3 +31,20 @@ export interface FantasyPlayer {
   isInjured: boolean | null;
   isPlaceholder: boolean | null;
 }
+
+export interface PlayerGoalsLeaderboard {
+  player_id: string;
+  player_name: string;
+  team_name: string | null;
+  total_goals: number;
+  total_assists: number;
+  total_appearances: number; 
+  total_fantasy_points: number;
+  goals_per_game: number;
+  rank: number;
+}
+
+export interface GoalsLeaderboardResponse {
+  count: number;
+  results: PlayerGoalsLeaderboard[];
+}

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.fantasy.models import FantasyPlayer, FantasyTeam
+from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance
 from apps.kpl.models import Gameweek
 
 
@@ -90,3 +90,16 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
                 )
 
         return data
+
+class PlayerPerformanceSerializer(serializers.ModelSerializer):
+    player_name = serializers.CharField(source='player.name', read_only=True)
+    team_name = serializers.CharField(source='player.team.name', read_only=True)
+    
+    class Meta:
+        model = PlayerPerformance
+        fields = [
+            'id', 'player_name', 'team_name',
+            'goals_scored', 'assists', 'yellow_cards', 'red_cards', 'clean_sheets',
+            'saves', 'own_goals', 'penalties_saved', 'penalties_missed',
+            'minutes_played', 'fantasy_points', 'created_at', 'updated_at'
+        ]

@@ -4,10 +4,15 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from apps.fantasy.models import FantasyPlayer, FantasyTeam
+from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance
+from apps.kpl.models import Player, Gameweek
 
-from .serializers import FantasyPlayerSerializer, FantasyTeamSerializer
-from .services import FantasyService
+from .serializers import FantasyPlayerSerializer, FantasyTeamSerializer, PlayerPerformanceSerializer
+from .services.fantasy import FantasyService
+from .services.gameweek_status import GameweekStatusService
+
+from django.db.models import Sum, Count, Q
+
 
 
 class FantasyTeamViewSet(ModelViewSet):
@@ -110,3 +115,58 @@ class FantasyPlayerViewSet(ModelViewSet):
                 {"detail": "An unexpected error occurred.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+
+class PlayerPerformanceViewSet(ModelViewSet):
+    queryset = PlayerPerformance.objects.all()
+    serializer_class = PlayerPerformanceSerializer
+    
+    @action(detail=False, methods=['get'], url_path='goals-leaderboard')
+    def goals_leaderboard(self, request):
+        limit = int(request.query_params.get('limit', 5))
+        
+        players_goals = Player.objects.annotate(
+            total_goals=Sum('performances__goals_scored'),
+            total_assists=Sum('performances__assists'),
+            total_appearances=Count('performances', filter=Q(performances__minutes_played__gt=0)),
+            total_fantasy_points=Sum('performances__fantasy_points')
+        ).filter(total_goals__gt=0).order_by('-total_goals')[:limit]
+        
+        leaderboard_data = []
+        for player in players_goals:
+            leaderboard_data.append({
+                'player_id': player.id,
+                'player_name': player.name,
+                'team_name': player.team.name if player.team else None,
+                'total_goals': player.total_goals or 0,
+                'total_assists': player.total_assists or 0,
+                'total_appearances': player.total_appearances or 0,
+                'total_fantasy_points': player.total_fantasy_points or 0,
+                'goals_per_game': round((player.total_goals or 0) / (player.total_appearances or 1), 2) if player.total_appearances else 0,
+                'rank': len(leaderboard_data) + 1
+            })
+        
+        return Response({
+            'count': len(leaderboard_data),
+            'results': leaderboard_data
+        }, status=status.HTTP_200_OK)
+        
+
+class GameweekViewSet(ModelViewSet):
+    queryset = Gameweek.objects.all()
+
+    @action(detail=False, methods=["get"], url_path="status")
+    def get_gameweek_status(self, request):
+        """
+        Usage:
+          - /api/gameweeks/status/ (active gameweek)
+          - /api/gameweeks/status/?gameweek_id=5 (specific gameweek)
+        """
+        gameweek_id = request.query_params.get("gameweek_id")
+        service = GameweekStatusService()
+        data = service.get_comprehensive_gameweek_status(gameweek_id=gameweek_id)
+
+        if "error" in data:
+            return Response(data, status=status.HTTP_404_NOT_FOUND)
+
+        return Response(data, status=status.HTTP_200_OK)

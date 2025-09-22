@@ -1,6 +1,13 @@
 import { defineStore } from "pinia";
 import apiClient from "@/axios-interceptor";
-import type { FantasyPlayer, FantasyTeam } from "@/helpers/types/fantasy";
+import type {
+  FantasyPlayer,
+  FantasyTeam,
+  PlayerGoalsLeaderboard,
+  GoalsLeaderboardResponse
+} from "@/helpers/types/fantasy";
+
+import type { GameweekStatusResponse } from "@/helpers/types/gameweek";
 import type { TeamData } from "@/helpers/types/team";
 
 export const useFantasyStore = defineStore("fantasy", {
@@ -8,9 +15,16 @@ export const useFantasyStore = defineStore("fantasy", {
     fantasyTeams: [] as FantasyTeam[],
     fantasyPlayers: [] as FantasyPlayer[],
     userTeam: [] as FantasyTeam[],
+    goalsLeaderboard: [] as PlayerGoalsLeaderboard[],
+    gameweekStatus: null as GameweekStatusResponse | null,
     isLoading: false,
     error: null as string | null,
   }),
+
+  getters: {
+    topScorers: (state) => state.goalsLeaderboard,
+    topScorer: (state) => state.goalsLeaderboard[0] || null,
+  },
 
   actions: {
     async fetchFantasyTeams() {
@@ -62,13 +76,48 @@ export const useFantasyStore = defineStore("fantasy", {
       }
     },
 
+    async fetchTopGoalsScorers(limit: number = 5) {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.get<GoalsLeaderboardResponse>(
+          `fantasy/performance/goals-leaderboard/?limit=${limit}`
+        );
+        this.goalsLeaderboard = response.data.results;
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : String(error);
+        console.error("Failed to fetch top goals scorers:", error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchGameweekStatus(gameweekId?: number): Promise<GameweekStatusResponse> {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.get<GameweekStatusResponse>(
+          `/fantasy/gameweek/status/`,
+          {
+            params: gameweekId ? { gameweek_id: gameweekId } : {},
+          }
+        );
+        this.gameweekStatus = response.data;  
+        return response.data;
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : String(error);
+        console.error("Failed to fetch gameweek status:", error);
+        throw error;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
     async saveFantasyTeamPlayers(team: TeamData) {
       try {
         this.isLoading = true;
         const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
         this.fetchFantasyTeamPlayers();
         return response.data;
-      }catch(error) {
+      } catch (error) {
         let errMsg = "Saving changes failed";
         let rawError: any;
 
@@ -94,9 +143,9 @@ export const useFantasyStore = defineStore("fantasy", {
         console.error("Error saving fantasy team players:", errMsg);
         this.error = errMsg;
       }
- finally {
-      this.isLoading = false;
+      finally {
+        this.isLoading = false;
+      }
     }
-  }
-},
+  },
 });

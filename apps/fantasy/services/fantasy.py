@@ -5,7 +5,7 @@ import random
 from apps.accounts.models import User
 from apps.kpl.models import Player
 
-from .models import FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer
+from ..models import FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer
 
 
 class FantasyService:

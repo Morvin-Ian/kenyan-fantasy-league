@@ -127,7 +127,7 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
     def team_name(self, obj):
         return obj.player.team.name
 
-    team_name.short_description = "Fantasy Team"
+    team_name.short_description = "Team"
 
     def yellow_card_display(self, obj):
         if obj.yellow_cards > 0:
@@ -136,14 +136,14 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
             )
         return "-"
 
-    yellow_card_display.short_description = "YC"
+    yellow_card_display.short_description = "Yellow Cards"
 
     def red_card_display(self, obj):
         if obj.red_cards > 0:
             return format_html('<span style="color: red;">●</span> ' * obj.red_cards)
         return "-"
 
-    red_card_display.short_description = "RC"
+    red_card_display.short_description = "Red Cards"
 
 
 @admin.register(PlayerTransfer)

@@ -13,9 +13,51 @@
 
       <div class="animate-fade-in grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <div class="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-100 p-3 sm:p-4 md:p-6">
-          <h3 class="text-base sm:text-lg md:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Top Goal Scorers</h3>
+          <div class="flex justify-between items-center mb-3 sm:mb-4">
+            <h3 class="text-base sm:text-lg md:text-xl font-bold text-gray-900">Top Goal Scorers</h3>
+            <button 
+              @click="fetchTopScorers" 
+              :disabled="isLoading"
+              class="text-xs sm:text-sm bg-blue-100 text-blue-700 px-2 sm:px-3 py-1 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              {{ isLoading ? 'Refreshing...' : 'Refresh' }}
+            </button>
+          </div>
           
-          <div class="space-y-2 sm:space-y-3 md:space-y-4">
+          <!-- Loading State -->
+          <div v-if="isLoading" class="space-y-2 sm:space-y-3 md:space-y-4">
+            <div v-for="i in 5" :key="i" class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 border-b border-gray-100 px-1">
+              <div class="col-span-1">
+                <div class="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div class="col-span-3">
+                <div class="h-4 w-20 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div class="col-span-2">
+                <div class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div class="col-span-1 text-center">
+                <div class="h-4 w-6 bg-gray-200 rounded animate-pulse mx-auto"></div>
+              </div>
+              <div class="col-span-1 text-center">
+                <div class="h-4 w-6 bg-gray-200 rounded animate-pulse mx-auto"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div v-else-if="error" class="text-center py-4">
+            <p class="text-red-500 text-sm">{{ error }}</p>
+            <button 
+              @click="fetchTopScorers"
+              class="mt-2 text-xs bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+
+          <!-- Data State -->
+          <div v-else class="space-y-2 sm:space-y-3 md:space-y-4">
             <!-- Header Row -->
             <div class="grid grid-cols-8 text-xs sm:text-sm font-medium text-gray-600 mb-1 sm:mb-2 px-1">
               <div class="col-span-1">#</div>
@@ -26,64 +68,35 @@
             </div>
             
             <!-- Player Rows -->
-            <div class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 border-b border-gray-100 px-1">
-              <div class="col-span-1 font-bold text-xs sm:text-sm md:text-base">1</div>
+            <div 
+              v-for="(player, index) in topScorers" 
+              :key="player.player_id"
+              class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 border-b border-gray-100 px-1 hover:bg-gray-50 transition-colors"
+            >
+              <div class="col-span-1 font-bold text-xs sm:text-sm md:text-base text-gray-700">
+                {{ index + 1 }}
+              </div>
               <div class="col-span-3 flex items-center">
-                <span class="text-xs sm:text-sm md:text-base font-medium truncate">Benson Omala</span>
+                <span class="text-xs sm:text-sm md:text-base font-medium text-gray-900 truncate">
+                  {{ player.player_name }}
+                </span>
               </div>
               <div class="col-span-2 flex items-center">
-                <span class="text-xs sm:text-sm text-gray-600 truncate">Gor Mahia</span>
+                <span class="text-xs sm:text-sm text-gray-600 truncate">
+                  {{ player.team_name || 'No Team' }}
+                </span>
               </div>
-              <div class="col-span-1 text-center text-xs sm:text-sm md:text-base">26</div>
-              <div class="col-span-1 text-center font-bold text-gray-900 text-xs sm:text-sm md:text-base">18</div>
+              <div class="col-span-1 text-center text-xs sm:text-sm md:text-base text-gray-600">
+                {{ player.total_appearances || 0 }}
+              </div>
+              <div class="col-span-1 text-center font-bold text-gray-900 text-xs sm:text-sm md:text-base">
+                {{ player.total_goals || 0 }}
+              </div>
             </div>
-            
-            <div class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 border-b border-gray-100 px-1">
-              <div class="col-span-1 font-bold text-xs sm:text-sm md:text-base">2</div>
-              <div class="col-span-3 flex items-center">
-                <span class="text-xs sm:text-sm md:text-base font-medium truncate">Titus Achesa</span>
-              </div>
-              <div class="col-span-2 flex items-center">
-                <span class="text-xs sm:text-sm text-gray-600 truncate">AFC Leopards</span>
-              </div>
-              <div class="col-span-1 text-center text-xs sm:text-sm md:text-base">25</div>
-              <div class="col-span-1 text-center font-bold text-gray-900 text-xs sm:text-sm md:text-base">14</div>
-            </div>
-            
-            <div class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 border-b border-gray-100 px-1">
-              <div class="col-span-1 font-bold text-xs sm:text-sm md:text-base">3</div>
-              <div class="col-span-3 flex items-center">
-                <span class="text-xs sm:text-sm md:text-base font-medium truncate">John Mark Makwatta</span>
-              </div>
-              <div class="col-span-2 flex items-center">
-                <span class="text-xs sm:text-sm text-gray-600 truncate">Kariobangi Sharks</span>
-              </div>
-              <div class="col-span-1 text-center text-xs sm:text-sm md:text-base">26</div>
-              <div class="col-span-1 text-center font-bold text-gray-900 text-xs sm:text-sm md:text-base">12</div>
-            </div>
-            
-            <div class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 border-b border-gray-100 px-1">
-              <div class="col-span-1 font-bold text-xs sm:text-sm md:text-base">4</div>
-              <div class="col-span-3 flex items-center">
-                <span class="text-xs sm:text-sm md:text-base font-medium truncate">Elvis Rupia</span>
-              </div>
-              <div class="col-span-2 flex items-center">
-                <span class="text-xs sm:text-sm text-gray-600 truncate">Kenya Police</span>
-              </div>
-              <div class="col-span-1 text-center text-xs sm:text-sm md:text-base">24</div>
-              <div class="col-span-1 text-center font-bold text-gray-900 text-xs sm:text-sm md:text-base">11</div>
-            </div>
-            
-            <div class="grid grid-cols-8 items-center py-2 sm:py-2.5 md:py-3 px-1">
-              <div class="col-span-1 font-bold text-xs sm:text-sm md:text-base">5</div>
-              <div class="col-span-3 flex items-center">
-                <span class="text-xs sm:text-sm md:text-base font-medium truncate">Michael Olunga</span>
-              </div>
-              <div class="col-span-2 flex items-center">
-                <span class="text-xs sm:text-sm text-gray-600 truncate">Tusker FC</span>
-              </div>
-              <div class="col-span-1 text-center text-xs sm:text-sm md:text-base">25</div>
-              <div class="col-span-1 text-center font-bold text-gray-900 text-xs sm:text-sm md:text-base">10</div>
+
+            <!-- Empty State -->
+            <div v-if="topScorers.length === 0" class="text-center py-6">
+              <p class="text-gray-500 text-sm">No goal scorers data available</p>
             </div>
           </div>
         </div>
@@ -93,7 +106,23 @@
 </template>
 
 <script setup>
+import { useFantasyStore } from '@/stores/fantasy';
+import { storeToRefs } from 'pinia';
+import { onMounted } from 'vue';
 
+const fantasyStore = useFantasyStore();
+const { goalsLeaderboard: topScorers, isLoading, error } = storeToRefs(fantasyStore);
+
+const fetchTopScorers = () => {
+  fantasyStore.fetchTopGoalsScorers(5);
+};
+
+onMounted(() => {
+  // Only fetch if we don't have data yet
+  if (topScorers.value.length === 0) {
+    fetchTopScorers();
+  }
+});
 </script>
 
 <style scoped>
