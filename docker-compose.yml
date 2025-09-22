@@ -9,30 +9,11 @@ services:
       - .:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
-    # ports:
-    #   - "8000:8000"
     env_file:
       - .env
     depends_on:
       - postgres-db
       - redis
-    networks:
-      - fpl-vue
-
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: client
-    ports:
-      - "3000:3000"
-    restart: on-failure
-    volumes:
-      - ./client:/app
-      - /app/node_modules
-    command: npm run dev -- --host 0.0.0.0
-    depends_on:
-      - api
     networks:
       - fpl-vue
 
@@ -64,39 +45,21 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
+      - ./docker/local/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     build:
-      context: ./docker/local/nginx
-      dockerfile: Dockerfile
+      context: ./client  
+      dockerfile: Dockerfile 
     ports:
       - "8080:80"
     networks:
       - fpl-vue
-
-  flower:
-    build:
-      context: .
-      dockerfile: ./docker/local/django/Dockerfile
-    command: /start-flower
-    container_name: flower
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    ports:
-      - "5557:5555"
-    depends_on:
-      - redis
-      - postgres-db
-    networks:
-      - fpl-vue
-    
 
   celery_worker:
     build:
       context: .
       dockerfile: ./docker/local/django/Dockerfile
     command: /start-celeryworker
-    container_name: worker 
+    container_name: worker
     volumes:
       - .:/app
     env_file:
@@ -126,10 +89,10 @@ services:
   selenium:
     image: selenium/standalone-chrome:latest
     container_name: selenium
-    shm_size: 2gb  # prevent browser crashes
+    shm_size: 2gb
     ports:
-      - "4444:4444"   # Selenium Grid / WebDriver
-      - "7900:7900"   # VNC (you can view browser at vnc://localhost:7900, password: 'secret')
+      - "4444:4444"
+      - "7900:7900"
     environment:
       - SE_NODE_SESSION_TIMEOUT=60
       - SE_NODE_MAX_SESSIONS=1

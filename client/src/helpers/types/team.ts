@@ -89,7 +89,7 @@ export interface Lineup {
   id: string;
   team: Team;
   side: "home" | "away";
-  formation: string | null;
+  formation?: string;
   is_confirmed: boolean;
   source: string;
   published_at: string | null;

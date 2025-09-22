@@ -34,8 +34,7 @@
                                     class="h-10 w-10 rounded-full object-cover" />
                                 <span class="ml-2">
                                     <span class="font-bold text-xs">Hello, {{ authStore.user?.username }}</span>
-                                    <font-awesome-icon icon="fa-solid fa-chevron-down"
-                                        class="ml-1 transition-transform duration-200"
+                                    <ChevronDownIcon class="ml-1 h-4 w-4 transition-transform duration-200"
                                         :class="{ 'rotate-180': isAccountOpen }" />
                                 </span>
                             </button>
@@ -69,18 +68,18 @@
         <nav class="md:hidden fixed inset-x-0 bottom-0 bg-white rounded-t-2xl border-t border-gray-300 shadow-lg">
             <div class="grid grid-cols-5 h-16">
                 <router-link v-for="item in mobileNavItems" :key="item.name" :to="item.href"
-                    class="flex flex-col items-center justify-center transition-colors duration-200" :class="[
-                        isActive(item.href)
-                            ? 'text-red-600'
-                            : 'text-gray-600 hover:text-red-600',
-                    ]">
-                    <font-awesome-icon :icon="item.icon" class="text-lg" />
+                    class="flex flex-col items-center justify-center transition-colors duration-200"
+                    :class="[isActive(item.href) ? 'text-red-600' : 'text-gray-600 hover:text-red-600']">
+
+                    <!-- Replace icon per item -->
+                    <component :is="item.icon" class="h-5 w-5" />
+
                     <span class="text-xs mt-1">{{ item.name }}</span>
                 </router-link>
             </div>
         </nav>
 
-    
+
     </div>
 </template>
 
@@ -90,6 +89,15 @@ import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import default_profile from "../../assets/images/user.jpeg";
+import {
+    HomeIcon,
+    UsersIcon,
+    TrophyIcon,
+    UserIcon,
+    ChevronDownIcon,
+    ChartBarIcon,
+} from "@heroicons/vue/24/solid";
+
 
 const isAccountOpen = ref(false);
 const isAuthenticated = ref(true);
@@ -108,32 +116,13 @@ const navItems = ref([
 
 // Mobile navigation items with icons
 const mobileNavItems = ref([
-    { name: "Home", href: "/", icon: "fa-solid fa-home", current: false },
-    {
-        name: "Team",
-        href: "/fkl_team",
-        icon: "fa-solid fa-users",
-        current: false,
-    },
-    {
-        name: "Leagues",
-        href: "/leagues",
-        icon: "fa-solid fa-futbol",
-        current: false,
-    },
-    {
-        name: "Standings",
-        href: "/standings",
-        icon: "fa-solid fa-ranking-star",
-        current: false,
-    },
-    {
-        name: "Account",
-        href: "/profile",
-        icon: "fa-solid fa-user",
-        current: false,
-    },
+    { name: "Home", href: "/", icon: HomeIcon },
+    { name: "Team", href: "/fkl_team", icon: UsersIcon },
+    { name: "Leagues", href: "/leagues", icon: TrophyIcon },
+    { name: "Standings", href: "/standings", icon: ChartBarIcon },
+    { name: "Account", href: "/profile", icon: UserIcon },
 ]);
+
 
 const accountItems = ref([
     { name: "Profile", action: () => handleProfile() },
