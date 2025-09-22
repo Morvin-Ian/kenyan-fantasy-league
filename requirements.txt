@@ -64,7 +64,7 @@ social-auth-core==4.5.4
 soupsieve==2.6
 sqlparse==0.5.1
 tornado==6.4.1
-typing-extensions==4.14.0
+typing-extensions==4.15.0
 tzdata==2024.2
 urllib3==2.5.0
 vine==5.1.0
