@@ -42,7 +42,7 @@ packaging==24.1
 pathspec==0.12.1
 phonenumbers==8.13.45
 pillow==10.4.0
-platformdirs==4.3.6
+platformdirs==4.4.0
 prometheus_client==0.21.0
 prompt_toolkit==3.0.48
 psycopg2-binary==2.9.9
