@@ -59,31 +59,44 @@ def set_active_gameweek_from_fixtures(current_datetime, current_date):
 
 
 def group_fixtures_by_week(fixtures):
-    """Group fixtures based on date proximity with dynamic threshold"""
+    """Group fixtures into gameweeks ensuring:
+    1. Date proximity (≤2 days) is considered.
+    2. No team plays more than once in the same gameweek.
+    """
     if not fixtures:
         return {}
-    
+
     sorted_fixtures = sorted(fixtures, key=lambda x: x.match_date)
-    
+
     fixtures_by_week = {}
     current_week_start = sorted_fixtures[0].match_date.date()
     fixtures_by_week[current_week_start] = [sorted_fixtures[0]]
-    
+
+    current_week_teams = {
+        sorted_fixtures[0].home_team_id,
+        sorted_fixtures[0].away_team_id,
+    }
+
     for i in range(1, len(sorted_fixtures)):
         current_fixture = sorted_fixtures[i]
-        prev_fixture = sorted_fixtures[i-1]
-        
-        # Calculate gap between consecutive fixtures
+        prev_fixture = sorted_fixtures[i - 1]
+
         days_gap = (current_fixture.match_date.date() - prev_fixture.match_date.date()).days
-        
-        # If gap is more than 2 days, consider it a new gameweek
-        if days_gap > 2:
+        teams_in_fixture = {current_fixture.home_team_id, current_fixture.away_team_id}
+
+        # Condition to start a new gameweek:
+        # 1. Gap > 2 days
+        # 2. OR either team already exists in the current week
+        if days_gap > 2 or teams_in_fixture & current_week_teams:
             current_week_start = current_fixture.match_date.date()
             fixtures_by_week[current_week_start] = [current_fixture]
+            current_week_teams = teams_in_fixture.copy()
         else:
             fixtures_by_week[current_week_start].append(current_fixture)
-    
+            current_week_teams.update(teams_in_fixture)
+
     return fixtures_by_week
+
 
 
 def calculate_transfer_deadline(fixtures, current_datetime):
