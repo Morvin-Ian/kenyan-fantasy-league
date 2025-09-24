@@ -41,10 +41,23 @@ class GameweekStatusService:
         }
     
     def _get_gameweek(self, gameweek_id: Optional[int] = None) -> Optional[Gameweek]:
-        """Get the specified gameweek or the active one"""
+        """Get the specified gameweek or the correct active one (fall back to previous if not started yet)"""
         if gameweek_id:
             return Gameweek.objects.filter(id=gameweek_id).first()
-        return Gameweek.objects.filter(is_active=True).first()
+        
+        gameweek = Gameweek.objects.filter(is_active=True).first()
+        if not gameweek:
+            return None
+
+        now = timezone.now()
+        start_datetime = timezone.make_aware(datetime.combine(gameweek.start_date, datetime.min.time()))
+
+        # If active gameweek hasn't started yet → use previous gameweek
+        if now < start_datetime and gameweek.number > 1:
+            return Gameweek.objects.filter(number=gameweek.number - 1).first()
+
+        return gameweek
+
     
     def _get_gameweek_fixtures(self, gameweek: Gameweek) -> List[Fixture]:
         """Get all fixtures for the gameweek"""
@@ -60,9 +73,11 @@ class GameweekStatusService:
         if now < timezone.make_aware(datetime.combine(gameweek.start_date, datetime.min.time())):
             return "UPCOMING"
         
-        # Check if all fixtures are completed
         completed_fixtures = [f for f in fixtures if f.status == "completed"]
-        if len(completed_fixtures) == len(fixtures):
+        postponed_fixtures = [f for f in fixtures if f.status == "postponed"]
+
+        # If all fixtures are either completed or postponed → treat as completed
+        if len(completed_fixtures) + len(postponed_fixtures) == len(fixtures):
             return "COMPLETED"
         
         # Check if any fixture is live
@@ -70,20 +85,24 @@ class GameweekStatusService:
         if live_fixtures:
             return "LIVE"
         
-        # Check if we're past the end date but some fixtures aren't completed
+        # If we're past the end date but some fixtures still pending → delayed
         end_datetime = timezone.make_aware(datetime.combine(gameweek.end_date, datetime.max.time()))
         if now > end_datetime:
             return "DELAYED"
         
         return "ACTIVE"
+
     
     def _calculate_progress_percentage(self, gameweek: Gameweek, fixtures: List[Fixture]) -> int:
-        """Calculate gameweek completion percentage"""
+        """Calculate gameweek completion percentage (treat postponed as completed)"""
         if not fixtures:
             return 0
         
         completed = len([f for f in fixtures if f.status == "completed"])
-        return int((completed / len(fixtures)) * 100)
+        postponed = len([f for f in fixtures if f.status == "postponed"])
+        
+        return int(((completed + postponed) / len(fixtures)) * 100)
+
     
     def _get_match_days_status(self, fixtures: List[Fixture]) -> List[Dict[str, Any]]:
         """Group fixtures by match day and get status for each day"""

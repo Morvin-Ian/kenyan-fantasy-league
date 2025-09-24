@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Dict, Iterable, List, Optional, Tuple, cast
 
 from django.db import transaction
-# pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 
 from apps.kpl.models import (
     Fixture,

@@ -33,14 +33,14 @@ class StandingViewSet(ReadOnlyModelViewSet):
 class FixtureViewSet(ReadOnlyModelViewSet):
     serializer_class = FixtureSerializer
     # Allow all fixtures for detail routes; filter to active GW in list via get_queryset
-    queryset = Fixture.objects.exclude(status="postponed")
+    queryset = Fixture.objects.all()
     lookup_field = "id"
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) == "list":
-            return qs.filter(gameweek__is_active=True)
+            return qs.all()
         return qs
 
     def get_permissions(self):

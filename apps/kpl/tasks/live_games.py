@@ -159,12 +159,10 @@ def get_goal_scorers(selenium_manager, match_link):
     return home_scorers, away_scorers
 
 
-
 def update_fixture_task(selenium_manager, live_data):
     from .fixtures import find_team
 
     candidate_fixtures = Fixture.objects.filter(gameweek__is_active=True) 
-
     matched_fixture_ids = set()
 
     for data in live_data:
@@ -190,19 +188,18 @@ def update_fixture_task(selenium_manager, live_data):
             task_name = f"monitor_fixture_{fixture.id}_{fixture.gameweek.number}"
             pt = PeriodicTask.objects.filter(name=task_name).first()
 
-            # If fixture was postponed but now found, reactivate it
+            # If fixture was postponed but now found, update its date but DO NOT enable task yet
             if fixture.status == "postponed":
                 logger.info(f"Fixture {fixture.id} was postponed, now updating from live data")
                 fixture.match_date = timezone.now()
                 fixture.save(update_fields=["match_date"])
 
                 if pt:
-                    pt.enabled = True
-                    pt.start_time = timezone.now()
-                    pt.expires = timezone.now() + timedelta(hours=2)
-                    pt.save(update_fields=["enabled", "start_time", "expires"])
-                    logger.info(f"Re-enabled PeriodicTask for resumed fixture {fixture.id}")
-
+                    pt.enabled = False 
+                    pt.save(update_fields=["enabled"])
+                    logger.info(f"Kept PeriodicTask disabled for fixture {fixture.id} (postponed)")
+            
+            # If match is live
             if data["is_playing"]:
                 if fixture.match_date > timezone.now():
                     fixture.match_date = timezone.now()
@@ -215,12 +212,11 @@ def update_fixture_task(selenium_manager, live_data):
                     logger.info(f"Updated fixture {fixture.id} status to live")
 
                 if pt:
-                    if not pt.enabled or pt.start_time > timezone.now():
-                        pt.start_time = timezone.now()
-                        pt.enabled = True
-                        pt.expires = timezone.now() + timedelta(hours=2)
-                        pt.save(update_fields=["start_time", "enabled", "expires"])
-                        logger.info(f"Enabled PeriodicTask for live fixture {fixture.id}")
+                    pt.start_time = timezone.now()
+                    pt.enabled = True
+                    pt.expires = timezone.now() + timedelta(hours=2)
+                    pt.save(update_fields=["start_time", "enabled", "expires"])
+                    logger.info(f"Enabled PeriodicTask for live fixture {fixture.id}")
 
             elif data["time"] == "FT":
                 if fixture.status != "completed":
@@ -229,49 +225,27 @@ def update_fixture_task(selenium_manager, live_data):
                     logger.info(f"Updated fixture {fixture.id} status to completed")
 
                 if pt:
-                    if not pt.enabled:
-                        pt.enabled = True  
+                    # completed matches never have enabled tasks
+                    pt.enabled = False
                     pt.expires = timezone.now()
                     pt.save(update_fields=["enabled", "expires"])
-                    logger.info(f"Closed PeriodicTask for completed fixture {fixture.id}")
+                    logger.info(f"Disabled PeriodicTask for completed fixture {fixture.id}")
 
+                # Update scores + players
                 if int(data['home_score']) > 0 or int(data['away_score']) > 0:
                     if (fixture.home_team_score != int(data['home_score']) or 
                         fixture.away_team_score != int(data['away_score'])):
-                        
                         fixture.home_team_score = int(data['home_score'])
                         fixture.away_team_score = int(data['away_score'])
                         fixture.save()
-                        
+
                     try:
                         home_scorers, away_scorers = get_goal_scorers(selenium_manager, data["link"])
                         if home_scorers or away_scorers:
                             update_player_performance(fixture, home_scorers, away_scorers)
-                            logger.info(
-                                f"Updated player performances for fixture {fixture.id} (completed match)"
-                            )
+                            logger.info(f"Updated player performances for fixture {fixture.id} (completed)")
                     except Exception as e:
                         logger.warning(f"Failed to update goal scorers for fixture {fixture.id}: {e}")
-
-    # # Mark unmatched fixtures as postponed
-    # unmatched_fixtures = candidate_fixtures.exclude(id__in=matched_fixture_ids)
-    # for fixture in unmatched_fixtures:
-    #     if fixture.status != "postponed":
-    #         fixture.status = "postponed"
-    #         fixture.save(update_fields=["status"])
-    #         logger.info(f"Marked fixture {fixture.id} as postponed (not in live_data)")
-
-    #     task_name = f"monitor_fixture_{fixture.id}_{fixture.gameweek.number}"
-    #     try:
-    #         pt = PeriodicTask.objects.get(name=task_name)
-    #         if pt.enabled:
-    #             pt.enabled = False
-    #             pt.save(update_fields=["enabled"])
-    #             logger.info(f"Disabled PeriodicTask for postponed fixture {fixture.id}")
-    #     except PeriodicTask.DoesNotExist:
-    #         logger.warning(f"No PeriodicTask found for fixture {fixture.id} to disable")
-
-
                     
 @shared_task
 def monitor_fixture_score(fixture_id=None):

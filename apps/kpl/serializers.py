@@ -21,6 +21,7 @@ class FixtureSerializer(serializers.ModelSerializer):
     home_team = TeamSerializer(read_only=True)
     away_team = TeamSerializer(read_only=True)
     lineup_status = serializers.SerializerMethodField(read_only=True)
+    gameweek = serializers.CharField(source="gameweek.number", read_only=True)
     is_active = serializers.SerializerMethodField(read_only=True)
 
 

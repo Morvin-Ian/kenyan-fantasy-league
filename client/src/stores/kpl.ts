@@ -41,12 +41,37 @@ export const useKplStore = defineStore({
     async fetchFixtures(includeLineups: boolean = true) {
       try {
         const query = includeLineups ? "?include=lineups=true" : "";
-        const response = await apiClient.get(`/kpl/fixtures/${query}`);
-        this.fixtures = response.data.results;
+        let allFixtures: any[] = [];
+        let currentPage = 1;
+        let shouldFetchNext = true;
+
+        while (shouldFetchNext) {
+          const pageQuery = query
+            ? `${query}&page=${currentPage}`
+            : `?page=${currentPage}`;
+
+          const response = await apiClient.get(`/kpl/fixtures/${pageQuery}`);
+          const { results, next } = response.data;
+
+          // Add current page results to our collection
+          allFixtures = [...allFixtures, ...results];
+
+          // Check if any fixture in current page is active
+          const hasActiveFixture = results.some((fixture: any) => fixture.is_active === true);
+
+          // Only continue to next page if:
+          // 1. No active fixtures found in current page
+          // 2. There is a next page available
+          shouldFetchNext = !hasActiveFixture && next !== null;
+          currentPage++;
+        }
+
+        this.fixtures = allFixtures;
       } catch (error) {
         console.error("Error fetching fixtures:", error);
       }
     },
+
     async fetchFixtureLineups(fixtureId: string, { force }: { force?: boolean } = {}) {
       try {
         if (!force && this.fixtureLineups.has(fixtureId)) {
@@ -67,7 +92,7 @@ export const useKplStore = defineStore({
         let nextUrl: string | null = "/kpl/players/";
 
         while (nextUrl) {
-          const response: { data: PaginatedResponse<Player> } = await apiClient.get(nextUrl);          
+          const response: { data: PaginatedResponse<Player> } = await apiClient.get(nextUrl);
           this.players = this.players.concat(response.data.results);
           nextUrl = response.data.next;
         }
