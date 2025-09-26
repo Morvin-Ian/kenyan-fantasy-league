@@ -1,21 +1,28 @@
-FROM node:20 AS build-stage
-
+FROM node:20
 WORKDIR /app
-
 COPY package.json package-lock.json ./
-
-RUN npm ci
-
+RUN npm install
 COPY . .
-
 RUN npm run build
 
-FROM nginx:alpine AS production-stage
+# FROM node:20 AS build-stage
 
-RUN rm /etc/nginx/conf.d/default.conf
+# WORKDIR /app
 
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# COPY package.json package-lock.json ./
 
-EXPOSE 80
+# RUN npm ci
 
-CMD ["nginx", "-g", "daemon off;"]
+# COPY . .
+
+# RUN npm run build
+
+# FROM nginx:alpine AS production-stage
+
+# RUN rm /etc/nginx/conf.d/default.conf
+
+# COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# EXPOSE 80
+
+# CMD ["nginx", "-g", "daemon off;"]

@@ -6,70 +6,68 @@
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
         <div class="xl:col-span-2 flex flex-col gap-3 sm:gap-4 md:gap-6">
           <div
-            class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-lg overflow-hidden border border-gray-100">
-            <div class="bg-gray-50 px-3 sm:px-4 md:px-6 py-2 sm:py-3 md:py-4">
-              <h2 class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 flex items-center">
+            class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-md overflow-hidden border border-gray-100">
+            <div class="bg-gray-50 px-4 py-3 flex items-center justify-between">
+              <h2 class="text-lg md:text-xl font-bold text-gray-900 flex items-center">
                 <span class="mr-2">Gameweek {{ gameweekStatus?.gameweek.number }}</span>
                 <span v-if="gameweekStatus"
-                  class="bg-gray-600 text-xs text-white font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
+                  class="bg-gray-800 text-xs text-white font-semibold px-2 py-0.5 rounded-full">
                   {{ gameweekStatus.gameweek.status }}
                 </span>
               </h2>
-
             </div>
 
-            <div class="overflow-x-auto p-1">
-              <table class="w-full min-w-[480px]">
-                <thead>
-                  <tr class="text-left text-gray-600 font-medium border-b border-gray-100">
-                    <th class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8 text-xs sm:text-sm">Matchday</th>
-                    <th class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8 text-right text-xs sm:text-sm">Match Points
-                    </th>
-                    <th class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8 text-right text-xs sm:text-sm">Bonus Points
-                    </th>
+            <!-- Table -->
+            <div class="overflow-x-auto">
+              <table class="w-full min-w-[400px]">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                  <tr class="text-left text-gray-600 font-semibold text-sm">
+                    <th class="py-2 px-3">Matchday</th>
+                    <th class="py-2 px-3 text-right">Match Status</th>
+                    <th class="py-2 px-3 text-right">Bonus Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(day, index) in gameweekStatus?.match_days" :key="index"
-                    class="border-b border-gray-100 hover:bg-gray-50 transition-all duration-200">
-                    <td class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8">
-                      <div class="flex items-center">
+                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
+                    <td class="py-2.5 px-3">
+                      <div class="flex items-center space-x-2">
                         <div
-                          class="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-gray-200 flex items-center justify-center text-gray-700 font-bold mr-2 sm:mr-3 md:mr-4 shadow-sm text-xs sm:text-sm md:text-base">
+                          class="w-9 h-9 rounded-md bg-gray-200 flex items-center justify-center text-gray-800 font-semibold text-sm">
                           {{ day.date }}
                         </div>
                         <div>
-                          <div class="font-semibold text-gray-900 text-xs sm:text-sm md:text-base">
+                          <div class="font-semibold text-gray-900 text-sm leading-tight">
                             {{ day.name }}
                           </div>
-                          <div class="text-xs text-gray-500 font-medium">{{ day.month }}</div>
+                          <div class="text-xs text-gray-500 font-medium">
+                            {{ day.month }}
+                          </div>
                         </div>
                       </div>
                     </td>
-                    <td class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8 text-right">
-                      <span
-                        class="bg-gray-100 text-gray-700 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-full font-medium text-xs sm:text-sm">
+
+                    <td class="py-2.5 px-3 text-right">
+                      <span class="inline-block bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                         {{ day.match_status }}
                       </span>
                     </td>
-                    <td class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8 text-right">
-                      <span
-                        class="bg-gray-100 text-gray-700 px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-full font-medium text-xs sm:text-sm">
+
+                    <td class="py-2.5 px-3 text-right">
+                      <span class="inline-block bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full text-xs font-medium">
                         {{ day.bonus_status }}
                       </span>
                     </td>
                   </tr>
 
                   <tr>
-                    <td class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8">
-                      <div class="font-medium text-gray-700 flex items-center text-xs sm:text-sm">
-
+                    <td class="py-2.5 px-3">
+                      <div class="font-medium text-gray-700 text-sm">
                         League Tables
                       </div>
                     </td>
-                    <td colspan="2" class="py-2 sm:py-3 px-2 sm:px-4 md:px-6 lg:px-8 text-right">
-                      <span
-                        class="bg-gray-900 text-white px-2 sm:px-3 md:px-4 py-1 sm:py-1.5 rounded-full font-medium text-xs sm:text-sm shadow-sm">
+                    <td colspan="2" class="py-2.5 px-3 text-right">
+                      <span class="bg-gray-900 text-white px-2 py-0.5 rounded-full text-xs font-semibold shadow-sm">
                         UPDATED
                       </span>
                     </td>
@@ -79,7 +77,7 @@
             </div>
           </div>
 
-          <!-- Stats Section -->
+
           <div
             class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100">
             <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 sm:p-6 md:p-8">

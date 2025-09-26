@@ -15,14 +15,16 @@
 </template>
 
 <script setup lang="ts">
-import GameweekDetails from "@/components/Home/GameweekDetails.vue";
-import UpcomingGames from "@/components/Home/UpcomingGames.vue";
-import Performance from "@/components/Home/Performance.vue";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, defineAsyncComponent } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useKplStore } from "@/stores/kpl";
 import { useFantasyStore } from "@/stores/fantasy";
 import { useRouter } from "vue-router";
+
+
+const UpcomingGames = defineAsyncComponent(() => import('@/components/Home/UpcomingGames.vue'));
+const Performance = defineAsyncComponent(() => import('@/components/Home/Performance.vue'));
+const GameweekDetails = defineAsyncComponent(() => import('@/components/Home/GameweekDetails.vue'));
 
 const authStore = useAuthStore();
 const kplStore = useKplStore();
@@ -35,13 +37,21 @@ const isLoading = ref(true);
 onMounted(async () => {
   try {
     if (!authStore.isAuthenticated) {
-      router.push("/sign-in");
-    } else {
-      await authStore.initialize();
-      if (kplStore.fixtures.length == 0 || kplStore.standings.length == 0) {
-        await kplStore.fetchAllData();
-      }
+      router.push('/sign-in');
+      return;
     }
+    await Promise.all([
+      authStore.initialize(),
+      kplStore.fixtures.length === 0 || kplStore.standings.length === 0
+        ? kplStore.fetchAllData()
+        : Promise.resolve(),
+      fantasyStore.goalsLeaderboard.length === 0
+        ? fantasyStore.fetchTopGoalsScorers(5)
+        : Promise.resolve(),
+      !fantasyStore.gameweekStatus
+        ? fantasyStore.fetchGameweekStatus()
+        : Promise.resolve(),
+    ]);
   } finally {
     isLoading.value = false;
   }

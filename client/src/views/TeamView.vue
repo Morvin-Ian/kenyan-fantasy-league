@@ -126,11 +126,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted, watch, defineAsyncComponent } from "vue";
+import memoizeOne from 'memoize-one';
 import Pitch from "@/components/Team/Pitch.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
-import PlayerModal from "@/components/Team/PlayerModal.vue";
-import SearchPlayer from "@/components/Team/SearchPlayer.vue";
 import MessageAlert from "@/components/reusables/MessageAlert.vue";
 import type { StartingEleven, TeamData, Player as KplPlayer } from "@/helpers/types/team";
 import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
@@ -140,11 +139,17 @@ import { useFantasyStore } from "@/stores/fantasy";
 import defaultJersey from "@/assets/images/jerseys/default.png";
 import goalkeeperJersey from "@/assets/images/jerseys/goalkeeper.png";
 
+const PlayerModal = defineAsyncComponent(() => import('@/components/Team/PlayerModal.vue'));
+const SearchPlayer = defineAsyncComponent(() => import('@/components/Team/SearchPlayer.vue'));
+
 const authStore = useAuthStore();
 const router = useRouter();
 const fantasyStore = useFantasyStore();
 
-const userTeam = computed(() => fantasyStore.userTeam);
+const userTeam = computed(() => {
+  return fantasyStore.userTeam || [];
+});
+
 const showModal = ref(false);
 const showSearchModal = ref(false);
 const selectedPlayer = ref<Player | null>(null);
@@ -369,7 +374,7 @@ function initializeTeamState() {
   hasUnsavedChanges.value = false;
 }
 
-function areTeamsEqual(state1: { startingEleven: StartingEleven; benchPlayers: Player[] }, state2: { startingEleven: StartingEleven; benchPlayers: Player[] }): boolean {
+const areTeamsEqual = memoizeOne((state1, state2) => {
   const comparePlayers = (p1: Player, p2: Player) => p1.id === p2.id && p1.is_captain === p2.is_captain && p1.is_vice_captain === p2.is_vice_captain && p1.is_starter === p2.is_starter;
   const comparePlayerArrays = (arr1: Player[], arr2: Player[]) => arr1.length === arr2.length && arr1.every((p1, i) => comparePlayers(p1, arr2[i]));
 
@@ -380,17 +385,22 @@ function areTeamsEqual(state1: { startingEleven: StartingEleven; benchPlayers: P
     comparePlayerArrays(state1.startingEleven.forwards, state2.startingEleven.forwards) &&
     comparePlayerArrays(state1.benchPlayers, state2.benchPlayers)
   );
-}
+});
 
 watch(
-  [() => startingElevenRef.value, () => benchPlayersRef.value],
-  () => {
+  () => ({
+    goalkeeper: startingElevenRef.value.goalkeeper.id,
+    defenders: startingElevenRef.value.defenders.map(p => p.id),
+    midfielders: startingElevenRef.value.midfielders.map(p => p.id),
+    forwards: startingElevenRef.value.forwards.map(p => p.id),
+    bench: benchPlayersRef.value.map(p => p.id),
+  }),
+  (newState, oldState) => {
     if (initialTeamState.value) {
-      const currentState = {
+      hasUnsavedChanges.value = !areTeamsEqual(initialTeamState.value, {
         startingEleven: startingElevenRef.value,
         benchPlayers: benchPlayersRef.value,
-      };
-      hasUnsavedChanges.value = !areTeamsEqual(initialTeamState.value, currentState);
+      });
     }
   },
   { deep: true }

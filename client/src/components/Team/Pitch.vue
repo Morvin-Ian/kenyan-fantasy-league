@@ -1,5 +1,5 @@
 <template>
-  <div class="relative  bg-white overflow-hidden shadow-2xl rounded-2xl max-w-full">
+  <div class="relative bg-white overflow-hidden shadow-2xl rounded-2xl max-w-full">
     <div
       class="absolute inset-0 bg-[url('/pitch.jpg')] bg-cover bg-center"
       :style="{
@@ -25,7 +25,7 @@
 
       <!-- Defenders -->
       <div class="absolute top-[18%] left-0 right-0">
-        <div class="flex justify-center flex-wrap gap-x-1 xs:gap-x-4 sm:gap-x-4 md:gap-x-4 lg:gap-x-6 px-2 xs:px-4 sm:px-4 md:px-4">
+        <div class="flex justify-center flex-nowrap gap-x-1 xs:gap-x-2 sm:gap-x-3 md:gap-x-4 lg:gap-x-6 px-1 xs:px-2 sm:px-3 md:px-4">
           <div
             v-for="(player, index) in defenders"
             :key="player.id"
@@ -34,12 +34,12 @@
               `delay-${index * 100}`,
             ]"
             @click="handlePlayerClick(player)"
-            class="origin-bottom mb-1 xs:mb-2 sm:mb-0 mx-1"
+            class="origin-bottom mx-0.5 xs:mx-1"
           >
             <PlayerCard
               :player="player"
               :is-active="switchSource?.id === player.id"
-              class="w-[50px] xs:w-[55px] sm:w-[60px] md:w-[70px] lg:w-[80px] xl:w-[90px] shadow-xl"
+              class="w-[45px] xs:w-[50px] sm:w-[60px] md:w-[70px] lg:w-[80px] xl:w-[90px] shadow-xl"
             />
           </div>
         </div>
@@ -47,7 +47,7 @@
 
       <!-- Midfielders -->
       <div class="absolute top-[40%] left-0 right-0">
-        <div class="flex justify-center flex-wrap gap-x-1 xs:gap-x-2 sm:gap-x-3 md:gap-x-4 lg:gap-x-6 px-1 xs:px-2 sm:px-3 md:px-4">
+        <div class="flex justify-center flex-nowrap gap-x-1 xs:gap-x-2 sm:gap-x-3 md:gap-x-4 lg:gap-x-6 px-1 xs:px-2 sm:px-3 md:px-4">
           <div
             v-for="(player, index) in midfielders"
             :key="player.id"
@@ -56,13 +56,13 @@
               `delay-${index * 100}`,
             ]"
             @click="handlePlayerClick(player)"
-            class="origin-bottom mb-1 xs:mb-2 sm:mb-0 mx-1"
+            class="origin-bottom mx-0.5 xs:mx-1"
           >
-            <PlayerCard
-              :player="player"
-              :is-active="switchSource?.id === player.id"
-              class="w-[50px] xs:w-[55px] sm:w-[60px] md:w-[70px] lg:w-[80px] xl:w-[90px] shadow-xl"
-            />
+          <PlayerCard
+            :player="player"
+            :is-active="switchSource?.id === player.id"
+            class="w-[45px] xs:w-[50px] sm:w-[60px] md:w-[70px] lg:w-[80px] xl:w-[90px] shadow-xl"
+          />
           </div>
         </div>
       </div>
@@ -103,7 +103,6 @@
               ]"
               @click="handlePlayerClick(player)"
               class="origin-bottom mb-1 xs:mb-2 sm:mb-0 mx-2"
-
             >
               <PlayerCard
                 :player="player"

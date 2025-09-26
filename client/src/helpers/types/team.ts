@@ -12,6 +12,7 @@ export interface Player {
   name: string;
   position: string;
   age?: number;
+  current_value:number;
   jersey_number?: number;
   team: Team;
 }
