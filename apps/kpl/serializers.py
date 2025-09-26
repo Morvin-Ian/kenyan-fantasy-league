@@ -4,10 +4,16 @@ from apps.kpl.models import Fixture, FixtureLineup, FixtureLineupPlayer, Player,
 
 
 class TeamSerializer(serializers.ModelSerializer):
+    jersey_image = serializers.SerializerMethodField()
+
     class Meta:
         model = Team
         exclude = ("pkid", "created_at", "updated_at")
 
+    def get_jersey_image(self, obj):
+        if obj.jersey_image:
+            return obj.jersey_image.url
+        return None
 
 class StandingSerializer(serializers.ModelSerializer):
     team = TeamSerializer(read_only=True)

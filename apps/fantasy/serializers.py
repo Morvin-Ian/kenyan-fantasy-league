@@ -33,9 +33,7 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
     price = serializers.DecimalField(
         source="purchase_price", max_digits=6, decimal_places=2
     )
-    jersey_image = serializers.ImageField(
-        source="player.team.jersey_image", read_only=True
-    )
+    jersey_image = serializers.SerializerMethodField(read_only=True) 
     player = serializers.UUIDField(source="player.id", read_only=True)
     fantasy_team = serializers.UUIDField(source="fantasy_team.id", read_only=True)
 
@@ -90,6 +88,12 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
                 )
 
         return data
+    
+    def get_jersey_image(self, obj):
+        team = getattr(obj.player, "team", None)
+        if team and team.jersey_image:
+            return team.jersey_image.url 
+        return None
 
 class PlayerPerformanceSerializer(serializers.ModelSerializer):
     player_name = serializers.CharField(source='player.name', read_only=True)

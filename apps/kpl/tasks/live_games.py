@@ -1,13 +1,12 @@
 import logging
 import os
 import re
-import time
 from datetime import timedelta
 
 from celery import shared_task
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
 from django.utils import timezone
-from django.db import models
+from django.db.models import Q
 import json
 
 from selenium.webdriver.common.by import By
@@ -162,7 +161,9 @@ def get_goal_scorers(selenium_manager, match_link):
 def update_fixture_task(selenium_manager, live_data):
     from .fixtures import find_team
 
-    candidate_fixtures = Fixture.objects.filter(gameweek__is_active=True) 
+    candidate_fixtures = Fixture.objects.filter(
+        Q(gameweek__is_active=True) | Q(status='postponed')
+    ) 
     matched_fixture_ids = set()
 
     for data in live_data:
@@ -192,7 +193,8 @@ def update_fixture_task(selenium_manager, live_data):
             if fixture.status == "postponed":
                 logger.info(f"Fixture {fixture.id} was postponed, now updating from live data")
                 fixture.match_date = timezone.now()
-                fixture.save(update_fields=["match_date"])
+                fixture.status = "upcoming"
+                fixture.save(update_fields=["match_date", "status"])
 
                 if pt:
                     pt.enabled = False 
@@ -263,7 +265,7 @@ def monitor_fixture_score(fixture_id=None):
         else:
             fixtures = Fixture.objects.exclude(status='completed')
         
-        if len(fixtures) < 1:
+        if len(fixtures) < 1:                                                                                                                                                                                                                                               
             logger.info("No fixtures found")
             return False
         
@@ -324,6 +326,10 @@ def monitor_fixture_score(fixture_id=None):
                                   f"{fixture.away_team.name} {old_away_score}->{fixture.away_team_score}")
                     
                     if (data["is_playing"]):
+                        if fixture.status != "live":
+                            fixture.status = "live"
+                            fixture_updated = True
+                            
                         try:
                             home_scorers, away_scorers = get_goal_scorers(selenium_manager, data["link"])
                             if home_scorers or away_scorers:
