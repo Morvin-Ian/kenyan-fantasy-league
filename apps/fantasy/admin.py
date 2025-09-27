@@ -115,7 +115,7 @@ class PlayerPerformanceAdmin(admin.ModelAdmin):
         "assists",
         "yellow_card_display",
         "red_card_display",
-        "gameweek"
+        "gameweek",
     )
     list_filter = ("yellow_cards", "red_cards")
     search_fields = ("player__name",)

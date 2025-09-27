@@ -1,23 +1,25 @@
+import json
 import logging
 import random
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import json
 from typing import Dict, List, Optional, Tuple
 
 from celery import shared_task
 from django.db import transaction  # noqa: F401
 from django.utils import timezone  # noqa: F401
+
 # pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 from django_celery_beat.models import ClockedSchedule, PeriodicTask
-# pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 
-from apps.kpl.models import Fixture, ExternalFixtureMapping
+from apps.kpl.models import ExternalFixtureMapping, Fixture
 from apps.kpl.scrapers import detect_provider_from_url, scrape_lineups_for_url
 from apps.kpl.services import upsert_fixture_lineup
 from config.settings import base as settings
 from util.selenium import selenium_session
+
+# pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 
 
 logger = logging.getLogger(__name__)
@@ -60,7 +62,9 @@ def build_lineup_url(provider: str, fixture: Fixture, *, side: str) -> Optional[
     return None
 
 
-def parse_lineup_from_source(driver, provider: str, url: str, *, side: str) -> Optional[ParsedLineup]:
+def parse_lineup_from_source(
+    driver, provider: str, url: str, *, side: str
+) -> Optional[ParsedLineup]:
     try:
         driver.get(url)
         # Allow URL-based detection so new sites can be plugged without code changes
@@ -87,14 +91,16 @@ def parse_lineup_from_source(driver, provider: str, url: str, *, side: str) -> O
 
 def _with_backoff_attempts(max_attempts: int = 3):
     for attempt in range(1, max_attempts + 1):
-        yield attempt, (2 ** attempt) + random.uniform(0, 1)
+        yield attempt, (2**attempt) + random.uniform(0, 1)
 
 
 def fetch_lineup_for_fixture(fixture: Fixture) -> Tuple[bool, str]:
     if not settings.LINEUPS_SCRAPING_ENABLED:
         return False, "feature disabled"
 
-    providers = [settings.PRIMARY_LINEUP_SOURCE] + [p for p in PROVIDERS if p != settings.PRIMARY_LINEUP_SOURCE]
+    providers = [settings.PRIMARY_LINEUP_SOURCE] + [
+        p for p in PROVIDERS if p != settings.PRIMARY_LINEUP_SOURCE
+    ]
 
     with selenium_session(
         command_executor=settings.SELENIUM_REMOTE_URL,
@@ -103,7 +109,10 @@ def fetch_lineup_for_fixture(fixture: Fixture) -> Tuple[bool, str]:
         page_load_timeout_seconds=30,
     ) as driver:
         for provider in providers:
-            for side, team in [("home", fixture.home_team), ("away", fixture.away_team)]:
+            for side, team in [
+                ("home", fixture.home_team),
+                ("away", fixture.away_team),
+            ]:
                 url = build_lineup_url(provider, fixture, side=side)
                 if not url:
                     continue
@@ -113,6 +122,7 @@ def fetch_lineup_for_fixture(fixture: Fixture) -> Tuple[bool, str]:
                         if attempt < 3:
                             with suppress(Exception):
                                 import time
+
                                 time.sleep(sleep_seconds)
                             continue
                         else:
@@ -129,13 +139,21 @@ def fetch_lineup_for_fixture(fixture: Fixture) -> Tuple[bool, str]:
                         starters=result.starters,
                         bench=result.bench,
                     )
-                    logger.info("Lineup saved for fixture %s (%s/%s) via %s", fixture.id, team.name, side, provider)
+                    logger.info(
+                        "Lineup saved for fixture %s (%s/%s) via %s",
+                        fixture.id,
+                        team.name,
+                        side,
+                        provider,
+                    )
                     break
 
     return True, "done"
 
 
-@shared_task(autoretry_for=(Exception,), retry_backoff=30, retry_backoff_max=300, max_retries=5)
+@shared_task(
+    autoretry_for=(Exception,), retry_backoff=30, retry_backoff_max=300, max_retries=5
+)
 def fetch_lineup_for_fixture_task(fixture_id: str) -> str:
     fixture = Fixture.objects.filter(id=fixture_id).select_related("home_team", "away_team").first()  # type: ignore[attr-defined]
     if not fixture:
@@ -144,8 +162,9 @@ def fetch_lineup_for_fixture_task(fixture_id: str) -> str:
     return f"{ok}: {msg}"
 
 
-
-@shared_task(autoretry_for=(Exception,), retry_backoff=30, retry_backoff_max=300, max_retries=3)
+@shared_task(
+    autoretry_for=(Exception,), retry_backoff=30, retry_backoff_max=300, max_retries=3
+)
 def scan_upcoming_fixtures_for_lineups() -> str:
     """Scan fixtures within the next 3 hours (and up to KO+5 minutes) and schedule lineup fetches.
 
@@ -165,14 +184,18 @@ def scan_upcoming_fixtures_for_lineups() -> str:
     # - upcoming within next 3 hours, or
     # - already kicked off but within the first 5 minutes (KO+5)
     fixtures = (
-        Fixture.objects.filter(match_date__lte=window_end, match_date__gte=ko_grace_start)
+        Fixture.objects.filter(
+            match_date__lte=window_end, match_date__gte=ko_grace_start
+        )
         .select_related("home_team", "away_team")
         .prefetch_related("lineups")
         .order_by("match_date")
     )
 
     scheduled = 0
-    max_concurrency = max(1, int(getattr(settings, "LINEUP_SCRAPER_MAX_CONCURRENCY", 2)))
+    max_concurrency = max(
+        1, int(getattr(settings, "LINEUP_SCRAPER_MAX_CONCURRENCY", 2))
+    )
 
     def _schedule_clocked_fetches(fix: Fixture) -> int:
         offsets = [
@@ -227,7 +250,9 @@ def scan_upcoming_fixtures_for_lineups() -> str:
             logger.warning("LINEUPS_SCRAPER failed to schedule immediate fetch: %s", e)
             webhook = getattr(settings, "LINEUPS_ALERT_WEBHOOK", None)
             if webhook:
-                logger.warning("LINEUPS_ALERT_WEBHOOK configured; consider sending alert")
+                logger.warning(
+                    "LINEUPS_ALERT_WEBHOOK configured; consider sending alert"
+                )
         scheduled += 1
         logger.info(
             "LINEUPS_SCRAPER scan scheduled fetch for fixture=%s at %s (scheduled=%s)",
@@ -240,4 +265,3 @@ def scan_upcoming_fixtures_for_lineups() -> str:
             break
 
     return f"scheduled={scheduled}"
-

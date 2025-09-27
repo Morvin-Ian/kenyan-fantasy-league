@@ -1,35 +1,36 @@
 import logging
 import time
+
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.common.exceptions import TimeoutException, WebDriverException
 
 logger = logging.getLogger(__name__)
 
+
 class SeleniumManager:
-    
+
     def __init__(self, timeout=30):
         self.timeout = timeout
         self.driver = None
-    
+
     def get_driver(self):
         if self.driver:
             return self.driver
-            
+
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
-        
+
         try:
             self.driver = webdriver.Remote(
-                command_executor="http://selenium:4444/wd/hub",
-                options=options
+                command_executor="http://selenium:4444/wd/hub", options=options
             )
             logger.info("Remote driver created successfully")
         except Exception as e:
@@ -41,18 +42,18 @@ class SeleniumManager:
             except Exception as local_e:
                 logger.error(f"Both drivers failed: {local_e}")
                 return None
-        
+
         # Basic timeouts only
         self.driver.set_page_load_timeout(60)
         self.driver.implicitly_wait(10)
         return self.driver
-    
+
     def safe_get(self, url):
         """Navigate to URL"""
         driver = self.get_driver()
         if not driver:
             return False
-            
+
         try:
             logger.info(f"Navigating to {url}")
             driver.get(url)
@@ -61,12 +62,12 @@ class SeleniumManager:
         except Exception as e:
             logger.error(f"Navigation failed: {e}")
             return False
-    
+
     def wait_for_elements(self, by, selector, timeout=None):
         """Wait for element to appear"""
         if not self.driver:
             return None
-            
+
         timeout = timeout or self.timeout
         try:
             element = WebDriverWait(self.driver, timeout).until(
@@ -79,7 +80,7 @@ class SeleniumManager:
         except Exception as e:
             logger.error(f"Error finding element {selector}: {e}")
             return None
-    
+
     def close(self):
         """Close the driver"""
         if self.driver:

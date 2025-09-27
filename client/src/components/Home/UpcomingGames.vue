@@ -82,7 +82,7 @@
                   'bg-red-100 text-red-600': game.status === 'live',
                   'bg-gray-50 text-gray-600': game.status === 'completed'
                 }">
-                  {{ game.home_team_score }}
+                  {{ game.home_team_score ?? 0 }}
                 </span>
               </div>
               <div class="flex items-center justify-between text-sm sm:text-base font-bold">
@@ -91,7 +91,7 @@
                   'bg-red-100 text-red-600': game.status === 'live',
                   'bg-gray-50 text-gray-600': game.status === 'completed'
                 }">
-                  {{ game.away_team_score }}
+                  {{ game.away_team_score ?? 0 }}
                 </span>
               </div>
             </template>
@@ -117,9 +117,9 @@
                 <line x1="8" y1="2" x2="8" y2="6"></line>
                 <line x1="3" y1="10" x2="21" y2="10"></line>
               </svg>
-              <span>{{ formatDatePart(game.match_date || game.datetime) }}</span>
+              <span>{{ formatDatePart(game.match_date) }}</span>
               <span class="text-gray-300">•</span>
-              <span>{{ formatTimePart(game.match_date || game.datetime) }}</span>
+              <span>{{ formatTimePart(game.match_date) }}</span>
             </div>
           </div>
         </div>
@@ -269,24 +269,6 @@ const scroll = (direction: "left" | "right") => {
   });
 };
 
-const toUpperCase = (text: string) => {
-  return text.toUpperCase();
-};
-
-function getRandomFormResults(): string[] {
-  const results = ['W', 'D', 'L'];
-  const form = [];
-  for (let i = 0; i < 5; i++) {
-    form.push(results[Math.floor(Math.random() * results.length)]);
-  }
-  return window.innerWidth < 640 ? form.slice(0, 3) : form;
-}
-
-function getFormBadgeColor(result: string): string {
-  const formResults = ["W", "D", "L"];
-  if (!formResults.includes(result)) return "bg-gray-500"; // Default color for unexpected values
-  return result === "W" ? "bg-green-500" : result === "D" ? "bg-yellow-500" : "bg-red-500";
-}
 
 const formatDatePart = (dateStr?: string) => {
   if (!dateStr) return "";

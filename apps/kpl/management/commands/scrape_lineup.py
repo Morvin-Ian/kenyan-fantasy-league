@@ -18,6 +18,8 @@ class Command(BaseCommand):
             raise CommandError(f"Fixture {fixture_id} not found")
         ok, msg = fetch_lineup_for_fixture(fixture)
         if not ok:
-            self.stderr.write(self.style.WARNING(f"Scrape finished with status={ok} message={msg}"))
+            self.stderr.write(
+                self.style.WARNING(f"Scrape finished with status={ok} message={msg}")
+            )
         else:
             self.stdout.write(self.style.SUCCESS(f"Scrape succeeded: {msg}"))

@@ -10,8 +10,7 @@ type PaginatedResponse<T> = {
 
 
 
-export const useKplStore = defineStore({
-  id: "kpl",
+export const useKplStore = defineStore('kpl', {
   state: () => ({
     teams: [] as Team[],
     standings: [] as TeamStanding[],
@@ -19,6 +18,7 @@ export const useKplStore = defineStore({
     players: [] as Player[],
     fixtureLineups: new Map<string, Lineup[]>()
   }),
+  
   actions: {
     async fetchTeams() {
       try {
@@ -99,6 +99,19 @@ export const useKplStore = defineStore({
 
       } catch (error) {
         console.error("Error fetching players:", error);
+      }
+    },
+
+    async uploadLineupCsv (formData: FormData) {
+      try {
+        const response = await apiClient.post(`/kpl/fixtures/upload-lineup-csv/`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        })
+        return response.data
+      } catch (error) {
+        throw error
       }
     },
 

@@ -1,6 +1,6 @@
-import os
 import logging
 import logging.config
+import os
 from datetime import datetime
 
 import requests
@@ -8,11 +8,10 @@ from bs4 import BeautifulSoup
 from celery import shared_task
 
 from apps.kpl.models import Standing, Team
+from config.settings import base
 from util.views import headers
 
 from .fixtures import find_team
-
-from config.settings import base
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)

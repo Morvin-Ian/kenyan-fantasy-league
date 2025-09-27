@@ -1,12 +1,5 @@
 import { type FantasyPlayer } from "./fantasy";
 
-export interface Team {
-  id: string;
-  name: string;
-  logo_url?: string;
-  jersey_image?: string;
-}
-
 export interface Player {
   id: string;
   name: string;
@@ -31,51 +24,29 @@ export interface StartingElevenRef {
   forwards: FantasyPlayer[];
 }
 
+
 export interface TeamData {
   formation: string;
   startingEleven: StartingElevenRef;
   benchPlayers: FantasyPlayer[];
 }
-export interface Fixture {
+
+
+export interface Team {
   id: string;
-  status: string;
-  type: string;
-  home_team: Team;
-  away_team: Team;
-  home_team_score: string;
-  away_team_score: string;
-  venue:string;
-  is_active:boolean;
-  match_date: string;
-  datetime?: string;
-  lineup_status?: LineupStatus | null;
-}
-
-export interface Result {
-  match: string;
-  date: string;
-}
-
-export interface Performer {
   name: string;
-  points: number;
-  image: string;
+  logo_url?: string;
+  jersey_image?: string;
 }
 
-export interface TeamStanding {
-  id: number;
-  position: number;
+export interface Player {
+  id: string;
+  name: string;
+  position: string;
+  age?: number;
+  current_value: number;
+  jersey_number?: number;
   team: Team;
-  played: number;
-  wins: number;
-  draws: number;
-  losses: number;
-  goals_for: number;
-  goals_against: number;
-  goalDifference: number;
-  goal_differential: number;
-  points: number;
-  form: string[];
 }
 
 export interface LineupPlayer {
@@ -94,13 +65,43 @@ export interface Lineup {
   is_confirmed: boolean;
   source: string;
   published_at: string | null;
-  starters?: LineupPlayer[];
-  bench?: LineupPlayer[];
-  players?: LineupPlayer[];
+  starters: LineupPlayer[];
+  bench: LineupPlayer[];
+}
+
+export interface Fixture {
+  id: string;
+  status: string;
+  home_team: Team;
+  away_team: Team;
+  home_team_score: number | null;
+  away_team_score: number | null;
+  venue: string;
+  is_active: boolean;
+  match_date: string;
+  gameweek?: string;
+  lineups: Lineup[]; 
 }
 
 export interface LineupStatus {
   available: boolean;
   confirmed: boolean;
   status: "Predicted" | "Confirmed" | "NA";
+}
+
+
+export interface TeamStanding {
+  id: number;
+  position: number;
+  team: Team;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goals_for: number;
+  goals_against: number;
+  goalDifference: number;
+  goal_differential: number;
+  points: number;
+  form: string[];
 }

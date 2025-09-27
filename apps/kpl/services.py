@@ -16,7 +16,6 @@ from apps.kpl.models import (
     Team,
 )
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -29,7 +28,7 @@ def normalize_player_name(raw_name: str) -> str:
     if not raw_name:
         return ""
     name = _strip_accents(raw_name).lower().strip()
-    for ch in ["\t", "\n", "\r", ",", ".", "'", "\"", "(", ")", "[", "]", "{", "}"]:
+    for ch in ["\t", "\n", "\r", ",", ".", "'", '"', "(", ")", "[", "]", "{", "}"]:
         name = name.replace(ch, " ")
     name = name.replace("-", " ")
     # Collapse multiple spaces
@@ -37,7 +36,9 @@ def normalize_player_name(raw_name: str) -> str:
     return name
 
 
-def map_role_to_position(role: Optional[str], position_guess: Optional[str] = None) -> Optional[str]:
+def map_role_to_position(
+    role: Optional[str], position_guess: Optional[str] = None
+) -> Optional[str]:
     tokens: List[str] = []
     if role:
         tokens.append(role.lower())
@@ -46,11 +47,49 @@ def map_role_to_position(role: Optional[str], position_guess: Optional[str] = No
     token_str = " ".join(tokens)
     if any(k in token_str for k in ["gk", "keeper", "goalkeeper"]):
         return "GKP"
-    if any(k in token_str for k in ["def", "full back", "centre back", "center back", "cb", "rb", "lb", "wing back", "back"]):
+    if any(
+        k in token_str
+        for k in [
+            "def",
+            "full back",
+            "centre back",
+            "center back",
+            "cb",
+            "rb",
+            "lb",
+            "wing back",
+            "back",
+        ]
+    ):
         return "DEF"
-    if any(k in token_str for k in ["mid", "cm", "am", "dm", "winger", "wide", "number 10", "no 10", "playmaker"]):
+    if any(
+        k in token_str
+        for k in [
+            "mid",
+            "cm",
+            "am",
+            "dm",
+            "winger",
+            "wide",
+            "number 10",
+            "no 10",
+            "playmaker",
+        ]
+    ):
         return "MID"
-    if any(k in token_str for k in ["fwd", "fw", "striker", "forward", "cf", "attacker", "no 9", "number 9"]):
+    if any(
+        k in token_str
+        for k in [
+            "fwd",
+            "fw",
+            "striker",
+            "forward",
+            "cf",
+            "attacker",
+            "no 9",
+            "number 9",
+        ]
+    ):
         return "FWD"
     return None
 
@@ -153,7 +192,9 @@ def upsert_fixture_lineup(
         order_index = 1
         objects: List[FixtureLineupPlayer] = []
 
-        def _build_player(entry: Dict, *, is_bench: bool, order_idx: int) -> FixtureLineupPlayer:
+        def _build_player(
+            entry: Dict, *, is_bench: bool, order_idx: int
+        ) -> FixtureLineupPlayer:
             raw_name = entry.get("name", "")
             normalized_name = normalize_player_name(raw_name)
             jersey_number = entry.get("jersey_number")
@@ -185,5 +226,3 @@ def upsert_fixture_lineup(
             FixtureLineupPlayer.objects.bulk_create(objects, batch_size=64)  # type: ignore[attr-defined]
 
     return lineup
-
-

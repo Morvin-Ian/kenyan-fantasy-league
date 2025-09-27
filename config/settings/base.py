@@ -34,11 +34,15 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG")
 
 # Feature flags
-LINEUPS_SCRAPING_ENABLED = os.getenv("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
+LINEUPS_SCRAPING_ENABLED = (
+    os.getenv("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
+)
 PRIMARY_LINEUP_SOURCE = os.getenv("PRIMARY_LINEUP_SOURCE", "fkf")
 SELENIUM_REMOTE_URL = os.getenv("SELENIUM_REMOTE_URL", "http://selenium:4444/wd/hub")
 LINEUP_SCRAPER_MAX_CONCURRENCY = int(os.getenv("LINEUP_SCRAPER_MAX_CONCURRENCY", "2"))
-SCRAPER_USER_AGENT = os.getenv("SCRAPER_USER_AGENT", "kenyan-fantasy-league/lineups-scraper")
+SCRAPER_USER_AGENT = os.getenv(
+    "SCRAPER_USER_AGENT", "kenyan-fantasy-league/lineups-scraper"
+)
 
 # ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
 ALLOWED_HOSTS = ["*"]
@@ -277,20 +281,21 @@ logging.config.dictConfig(
     }
 )
 
-CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 
 from datetime import timedelta
+
 from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "update-kpl-standings": {
         "task": "apps.kpl.tasks.standings.get_kpl_table",
-        "schedule": timedelta(days=1).total_seconds(),  
+        "schedule": timedelta(days=1).total_seconds(),
     },
     "update-kpl-fixtures": {
         "task": "apps.kpl.tasks.fixtures.get_kpl_fixtures",
-        "schedule": timedelta(days=2).total_seconds(), 
+        "schedule": timedelta(days=2).total_seconds(),
     },
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
@@ -306,9 +311,9 @@ CELERY_BEAT_SCHEDULE = {
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://redis:6379/1",  
+        "LOCATION": "redis://redis:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
+        },
     }
 }

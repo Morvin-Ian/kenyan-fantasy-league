@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional
 from urllib.parse import urlparse
 
-
 PROVIDER_DOMAINS = {
     "sofascore": ["sofascore.com"],
     "flashscore": ["flashscore.com", "flashscore.co.ke"],
@@ -31,11 +30,9 @@ def scrape_lineups_for_url(driver, url: str):
         from .flashscore import scrape_lineups  # type: ignore
 
         return scrape_lineups(driver)
-    
+
     if provider == "kenyafootballdata":
         from .kenyafootballdata import scrape_lineups  # type: ignore
 
         return scrape_lineups(driver)
     return {}
-
-

@@ -131,7 +131,9 @@ class Fixture(TimeStampedUUIDModel):
 class ExternalTeamMapping(TimeStampedUUIDModel):
     provider = models.CharField(max_length=50)
     provider_team_id = models.CharField(max_length=100)
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="external_ids")
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, related_name="external_ids"
+    )
 
     class Meta:
         unique_together = ("provider", "provider_team_id")
@@ -189,9 +191,15 @@ class FixtureLineupPlayer(TimeStampedUUIDModel):
         FixtureLineup, on_delete=models.CASCADE, related_name="players"
     )
     player = models.ForeignKey(
-        Player, on_delete=models.SET_NULL, null=True, blank=True, related_name="lineup_entries"
+        Player,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="lineup_entries",
     )
-    position = models.CharField(max_length=3, choices=POSITION_CHOICES, null=True, blank=True)
+    position = models.CharField(
+        max_length=3, choices=POSITION_CHOICES, null=True, blank=True
+    )
     order_index = models.PositiveIntegerField()
     is_bench = models.BooleanField(default=False)
 
@@ -206,7 +214,9 @@ class FixtureLineupPlayer(TimeStampedUUIDModel):
 
 
 class PlayerAlias(TimeStampedUUIDModel):
-    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="player_aliases")
+    team = models.ForeignKey(
+        Team, on_delete=models.CASCADE, related_name="player_aliases"
+    )
     canonical_player = models.ForeignKey(
         Player, on_delete=models.CASCADE, related_name="aliases"
     )
@@ -222,4 +232,6 @@ class PlayerAlias(TimeStampedUUIDModel):
         verbose_name_plural = "Player Aliases"
 
     def __str__(self) -> str:
-        return f"{self.normalized_name} -> {self.canonical_player.name} ({self.team.name})"
+        return (
+            f"{self.normalized_name} -> {self.canonical_player.name} ({self.team.name})"
+        )

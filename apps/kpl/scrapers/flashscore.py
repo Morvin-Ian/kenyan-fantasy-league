@@ -58,7 +58,11 @@ def scrape_lineups(driver) -> Dict[str, Dict[str, Any]]:
         "xpath",
         ".//div[contains(@class,'lineup') or contains(@class,'team') or contains(@class,'players')]",
     )
-    ranked = sorted(((b, len(_collect_players_in_block(b))) for b in blocks), key=lambda x: x[1], reverse=True)
+    ranked = sorted(
+        ((b, len(_collect_players_in_block(b))) for b in blocks),
+        key=lambda x: x[1],
+        reverse=True,
+    )
     if len(ranked) < 2:
         return {}
     home_block, away_block = ranked[0][0], ranked[1][0]
@@ -84,5 +88,3 @@ def scrape_lineups(driver) -> Dict[str, Dict[str, Any]]:
             "bench": [{"name": n} for n in away_players[11:]],
         },
     }
-
-

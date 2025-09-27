@@ -1,19 +1,23 @@
 import logging
 import os
 from datetime import datetime
+from difflib import get_close_matches
 
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
 from django.utils import timezone
 
-from apps.kpl.models import Fixture, Gameweek, Team, Player
-from .live_games import setup_gameweek_monitoring
-from .gameweeks import check_current_active_gameweek, set_active_gameweek_from_date_ranges, set_active_gameweek_from_fixtures
-from util.views import headers
-from difflib import get_close_matches
-
+from apps.kpl.models import Fixture, Gameweek, Player, Team
 from config.settings import base
+from util.views import headers
+
+from .gameweeks import (
+    check_current_active_gameweek,
+    set_active_gameweek_from_date_ranges,
+    set_active_gameweek_from_fixtures,
+)
+from .live_games import setup_gameweek_monitoring
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
@@ -21,49 +25,51 @@ logger = logging.getLogger(__name__)
 
 def find_team(team_name: str) -> Team | None:
     team_name = team_name.strip().lower()
-    
+
     cleaned_name = clean_team_name(team_name)
-    
+
     all_teams = list(Team.objects.values_list("name", flat=True))
-    
+
     for db_team in all_teams:
         if cleaned_name == clean_team_name(db_team):
             return Team.objects.get(name=db_team)
-    
+
     match = get_close_matches(
         cleaned_name, [clean_team_name(t) for t in all_teams], n=1, cutoff=0.4
     )
-    
+
     if match:
         for db_team in all_teams:
             if clean_team_name(db_team) == match[0]:
                 return Team.objects.get(name=db_team)
-    
+
     return None
+
 
 def clean_team_name(name: str) -> str:
     """Clean and normalize team names for better matching"""
     name = name.strip().lower()
-    
+
     replacements = {
-        'k-': 'kariobangi ',
-        'fc ': '',
-        ' fc': '',
-        'afc ': '',
-        ' afc': '',
-        ' united': '',
-        ' city': '',
-        ' stars': '',
-        ' sugar': '',
-        ' ': '',  
-        '-': '',  
+        "k-": "kariobangi ",
+        "fc ": "",
+        " fc": "",
+        "afc ": "",
+        " afc": "",
+        " united": "",
+        " city": "",
+        " stars": "",
+        " sugar": "",
+        " ": "",
+        "-": "",
     }
-    
+
     cleaned = name
     for old, new in replacements.items():
         cleaned = cleaned.replace(old, new)
-    
+
     return cleaned
+
 
 def find_player(player_name: str) -> Player | None:
     player_name = player_name.strip()
@@ -149,10 +155,14 @@ def extract_fixtures_data(headers) -> bool:
             venue = venue_div.text.strip() if venue_div else "Unknown"
 
             try:
-                match_datetime = datetime.strptime(match_datetime_str, "%B %d, %Y %H:%M")
+                match_datetime = datetime.strptime(
+                    match_datetime_str, "%B %d, %Y %H:%M"
+                )
             except ValueError:
                 try:
-                    match_datetime = datetime.strptime(match_datetime_str, "%b %d, %Y %H:%M")
+                    match_datetime = datetime.strptime(
+                        match_datetime_str, "%b %d, %Y %H:%M"
+                    )
                 except ValueError:
                     logger.error(f"Date parsing failed for: {match_datetime_str}")
                     continue
@@ -170,11 +180,14 @@ def extract_fixtures_data(headers) -> bool:
                     if match_datetime == "Postponed":
                         existing_fixture.status = "postponed"
                         updated = True
-                                            
-                    if match_datetime != "Postponed"and existing_fixture.match_date != match_datetime:
+
+                    if (
+                        match_datetime != "Postponed"
+                        and existing_fixture.match_date != match_datetime
+                    ):
                         existing_fixture.match_date = match_datetime
                         updated = True
-                    
+
                     if updated:
                         existing_fixture.save()
                         fixtures_updated += 1
@@ -182,8 +195,10 @@ def extract_fixtures_data(headers) -> bool:
                             f"Updated fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
                         )
                 else:
-                    status = "upcoming" if match_datetime >= timezone.now() else "completed"
-                    
+                    status = (
+                        "upcoming" if match_datetime >= timezone.now() else "completed"
+                    )
+
                     Fixture.objects.create(
                         home_team=home_team,
                         away_team=away_team,
@@ -195,16 +210,19 @@ def extract_fixtures_data(headers) -> bool:
                     logger.info(
                         f"Created new fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
                     )
-                                    
+
             except Exception as e:
                 logger.error(f"Error creating or updating fixture: {e}")
-        logger.info(f"Successfully processed KPL fixtures: {fixtures_created} created, {fixtures_updated} updated")
+        logger.info(
+            f"Successfully processed KPL fixtures: {fixtures_created} created, {fixtures_updated} updated"
+        )
         return True
     else:
         logger.error(
             f"Failed to retrieve the web page. Status code: {web_content.status_code}"
         )
         return False
+
 
 @shared_task
 def update_active_gameweek():
@@ -233,7 +251,8 @@ def update_active_gameweek():
     except Exception as e:
         logger.error(f"Error updating active gameweek: {e}")
         return False
-    
+
+
 @shared_task
 def get_kpl_fixtures():
     response = extract_fixtures_data(headers)

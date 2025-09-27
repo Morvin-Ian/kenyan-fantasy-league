@@ -75,7 +75,11 @@ def scrape_lineups(driver) -> Dict[str, Dict[str, Any]]:
             side_blocks.append((c, players))
     if len(side_blocks) < 2:
         # fallback: use the two largest containers by player-like count
-        ranked = sorted(((c, _collect_player_names(c)) for c in containers), key=lambda x: len(x[1]), reverse=True)
+        ranked = sorted(
+            ((c, _collect_player_names(c)) for c in containers),
+            key=lambda x: len(x[1]),
+            reverse=True,
+        )
         side_blocks = ranked[:2]
     if len(side_blocks) < 2:
         return {}
@@ -110,5 +114,3 @@ def scrape_lineups(driver) -> Dict[str, Dict[str, Any]]:
     result["away"]["bench"] = [{"name": n} for n in away_players[11:]]
 
     return result
-
-

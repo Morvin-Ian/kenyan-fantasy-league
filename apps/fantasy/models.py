@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 
-from apps.kpl.models import Gameweek, Player, Fixture
+from apps.kpl.models import Fixture, Gameweek, Player
 from util.models import TimeStampedUUIDModel
 
 User = get_user_model()
@@ -113,7 +113,7 @@ class PlayerTransfer(TimeStampedUUIDModel):
         Player, on_delete=models.CASCADE, related_name="transfers_out"
     )
     gameweek = models.ForeignKey(
-        Gameweek, on_delete=models.PROTECT, null=True, blank=True 
+        Gameweek, on_delete=models.PROTECT, null=True, blank=True
     )
     transfer_cost = models.DecimalField(max_digits=4, decimal_places=1, default=0)
 
@@ -140,7 +140,7 @@ class PlayerPerformance(TimeStampedUUIDModel):
         null=True,
         blank=True,
     )
-    fixture = models.ForeignKey(   
+    fixture = models.ForeignKey(
         Fixture,
         on_delete=models.PROTECT,
         related_name="performances",
