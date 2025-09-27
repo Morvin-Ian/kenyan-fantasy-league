@@ -250,7 +250,7 @@ const props = defineProps({
 });
 
 const activeStandings = computed(() =>
-  props.fixtures.filter(fixture => fixture.is_active)
+  props.fixtures.filter(fixture => fixture.is_active && fixture.status != "postponed")
 );
 
 const firstFiveStandings = computed(() => props.standings.slice(0, 5));

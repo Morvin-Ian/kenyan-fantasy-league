@@ -277,7 +277,7 @@ def update_fixture_task(selenium_manager, live_data):
                             f"Failed to update goal scorers for fixture {fixture.id}: {e}"
                         )
 
-            elif data["time"] == "Postponed":
+            elif data["time"].lower() == "postponed":
                 if fixture.status != "postponed":
                     fixture.status = "postponed"
                     fixture.save(update_fields=["status"])
@@ -290,7 +290,21 @@ def update_fixture_task(selenium_manager, live_data):
                         f"Disabled PeriodicTask for postponed fixture {fixture.id}"
                     )
 
+    stale_fixtures = Fixture.objects.filter(status__in=["completed", "postponed"]).exclude(
+        id__in=matched_fixture_ids
+    )
 
+    for fixture in stale_fixtures:
+        task_name = f"monitor_fixture_{fixture.id}_{fixture.gameweek.number if fixture.gameweek else 'N/A'}"
+        pt = PeriodicTask.objects.filter(name=task_name, enabled=True).first()
+        if pt:
+            pt.enabled = False
+            pt.expires = timezone.now()
+            pt.save(update_fields=["enabled", "expires"])
+            logger.info(
+                f"Disabled PeriodicTask for stale fixture {fixture.id} ({fixture.status})"
+            )
+            
 @shared_task
 def monitor_fixture_score(fixture_id=None):
     selenium_manager = None
