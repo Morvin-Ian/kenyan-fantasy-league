@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.viewsets import ReadOnlyModelViewSet
+from django.core.cache import cache
 
 from apps.kpl.models import Fixture, FixtureLineup, Player, Standing, Team
 from apps.kpl.services import upsert_fixture_lineup
@@ -17,6 +18,13 @@ from .serializers import (
     TeamSerializer,
 )
 
+import logging
+import logging.config
+from config.settings import base
+
+logging.config.dictConfig(base.DEFAULT_LOGGING)
+logger = logging.getLogger(__name__)
+
 
 class TeamViewSet(ReadOnlyModelViewSet):
     serializer_class = TeamSerializer
@@ -28,11 +36,32 @@ class StandingViewSet(ReadOnlyModelViewSet):
     serializer_class = StandingSerializer
     queryset = Standing.objects.all()
     permission_classes = [IsAuthenticated]
+    
+    def list(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        cache_key = f"standings_list_page_{page_number}"
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            paginated_response = self.get_paginated_response(serializer.data)
+            cache.set(cache_key, paginated_response.data, timeout=86400)
+            return Response(paginated_response.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        cache.set(cache_key, data, timeout=86400)
+        return Response(data)
 
 
 class FixtureViewSet(ReadOnlyModelViewSet):
     serializer_class = FixtureSerializer
-    # Allow all fixtures for detail routes; filter to active GW in list via get_queryset
     queryset = Fixture.objects.all()
     lookup_field = "id"
     permission_classes = [IsAuthenticated]
@@ -40,7 +69,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) == "list":
-            return qs.all()
+            return qs.filter(gameweek__is_active=True)
         return qs
 
     def get_permissions(self):
@@ -85,3 +114,26 @@ class PlayerViewSet(ReadOnlyModelViewSet):
     serializer_class = PlayerSerializer
     queryset = Player.objects.filter(team__is_relegated=False)
     permission_classes = [IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        page_number = request.query_params.get('page', 1)
+        cache_key = f"players_active_list_page_{page_number}"
+
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
+
+        queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            paginated_response = self.get_paginated_response(serializer.data)
+
+            cache.set(cache_key, paginated_response.data, timeout=172800)
+            return Response(paginated_response.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        data = serializer.data
+        cache.set(cache_key, data, timeout=172800)
+        return Response(data)
