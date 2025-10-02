@@ -94,7 +94,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="lineups")
     def lineups(self, request, id=None):
-        fixture = self.get_object()
+        fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
         if request.method == "GET":
             qs = (
                 FixtureLineup.objects.filter(fixture=fixture)
@@ -464,9 +464,10 @@ class PlayerViewSet(ModelViewSet):
 
 class MatchEventsViewSet(ModelViewSet):
     permission_classes = [IsAdminUser]
-    
+    queryset = Fixture.objects.all()
+    serializer_class = FixtureSerializer
 
-    @action(detail=True, methods=["post"], url_path="update-assists")
+    @action(detail=False, methods=["post"], url_path="update-assists")
     def update_assists(self, request, pk=None):
         """
         Update assists for players in a fixture
@@ -480,7 +481,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = self.get_object()
+            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -514,9 +515,7 @@ class MatchEventsViewSet(ModelViewSet):
 
                 try:
                     team = Team.objects.get(id=team_id)
-                    player = Player.objects.filter(
-                        name__iexact=player_name, team=team
-                    ).first()
+                    player = find_player(player_name)
 
                     if not player:
                         errors.append(
@@ -571,13 +570,12 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["post"], url_path="update-cards")
+    @action(detail=False, methods=["post"], url_path="update-cards")
     def update_cards(self, request, pk=None):
         """
-        Update yellow and red cards for players in a fixture
-
         Request body:
         {
+            "fixture_id":"uuid",
             "yellow_cards": [
                 {"player_name": "John Doe", "team_id": "uuid", "count": 1}
             ],
@@ -587,7 +585,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = self.get_object()
+            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -626,11 +624,12 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["post"], url_path="update-substitutions")
+    @action(detail=False, methods=["post"], url_path="update-substitutions")
     def update_substitutions(self, request, pk=None):
         """
         Request body:
         {
+            "fixture_id":"uuid",
             "substitutions": [
                 {
                     "player_out": "John Doe",
@@ -642,7 +641,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = self.get_object()
+            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -675,9 +674,7 @@ class MatchEventsViewSet(ModelViewSet):
                 try:
                     team = Team.objects.get(id=team_id)
 
-                    player_out = Player.objects.filter(
-                        name__iexact=player_out_name, team=team
-                    ).first()
+                    player_out = find_player(player_out_name)
 
                     if player_out:
                         perf_out, _ = PlayerPerformance.objects.get_or_create(
@@ -709,9 +706,7 @@ class MatchEventsViewSet(ModelViewSet):
                             }
                         )
 
-                    player_in = Player.objects.filter(
-                        name__iexact=player_in_name, team=team
-                    ).first()
+                    player_in = find_player(player_in_name)
 
                     if player_in:
                         minutes_in = 90 - minute  # Minutes played after coming on
@@ -769,7 +764,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = self.get_object()
+            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -803,9 +798,7 @@ class MatchEventsViewSet(ModelViewSet):
 
                 try:
                     team = Team.objects.get(id=team_id)
-                    player = Player.objects.filter(
-                        name__iexact=player_name, team=team
-                    ).first()
+                    player = find_player(player_name)
 
                     if not player:
                         errors.append(
@@ -875,7 +868,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = self.get_object()
+            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -920,7 +913,6 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-
     def _process_card(self, fixture, card_data, field_name, card_type):
         player_name = card_data.get("player_name", "").strip()
         team_id = card_data.get("team_id")
@@ -937,7 +929,7 @@ class MatchEventsViewSet(ModelViewSet):
 
         try:
             team = Team.objects.get(id=team_id)
-            player = Player.objects.filter(name__iexact=player_name, team=team).first()
+            player = find_player(player_name)
 
             if not player:
                 return {
@@ -1003,8 +995,7 @@ class MatchEventsViewSet(ModelViewSet):
 
         try:
             team = Team.objects.get(id=team_id)
-            player = Player.objects.filter(name__iexact=player_name, team=team).first()
-
+            player = find_player(player_name)
             if not player:
                 return {
                     "success": False,
@@ -1068,7 +1059,7 @@ class MatchEventsViewSet(ModelViewSet):
             points += performance.goals_scored * 6
         elif position == "MID":
             points += performance.goals_scored * 5
-        else:  
+        else:
             points += performance.goals_scored * 4
 
         points += performance.assists * 3
