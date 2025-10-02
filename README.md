@@ -334,9 +334,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Support & Contact
 
-- ** Bug Reports**: [Open an issue](https://github.com/your-org/kenyan-fantasy-league/issues)
-- ** Feature Requests**: [Start a discussion](https://github.com/your-org/kenyan-fantasy-league/discussions)
-- ** Questions**: Check our [documentation](docs/) or [discussions](https://github.com/your-org/kenyan-fantasy-league/discussions)
+- **Bug Reports**: [Open an issue](https://github.com/your-org/kenyan-fantasy-league/issues)
+- **Feature Requests**: [Start a discussion](https://github.com/your-org/kenyan-fantasy-league/discussions)
+- **Questions**: Check our [documentation](docs/) or [discussions](https://github.com/your-org/kenyan-fantasy-league/discussions)
 
 ---
 
