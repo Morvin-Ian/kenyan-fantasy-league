@@ -290,9 +290,9 @@ def update_fixture_task(selenium_manager, live_data):
                         f"Disabled PeriodicTask for postponed fixture {fixture.id}"
                     )
 
-    stale_fixtures = Fixture.objects.filter(status__in=["completed", "postponed"]).exclude(
-        id__in=matched_fixture_ids
-    )
+    stale_fixtures = Fixture.objects.filter(
+        status__in=["completed", "postponed"]
+    ).exclude(id__in=matched_fixture_ids)
 
     for fixture in stale_fixtures:
         task_name = f"monitor_fixture_{fixture.id}_{fixture.gameweek.number if fixture.gameweek else 'N/A'}"
@@ -304,7 +304,8 @@ def update_fixture_task(selenium_manager, live_data):
             logger.info(
                 f"Disabled PeriodicTask for stale fixture {fixture.id} ({fixture.status})"
             )
-            
+
+
 @shared_task
 def monitor_fixture_score(fixture_id=None):
     selenium_manager = None
