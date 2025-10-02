@@ -344,6 +344,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with for the Kenyan football community**
 
-[Star this project](https://github.com/your-org/kenyan-fantasy-league) • [🍴 Fork it](https://github.com/your-org/kenyan-fantasy-league/fork) • [Share it](https://twitter.com/intent/tweet?text=Check%20out%20Kenyan%20Fantasy%20League%21&url=https%3A//github.com/your-org/kenyan-fantasy-league)
+[Star this project](https://github.com/your-org/kenyan-fantasy-league) • [Fork it](https://github.com/your-org/kenyan-fantasy-league/fork) • [Share it](https://twitter.com/intent/tweet?text=Check%20out%20Kenyan%20Fantasy%20League%21&url=https%3A//github.com/your-org/kenyan-fantasy-league)
 
 </div>
