@@ -94,7 +94,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="lineups")
     def lineups(self, request, id=None):
-        fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
+        fixture = Fixture.objects.get(id=request.data.get('fixture_id'))
         if request.method == "GET":
             qs = (
                 FixtureLineup.objects.filter(fixture=fixture)
@@ -464,16 +464,15 @@ class PlayerViewSet(ModelViewSet):
 
 class MatchEventsViewSet(ModelViewSet):
     permission_classes = [IsAdminUser]
-    queryset = Fixture.objects.all()
+    queryset = Fixture.objects.all() 
     serializer_class = FixtureSerializer
 
     @action(detail=False, methods=["post"], url_path="update-assists")
     def update_assists(self, request, pk=None):
         """
-        Update assists for players in a fixture
-
         Request body:
         {
+            "fixture_id":"uuid",
             "assists": [
                 {"player_name": "John Doe", "team_id": "uuid", "count": 1},
                 {"player_name": "Jane Smith", "team_id": "uuid", "count": 2}
@@ -481,7 +480,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
+            fixture = Fixture.objects.get(id=request.data.get('fixture_id'))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -585,7 +584,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
+            fixture = Fixture.objects.get(id=request.data.get('fixture_id'))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -641,7 +640,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
+            fixture = Fixture.objects.get(id=request.data.get('fixture_id'))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -757,6 +756,7 @@ class MatchEventsViewSet(ModelViewSet):
         """
         Request body:
         {
+            "fixture_id":"uuid",
             "minutes": [
                 {"player_name": "John Doe", "team_id": "uuid", "minutes_played": 90},
                 {"player_name": "Jane Smith", "team_id": "uuid", "minutes_played": 65}
@@ -764,7 +764,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
+            fixture = Fixture.objects.get(id=request.data.get('fixture_id'))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -868,7 +868,7 @@ class MatchEventsViewSet(ModelViewSet):
         }
         """
         try:
-            fixture = Fixture.objects.get(id=request.data.get("fixture_id"))
+            fixture = Fixture.objects.get(id=request.data.get('fixture_id'))
         except Fixture.DoesNotExist:
             return Response(
                 {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
@@ -912,6 +912,7 @@ class MatchEventsViewSet(ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
 
     def _process_card(self, fixture, card_data, field_name, card_type):
         player_name = card_data.get("player_name", "").strip()
@@ -1059,7 +1060,7 @@ class MatchEventsViewSet(ModelViewSet):
             points += performance.goals_scored * 6
         elif position == "MID":
             points += performance.goals_scored * 5
-        else:
+        else:  
             points += performance.goals_scored * 4
 
         points += performance.assists * 3

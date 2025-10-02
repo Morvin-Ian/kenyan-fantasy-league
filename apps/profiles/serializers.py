@@ -15,7 +15,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
     full_name = serializers.SerializerMethodField(read_only=True)
     country = CountryField(name_only=True)
-    profile_photo = serializers.SerializerMethodField(read_only=True)
+    profile_photo = serializers.ImageField(required=False, allow_null=True)
 
     class Meta:
         model = Profile
@@ -42,7 +42,10 @@ class ProfileSerializer(serializers.ModelSerializer):
 
         return f"{first_name.title()} {last_name.title()}"
 
-    def get_profile_photo(self, obj):
-        if obj.profile_photo:
-            return obj.profile_photo.url
-        return None
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.profile_photo:
+            data["profile_photo"] = instance.profile_photo.url
+        else:
+            data["profile_photo"] = None
+        return data
