@@ -1,4 +1,4 @@
-# 🇰🇪 Kenyan Fantasy League (KFL)
+# Kenyan Fantasy League (KFL)
 
 <div align="center">
 
@@ -18,20 +18,20 @@
 
 ---
 
-## 🏆 About
+## About
 
 **Kenyan Fantasy League (KFL)** is a modern, full-stack fantasy football platform designed specifically for Kenyan Premier League enthusiasts. Create your dream team, compete with friends, and experience the thrill of fantasy football with real KPL data.
 
-### 🎯 Why KFL?
+### Why KFL?
 
-- **🇰🇪 Local Focus**: Built for Kenyan football fans with KPL integration
-- **⚡ Real-time Data**: Live scores, player stats, and league standings
-- **🎮 Interactive**: Modern, responsive interface built with Vue.js
-- **🔐 Secure**: JWT authentication and robust API security
-- **📱 Mobile-first**: Optimized for all devices
-- **🚀 Fast**: Docker-based deployment, Redis caching, async tasks
+- ** Local Focus**: Built for Kenyan football fans with KPL integration
+- ** Real-time Data**: Live scores, player stats, and league standings
+- ** Interactive**: Modern, responsive interface built with Vue.js
+- ** Secure**: JWT authentication and robust API security
+- ** Mobile-first**: Optimized for all devices
+- ** Fast**: Docker-based deployment, Redis caching, async tasks
 
-## ✨ Features
+##  Features
 
 ### Core Functionality
 - **Fantasy Team Management**: Create and manage your fantasy team with budget constraints
@@ -48,13 +48,13 @@
 - **User Profiles**: Customizable user profiles with stats and achievements
 
 ### Upcoming Features
-- 🔄 Live score updates during matches
-- 📊 Advanced statistics and analytics
-- 🏅 Leagues and mini-competitions
-- 💬 Social features and community interaction
-- 📱 Mobile application
+- Live score updates during matches
+- Advanced statistics and analytics
+- Leagues and mini-competitions
+- Social features and community interaction
+- Mobile application
 
-## 🚀 Quick Start
+## Quick Start
 
 Get KFL running locally in 5 minutes:
 
@@ -89,16 +89,16 @@ docker compose up --build -d
 make migrate
 make superuser
 
-# 🎉 You're ready!
+# You're ready!
 ```
 
 ### 4. Access the Platform
-- **🌐 Frontend**: [http://localhost:3000](http://localhost:3000)
-- **⚙️ API**: [http://localhost:8080/api/v1/](http://localhost:8080/api/v1/)
-- **👨‍💼 Admin**: [http://localhost:8080/guardian/](http://localhost:8080/guardian/)
-- **📊 Monitoring**: [http://localhost:5557](http://localhost:5557) (Flower)
+- ** Frontend**: [http://localhost:3000](http://localhost:3000)
+- ** API**: [http://localhost:8080/api/v1/](http://localhost:8080/api/v1/)
+- ** Admin**: [http://localhost:8080/guardian/](http://localhost:8080/guardian/)
+- ** Monitoring**: [http://localhost:5557](http://localhost:5557) (Flower)
 
-## 🏗️ Architecture
+##  Architecture
 
 KFL is built with a modern, scalable architecture:
 
@@ -129,18 +129,18 @@ KFL is built with a modern, scalable architecture:
 - **Testing**: Pytest, Vue Test Utils
 - **Documentation**: Sphinx with MyST
 
-## 📚 Documentation
+## Documentation
 
 Comprehensive documentation is available:
 
 | Guide | Description |
 |-------|-------------|
-| [📖 Full Documentation](docs/) | Complete project documentation |
-| [🚀 Installation Guide](docs/source/installation.md) | Detailed setup instructions |
-| [⚙️ Configuration](docs/source/configuration.md) | Environment and settings |
-| [🏗️ Architecture](docs/source/architecture.md) | System design and patterns |
-| [🔌 API Reference](docs/source/api.md) | Complete API documentation |
-| [🤝 Contributing](docs/source/contributing.md) | Development guidelines |
+| [ Full Documentation](docs/) | Complete project documentation |
+| [ Installation Guide](docs/source/installation.md) | Detailed setup instructions |
+| [ Configuration](docs/source/configuration.md) | Environment and settings |
+| [ Architecture](docs/source/architecture.md) | System design and patterns |
+| [ API Reference](docs/source/api.md) | Complete API documentation |
+| [ Contributing](docs/source/contributing.md) | Development guidelines |
 
 ### Build Documentation Locally
 ```bash
@@ -149,7 +149,7 @@ make html
 # Open docs/build/html/index.html
 ```
 
-## 🔌 API
+## API
 
 KFL provides a comprehensive REST API:
 
@@ -186,7 +186,7 @@ const response = await fetch('/api/v1/kpl/teams/', {
 const teams = await response.json();
 ```
 
-## 🧪 Development
+##  Development
 
 ### Quick Development Setup
 ```bash
@@ -226,7 +226,7 @@ kenyan-fantasy-league/
 └── docker/                # Docker configurations
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions from the community! Here's how to get started:
 
@@ -241,12 +241,12 @@ We welcome contributions from the community! Here's how to get started:
 8. **Open** a Pull Request
 
 ### Areas for Contribution
-- 🐛 **Bug fixes** - Help improve stability
-- ✨ **New features** - Enhance functionality
-- 📚 **Documentation** - Improve guides and API docs
-- 🎨 **UI/UX** - Better user experience
-- 🧪 **Testing** - Increase test coverage
-- 🔧 **DevOps** - CI/CD and deployment improvements
+-  **Bug fixes** - Help improve stability
+-  **New features** - Enhance functionality
+-  **Documentation** - Improve guides and API docs
+-  **UI/UX** - Better user experience
+-  **Testing** - Increase test coverage
+-  **DevOps** - CI/CD and deployment improvements
 
 ### Development Guidelines
 - Follow [PEP 8](https://pep8.org/) for Python code
@@ -257,26 +257,8 @@ We welcome contributions from the community! Here's how to get started:
 
 Read our full [Contributing Guide](docs/source/contributing.md) for detailed information.
 
-## 📊 Project Status
 
-### Current Version: 1.0.0-beta
-
-### Recent Updates
-- ✅ Core fantasy team management
-- ✅ KPL data integration with web scraping
-- ✅ User authentication and profiles
-- ✅ Responsive Vue.js frontend
-- ✅ Docker containerization
-- ✅ Comprehensive API
-- ✅ Admin dashboard
-
-### Roadmap
-- 🔄 **Q1 2025**: Live score integration, mobile app beta
-- 🔄 **Q2 2025**: Social features, mini-leagues
-- 🔄 **Q3 2025**: Advanced analytics, premium features
-- 🔄 **Q4 2025**: Multi-league support, community features
-
-## 🛠️ Common Commands
+##  Common Commands
 
 ```bash
 # Essential commands (with Makefile)
@@ -304,7 +286,7 @@ npm run test         # Run frontend tests
 npm run lint         # Lint frontend code
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -339,29 +321,29 @@ docker compose up -d
 
 Need more help? Check our [Installation Guide](docs/source/installation.md) or [Troubleshooting Documentation](docs/source/troubleshooting.md).
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Kenyan Premier League** for inspiring this project
 - **Django** and **Vue.js** communities for excellent frameworks
 - **Contributors** who help make this project better
 - **Kenyan football fans** for their passion and support
 
-## 📞 Support & Contact
+## Support & Contact
 
-- **🐛 Bug Reports**: [Open an issue](https://github.com/your-org/kenyan-fantasy-league/issues)
-- **💡 Feature Requests**: [Start a discussion](https://github.com/your-org/kenyan-fantasy-league/discussions)
-- **❓ Questions**: Check our [documentation](docs/) or [discussions](https://github.com/your-org/kenyan-fantasy-league/discussions)
+- ** Bug Reports**: [Open an issue](https://github.com/your-org/kenyan-fantasy-league/issues)
+- ** Feature Requests**: [Start a discussion](https://github.com/your-org/kenyan-fantasy-league/discussions)
+- ** Questions**: Check our [documentation](docs/) or [discussions](https://github.com/your-org/kenyan-fantasy-league/discussions)
 
 ---
 
 <div align="center">
 
-**Built with ❤️ for the Kenyan football community**
+**Built with for the Kenyan football community**
 
-[⭐ Star this project](https://github.com/your-org/kenyan-fantasy-league) • [🍴 Fork it](https://github.com/your-org/kenyan-fantasy-league/fork) • [📢 Share it](https://twitter.com/intent/tweet?text=Check%20out%20Kenyan%20Fantasy%20League%21&url=https%3A//github.com/your-org/kenyan-fantasy-league)
+[Star this project](https://github.com/your-org/kenyan-fantasy-league) • [🍴 Fork it](https://github.com/your-org/kenyan-fantasy-league/fork) • [Share it](https://twitter.com/intent/tweet?text=Check%20out%20Kenyan%20Fantasy%20League%21&url=https%3A//github.com/your-org/kenyan-fantasy-league)
 
 </div>
