@@ -24,12 +24,12 @@
 
 ### Why KFL?
 
-- ** Local Focus**: Built for Kenyan football fans with KPL integration
-- ** Real-time Data**: Live scores, player stats, and league standings
-- ** Interactive**: Modern, responsive interface built with Vue.js
-- ** Secure**: JWT authentication and robust API security
-- ** Mobile-first**: Optimized for all devices
-- ** Fast**: Docker-based deployment, Redis caching, async tasks
+- **Local Focus**: Built for Kenyan football fans with KPL integration
+- **Real-time Data**: Live scores, player stats, and league standings
+- **Interactive**: Modern, responsive interface built with Vue.js
+- **Secure**: JWT authentication and robust API security
+- **Mobile-first**: Optimized for all devices
+- **Fast**: Docker-based deployment, Redis caching, async tasks
 
 ##  Features
 
