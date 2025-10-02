@@ -93,10 +93,10 @@ make superuser
 ```
 
 ### 4. Access the Platform
-- ** Frontend**: [http://localhost:3000](http://localhost:3000)
-- ** API**: [http://localhost:8080/api/v1/](http://localhost:8080/api/v1/)
-- ** Admin**: [http://localhost:8080/guardian/](http://localhost:8080/guardian/)
-- ** Monitoring**: [http://localhost:5557](http://localhost:5557) (Flower)
+- **Frontend**: [http://localhost:3000](http://localhost:3000)
+- **API**: [http://localhost:8080/api/v1/](http://localhost:8080/api/v1/)
+- **Admin**: [http://localhost:8080/guardian/](http://localhost:8080/guardian/)
+- **Monitoring**: [http://localhost:5557](http://localhost:5557) (Flower)
 
 ##  Architecture
 
