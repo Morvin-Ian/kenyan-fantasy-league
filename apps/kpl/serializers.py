@@ -1,3 +1,4 @@
+from django.db import models
 from rest_framework import serializers
 
 from apps.kpl.models import (
@@ -37,6 +38,8 @@ class FixtureSerializer(serializers.ModelSerializer):
     gameweek = serializers.CharField(source="gameweek.number", read_only=True)
     is_active = serializers.SerializerMethodField(read_only=True)
     lineups = serializers.SerializerMethodField(read_only=True)
+    events_summary = serializers.SerializerMethodField(read_only=True)
+    events = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Fixture
@@ -49,9 +52,95 @@ class FixtureSerializer(serializers.ModelSerializer):
         return False
 
     def get_lineups(self, obj):
-        """Attach lineups (home & away) with starters and bench"""
         qs = obj.lineups.select_related("team").prefetch_related("players__player")
         return FixtureLineupDetailSerializer(qs, many=True).data
+
+    def get_events_summary(self, obj):
+        performances = obj.performances.aggregate(
+            total_goals=models.Sum('goals_scored'),
+            total_assists=models.Sum('assists'),
+            total_yellow_cards=models.Sum('yellow_cards'),
+            total_red_cards=models.Sum('red_cards'),
+            total_penalties_saved=models.Sum('penalties_saved'),
+            total_penalties_missed=models.Sum('penalties_missed'),
+        )
+        
+        return {
+            'goals': performances['total_goals'] or 0,
+            'assists': performances['total_assists'] or 0,
+            'yellow_cards': performances['total_yellow_cards'] or 0,
+            'red_cards': performances['total_red_cards'] or 0,
+            'penalties_saved': performances['total_penalties_saved'] or 0,
+            'penalties_missed': performances['total_penalties_missed'] or 0,
+        }
+
+    def get_events(self, obj):
+        performances = obj.performances.select_related('player', 'player__team').all()
+        return self._compile_events_from_performances(performances)
+
+    def _compile_events_from_performances(self, performances):
+        events = []
+        
+        for performance in performances:
+            team_data = {
+                'player_name': performance.player.name,
+                'player_id': performance.player.id,
+                'team_id': performance.player.team.id,
+                'team_name': performance.player.team.name,
+            }
+            
+            # Goals
+            for i in range(performance.goals_scored):
+                events.append({
+                    **team_data,
+                    'type': 'goal',
+                    'event_id': f"goal_{performance.id}_{i}",
+                })
+            
+            # Assists
+            for i in range(performance.assists):
+                events.append({
+                    **team_data,
+                    'type': 'assist',
+                    'event_id': f"assist_{performance.id}_{i}",
+                })
+            
+            # Yellow Cards
+            for i in range(performance.yellow_cards):
+                events.append({
+                    **team_data,
+                    'type': 'yellow_card',
+                    'event_id': f"yellow_{performance.id}_{i}",
+                })
+            
+            # Red Cards
+            for i in range(performance.red_cards):
+                events.append({
+                    **team_data,
+                    'type': 'red_card',
+                    'event_id': f"red_{performance.id}_{i}",
+                })
+            
+            # Penalties Saved (for goalkeepers)
+            for i in range(performance.penalties_saved):
+                events.append({
+                    **team_data,
+                    'type': 'penalty_saved',
+                    'event_id': f"pen_saved_{performance.id}_{i}",
+                })
+            
+            # Penalties Missed
+            for i in range(performance.penalties_missed):
+                events.append({
+                    **team_data,
+                    'type': 'penalty_missed',
+                    'event_id': f"pen_missed_{performance.id}_{i}",
+                })
+        
+        type_order = {'goal': 0, 'assist': 1, 'yellow_card': 2, 'red_card': 3, 'penalty_saved': 4, 'penalty_missed': 5}
+        events.sort(key=lambda x: type_order.get(x['type'], 999))
+        
+        return events
 
 
 class PlayerSerializer(serializers.ModelSerializer):

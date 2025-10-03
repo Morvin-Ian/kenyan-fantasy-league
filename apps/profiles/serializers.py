@@ -16,6 +16,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField(read_only=True)
     country = CountryField(name_only=True)
     profile_photo = serializers.ImageField(required=False, allow_null=True)
+    is_admin = fields.BooleanField(source="user.is_staff", read_only=True)
 
     class Meta:
         model = Profile
@@ -31,6 +32,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gender",
             "country",
             "city",
+            "is_admin"
         )
 
     def get_full_name(self, obj):

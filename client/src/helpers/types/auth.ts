@@ -10,6 +10,7 @@ export interface User {
   gender: string;
   country: string;
   city: string;
+  is_admin: boolean;
 }
 
 export interface LoginCredentials {

@@ -16,7 +16,39 @@ export interface StartingEleven {
   midfielders: FantasyPlayer[];
   forwards: FantasyPlayer[];
 }
+export interface Fixture {
+  id: string;
+  status: string;
+  home_team: Team;
+  away_team: Team;
+  home_team_score: number | null;
+  away_team_score: number | null;
+  venue: string;
+  is_active: boolean;
+  match_date: string;
+  gameweek?: string;
+  lineups: Lineup[];
+  events?: MatchEvent[];
+  events_summary?: {
+    goals: number;
+    assists: number;
+    yellow_cards: number;
+    red_cards: number;
+    penalties_saved: number;
+    penalties_missed: number;
+  };
+}
 
+export interface MatchEvent {
+  type: string;
+  player_name: string;
+  player_id: string;
+  team_id: string;
+  team_name: string;
+  count?: number;
+  minute?: number;
+  event_id?: string;
+}
 export interface StartingElevenRef {
   goalkeeper: FantasyPlayer | null;
   defenders: FantasyPlayer[];
@@ -80,7 +112,27 @@ export interface Fixture {
   is_active: boolean;
   match_date: string;
   gameweek?: string;
-  lineups: Lineup[]; 
+  lineups: Lineup[];
+  events?: MatchEvent[];
+  events_summary?: {
+    goals: number;
+    assists: number;
+    yellow_cards: number;
+    red_cards: number;
+    penalties_saved: number;
+    penalties_missed: number;
+  };
+}
+
+export interface MatchEvent {
+  type: string;
+  player_name: string;
+  player_id: string;
+  team_id: string;
+  team_name: string;
+  count?: number;
+  minute?: number;
+  event_id?: string;
 }
 
 export interface LineupStatus {

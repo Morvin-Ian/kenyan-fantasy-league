@@ -34,25 +34,27 @@
       </div>
     </div>
     <div v-else class="space-y-3 sm:space-y-4">
-        <FixtureCard
-            v-for="fixture in fixtures"
-            :key="fixture.id"
-            :match="fixture"
-            @open-upload="openUploadModal"
-            @view-lineup="openLineupModal"
-        />
+      <FixtureCard
+        v-for="fixture in paginatedFixtures"
+        :key="fixture.id"
+        :match="fixture"
+        @open-upload="openUploadModal"
+        @view-lineup="openLineupModal"
+        @open-events="openEventsModal"
+        @view-events="openViewEventsModal" 
+      />
 
-        <LineUpModal
-            v-if="selectedFixture"
-            :fixture="selectedFixture"
-            @close="selectedFixture = null"
-        />    
+      <LineUpModal
+        v-if="selectedFixture"
+        :fixture="selectedFixture"
+        @close="selectedFixture = null"
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import {ref, computed} from "vue"
+import { ref, computed } from "vue"
 import FixtureCard from '@/components/Fixtures/FixtureCard.vue';
 import LineUpModal from "./LineUpModal.vue";
 import type { Fixture } from "@/helpers/types/team";
@@ -68,11 +70,14 @@ const selectedFixture = ref<Fixture | null>(null);
 
 const emit = defineEmits<{
   (e: 'open-upload', fixture: any): void;
+  (e: 'open-events', fixture: any): void;
+  (e: 'view-events', fixture: any): void;  
 }>();
 
 const paginatedFixtures = computed(() => {
   const start = (props.currentPage - 1) * props.itemsPerPage;
-  return props.fixtures.slice(start, start + props.itemsPerPage);
+  const end = start + props.itemsPerPage;
+  return props.fixtures.slice(start, end);
 });
 
 const openLineupModal = (fixture: Fixture) => {
@@ -81,5 +86,13 @@ const openLineupModal = (fixture: Fixture) => {
 
 const openUploadModal = (fixture: any) => {
   emit('open-upload', fixture);
+};
+
+const openEventsModal = (fixture: Fixture) => {
+  emit('open-events', fixture); 
+};
+
+const openViewEventsModal = (fixture: Fixture) => {
+  emit('view-events', fixture); 
 };
 </script>

@@ -40,7 +40,7 @@ export const useKplStore = defineStore('kpl', {
 
     async fetchFixtures(includeLineups: boolean = true) {
       try {
-        const query = includeLineups ? "?include=lineups=true" : "";
+        const query = includeLineups ? "" : "";
         let allFixtures: any[] = [];
         let currentPage = 1;
         let shouldFetchNext = true;
