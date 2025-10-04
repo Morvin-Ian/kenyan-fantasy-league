@@ -119,7 +119,7 @@ graph TD
         subgraph "Components"
             TeamComponents[Team/]
             HomeComponents[Home/]
-            Reusables[reusables/]
+            Common[common/]
         end
         
         subgraph "State Management"

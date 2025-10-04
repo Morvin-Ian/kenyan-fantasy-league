@@ -10,8 +10,8 @@ from django.utils import timezone
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from selenium.webdriver.common.by import By
 
-from apps.fantasy.tasks.player_performance import update_player_performance
-from apps.kpl.models import Fixture, Gameweek, Player
+from apps.fantasy.tasks.player_performance import update_complete_player_performance
+from apps.kpl.models import Fixture, Gameweek
 from config.settings import base
 from util.selenium import SeleniumManager
 
@@ -266,7 +266,7 @@ def update_fixture_task(selenium_manager, live_data):
                             selenium_manager, data["link"]
                         )
                         if home_scorers or away_scorers:
-                            update_player_performance(
+                            update_complete_player_performance(
                                 fixture, home_scorers, away_scorers
                             )
                             logger.info(
@@ -398,7 +398,7 @@ def monitor_fixture_score(fixture_id=None):
                                 selenium_manager, data["link"]
                             )
                             if home_scorers or away_scorers:
-                                update_player_performance(
+                                update_complete_player_performance(
                                     fixture, home_scorers, away_scorers
                                 )
                                 goals_updated += 1

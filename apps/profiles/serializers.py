@@ -32,7 +32,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gender",
             "country",
             "city",
-            "is_admin"
+            "is_admin",
         )
 
     def get_full_name(self, obj):

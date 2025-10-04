@@ -36,7 +36,7 @@
       </div>
 
       <div
-      v-if="player.gameweek_points == null"
+      v-if="(player.gameweek_points == null) || (player.gameweek_points === 0)"
       class="px-1 min-h-[1rem] flex items-center justify-center">
         <p class="text-white text-[0.6rem] xs:text-xs sm:text-sm font-semibold truncate max-w-full relative">
           <span class="name-gradient">{{ player.name }}</span>

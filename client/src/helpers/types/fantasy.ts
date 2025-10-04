@@ -3,6 +3,7 @@ export interface FantasyTeam {
   id: string;
   name: string;
   budget: string;
+  balance: number;
   gameweek: number;
   formation: string;
   free_transfers: number;

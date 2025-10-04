@@ -13,7 +13,7 @@
         </div>
         <div class="text-right flex-shrink-0">
           <div class="text-xs text-gray-400 uppercase tracking-wide">Gameweek</div>
-          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ currentGameweek }}</div>
+          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ fantasyStore.userTeam[0].gameweek }}</div>
         </div>
       </div>
     </div>
@@ -30,9 +30,14 @@
       <div class="space-y-1 sm:space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Balance</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">KES {{ inBank.toFixed(1) }}m</span>
+          <span class="text-xs sm:text-sm font-semibold text-green-600">KES {{ fantasyStore.userTeam[0].balance}}m</span>
         </div>
         <div class="flex items-center justify-between">
+          <span class="text-xs sm:text-sm text-gray-600">Formation</span>
+          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ fantasyStore.userTeam[0].formation
+          }}</span>
+        </div>
+            <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Free Transfers</span>
           <span class="text-xs sm:text-sm font-semibold text-green-600">{{ fantasyStore.userTeam[0].free_transfers
           }}</span>
@@ -63,25 +68,7 @@
         </div>
 
         <div
-          class="group bg-gradient-to-r from-green-500 to-green-600 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <div class="text-green-100 text-xs uppercase tracking-wide mb-1">Average</div>
-              <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">{{ averagePoints.toFixed(1) }}</div>
-            </div>
-            <div
-              class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                </path>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div
-          class="group bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          class="group bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
           <div class="flex items-center justify-between">
             <div class="min-w-0 flex-1">
               <div class="text-purple-100 text-xs uppercase tracking-wide mb-1">Best Week</div>
@@ -97,22 +84,6 @@
           </div>
         </div>
 
-        <div
-          class="group bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1">
-              <div class="text-orange-100 text-xs uppercase tracking-wide mb-1">Rank</div>
-              <div class="font-bold text-base sm:text-lg lg:text-xl truncate">{{ formatRank(overallRank) }}</div>
-            </div>
-            <div
-              class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
-              <svg class="w-3 h-3 sm:w-4 sm:h-4 lg:w-5 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M16 4v12l-4-2-4 2V4M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Recent Form -->
@@ -263,10 +234,7 @@ const props = defineProps<{
   recentForm?: number[];
 }>();
 
-// Default values for optional props
-const teamValue = computed(() => props.teamValue || 100.0);
 const inBank = computed(() => props.inBank || 0.5);
-const currentGameweek = computed(() => props.currentGameweek || 1);
 const recentForm = computed(() => props.recentForm || [65, 78, 45, 89, 56]);
 
 const formatRank = (rank: number | null) => {

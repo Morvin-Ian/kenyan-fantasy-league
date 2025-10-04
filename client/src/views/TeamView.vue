@@ -130,7 +130,7 @@ import { ref, computed, onMounted, watch, defineAsyncComponent } from "vue";
 import memoizeOne from 'memoize-one';
 import Pitch from "@/components/Team/Pitch.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
-import MessageAlert from "@/components/reusables/MessageAlert.vue";
+import MessageAlert from "@/components/common/MessageAlert.vue";
 import type { StartingEleven, TeamData, Player as KplPlayer } from "@/helpers/types/team";
 import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
 import { useAuthStore } from "@/stores/auth";

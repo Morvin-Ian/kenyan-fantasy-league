@@ -9,73 +9,27 @@ from config.settings import base
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
-
-def update_player_performance(fixture, home_scorers, away_scorers):
-    from apps.kpl.tasks.fixtures import find_player
-
-    PlayerPerformance.objects.filter(fixture=fixture).delete()
-
-    def process_scorers(scorers, scoring_team, opponent_team):
-        for player_data in scorers:
-            name = player_data["name"].strip()
-            if not name:
-                continue
-
-            goal_minutes = player_data.get("minutes", [])
-            is_own_goal = player_data.get("is_own_goal", False)
-
-            player_obj = find_player(name)
-
-            # If not found, create placeholder player
-            if not player_obj:
-                team = opponent_team if is_own_goal else scoring_team
-                player_obj = Player.objects.create(
-                    name=name,
-                    team=team,
-                    position="FWD",
-                    current_value=6.00 if not is_own_goal else 4.00,
-                )
-                logger.info(f"Created new player: {name} for team {team.name}")
-            else:
-                # Ensure player is assigned to the right team
-                correct_team = opponent_team if is_own_goal else scoring_team
-                if player_obj.team != correct_team:
-                    logger.info(
-                        f"Reassigning {name}: {player_obj.team.name} → {correct_team.name}"
-                    )
-                    player_obj.team = correct_team
-                    player_obj.save(update_fields=["team"])
-
-            performance = PlayerPerformance.objects.create(
-                player=player_obj,
-                gameweek=fixture.gameweek,
-                fixture=fixture,
-            )
-
-            if is_own_goal:
-                num_own_goals = len(goal_minutes)
-                performance.own_goals = num_own_goals
-                performance.fantasy_points = -num_own_goals * 2
-                logger.info(f"Own goal by {name}: {num_own_goals}")
-            else:
-                num_goals = len(goal_minutes)
-                performance.goals_scored = num_goals
-                performance.fantasy_points = num_goals * 4
-                performance.minutes_played = 90 if num_goals > 0 else 0
-                logger.info(f"Goal by {name}: {num_goals}")
-
-            performance.save()
-
-    with transaction.atomic():
-        process_scorers(home_scorers, fixture.home_team, fixture.away_team)
-        process_scorers(away_scorers, fixture.away_team, fixture.home_team)
-
-    logger.info(
-        f"Player performances updated for fixture {fixture.id} ({fixture.home_team} vs {fixture.away_team})"
-    )
+### SAMPLE STRUCTURE FOR match_data PARAMETER
+match_data = {
+    "home_assists": ["Mohamed Salah", "Darwin Nunez", "Trent Alexander-Arnold"],
+    "away_assists": ["Kevin De Bruyne", "Phil Foden"],
+    "yellow_cards": {
+        "home": ["Virgil van Dijk", "Andy Robertson"],
+        "away": ["Rodri", "Kyle Walker", "Erling Haaland"],
+    },
+    "red_cards": {"home": [], "away": ["John Stones"]},  # Empty if no red cards
+    "saves": {"home": {"Alisson Becker": 4}, "away": {"Ederson": 2}},
+    "penalties_saved": {
+        "home": {"Alisson Becker": 1},
+        "away": {},  # Empty if no penalty saves
+    },
+    "penalties_missed": {"home": {"Mohamed Salah": 1}, "away": {"Erling Haaland": 1}},
+}
 
 
-def update_complete_player_performance(fixture, match_data=None):
+def update_complete_player_performance(
+    fixture, home_scorers, away_scorers, match_data=None
+):
     from apps.kpl.tasks.fixtures import find_player
 
     player_stats = {}
@@ -91,12 +45,11 @@ def update_complete_player_performance(fixture, match_data=None):
             player_obj = Player.objects.create(
                 name=name,
                 team=team,
-                position="FWD",  # Default, should be updated manually
+                position="FWD",
                 current_value=6.00 if not is_own_goal else 4.00,
             )
             logger.info(f"Created new player: {name} for team {team.name}")
         else:
-            # Ensure correct team assignment
             if player_obj.team != team:
                 logger.info(f"Reassigning {name}: {player_obj.team.name} → {team.name}")
                 player_obj.team = team
@@ -123,22 +76,13 @@ def update_complete_player_performance(fixture, match_data=None):
         return player_stats[player_obj.id]
 
     def process_scorers(scorers, scoring_team, opponent_team):
-        if not scorers:
-            return
-
         for player_data in scorers:
-            if isinstance(player_data, str):
-                name = player_data
-                is_own_goal = False
-                goal_count = 1
-            else:
-                name = player_data.get("name", "").strip()
-                is_own_goal = player_data.get("is_own_goal", False)
-                goal_minutes = player_data.get("minutes", [])
-                goal_count = len(goal_minutes) if goal_minutes else 1
-
+            name = player_data["name"].strip()
             if not name:
                 continue
+
+            goal_minutes = player_data.get("minutes", [])
+            is_own_goal = player_data.get("is_own_goal", False)
 
             correct_team = opponent_team if is_own_goal else scoring_team
             player_obj = get_or_create_player(name, correct_team, is_own_goal)
@@ -146,9 +90,13 @@ def update_complete_player_performance(fixture, match_data=None):
             if player_obj:
                 stats = init_player_stats(player_obj)
                 if is_own_goal:
-                    stats["own_goals"] += goal_count
+                    num_own_goals = len(goal_minutes) if goal_minutes else 1
+                    stats["own_goals"] += num_own_goals
+                    logger.info(f"Own goal by {name}: {num_own_goals}")
                 else:
-                    stats["goals_scored"] += goal_count
+                    num_goals = len(goal_minutes) if goal_minutes else 1
+                    stats["goals_scored"] += num_goals
+                    logger.info(f"Goal by {name}: {num_goals}")
 
     def process_lineup_players(lineup):
         if not lineup:
@@ -228,12 +176,9 @@ def update_complete_player_performance(fixture, match_data=None):
     with transaction.atomic():
         PlayerPerformance.objects.filter(fixture=fixture).delete()
 
-        if hasattr(fixture, "home_scorers") and fixture.home_scorers:
-            process_scorers(fixture.home_scorers, fixture.home_team, fixture.away_team)
-        if hasattr(fixture, "away_scorers") and fixture.away_scorers:
-            process_scorers(fixture.away_scorers, fixture.away_team, fixture.home_team)
+        process_scorers(home_scorers, fixture.home_team, fixture.away_team)
+        process_scorers(away_scorers, fixture.away_team, fixture.home_team)
 
-        # Process lineups
         try:
             home_lineup = fixture.lineups.filter(team=fixture.home_team).first()
             away_lineup = fixture.lineups.filter(team=fixture.away_team).first()

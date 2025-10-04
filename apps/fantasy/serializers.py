@@ -2,11 +2,14 @@ from rest_framework import serializers
 
 from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance
 from apps.kpl.models import Gameweek
+from django.db.models import Sum
 
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     gameweek = serializers.SerializerMethodField()
+    balance = serializers.SerializerMethodField(read_only=True)
+    total_points = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = FantasyTeam
@@ -19,11 +22,42 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             "gameweek",
             "free_transfers",
             "transfer_budget",
+            "balance",
         )
 
     def get_gameweek(self, obj):
         active_gameweek = Gameweek.objects.filter(is_active=True).first()
         return active_gameweek.number if active_gameweek else None
+
+    def get_balance(self, obj):
+        total_players_value = (
+            obj.players.aggregate(total_value=Sum("current_value"))["total_value"]
+            or 0.00
+        )
+
+        budget_value = obj.budget
+        return budget_value - total_players_value
+
+    def get_total_points(self, obj):
+        """
+        Calculate total points by summing fantasy points of all players in this team
+        for the active gameweek
+        """
+
+        active_gameweek = Gameweek.objects.filter(is_active=True).first()
+        if not active_gameweek:
+            return 0
+
+        player_ids = obj.players.values_list("player_id", flat=True)
+
+        total_points = (
+            PlayerPerformance.objects.filter(
+                player_id__in=player_ids, gameweek=active_gameweek
+            ).aggregate(total=Sum("fantasy_points"))["total"]
+            or 0
+        )
+
+        return total_points
 
 
 class FantasyPlayerSerializer(serializers.ModelSerializer):
@@ -36,6 +70,10 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
     jersey_image = serializers.SerializerMethodField(read_only=True)
     player = serializers.UUIDField(source="player.id", read_only=True)
     fantasy_team = serializers.UUIDField(source="fantasy_team.id", read_only=True)
+
+    total_points = serializers.SerializerMethodField(read_only=True)
+    current_value = serializers.SerializerMethodField(read_only=True)
+    gameweek_points = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = FantasyPlayer
@@ -54,6 +92,7 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             "purchase_price",
             "current_value",
             "jersey_image",
+            "gameweek_points",
         )
         read_only_fields = (
             "total_points",
@@ -64,7 +103,36 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             "team",
             "player",
             "fantasy_team",
+            "gameweek_points",
         )
+
+    def get_total_points(self, obj):
+        total = obj.player.performances.aggregate(total_points=Sum("fantasy_points"))[
+            "total_points"
+        ]
+        return total or 0
+
+    def get_current_value(self, obj):
+        return obj.player.current_value
+
+    def get_gameweek_points(self, obj):
+        try:
+            active_gameweek = Gameweek.objects.get(is_active=True)
+            performance = obj.player.performances.filter(
+                gameweek=active_gameweek
+            ).first()
+            return performance.fantasy_points if performance else 0
+
+        except Gameweek.DoesNotExist:
+            return 0
+        except Exception:
+            return 0
+
+    def get_jersey_image(self, obj):
+        team = getattr(obj.player, "team", None)
+        if team and team.jersey_image:
+            return team.jersey_image.url
+        return None
 
     def validate(self, data):
         fantasy_team = data.get("fantasy_team")
@@ -88,12 +156,6 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
                 )
 
         return data
-
-    def get_jersey_image(self, obj):
-        team = getattr(obj.player, "team", None)
-        if team and team.jersey_image:
-            return team.jersey_image.url
-        return None
 
 
 class PlayerPerformanceSerializer(serializers.ModelSerializer):
