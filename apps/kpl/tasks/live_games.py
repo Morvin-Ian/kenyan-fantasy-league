@@ -19,6 +19,7 @@ logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
 
+
 def extract_fixture_data_selenium(selenium_manager, match_url):
     try:
         from .fixtures import find_team
@@ -27,39 +28,37 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
             logger.error("Failed to load match URL")
             return []
 
+        time.sleep(3)
+        
         selectors = [
             (By.XPATH, "//*[@class='Box kiSsvW']"),
-            (By.XPATH, "//*[contains(@class, 'Box')]"),
-            (By.CSS_SELECTOR, "[class*='Box']"),
-            (By.XPATH, "//div[contains(@class, 'Box') or contains(@class, 'box')]"),
-            (By.TAG_NAME, "table"),  # Fallback to any table
+            (By.XPATH, "//div[@class='Box kiSsvW' or contains(@class, 'Box kiSsvW')]"),
+            (By.XPATH, "//div[contains(@class, 'Box') and .//a[contains(@href, '/football/match/')]]"),
         ]
         
         table = None
-        matched_selector = None
         
         for by, selector in selectors:
             logger.info(f"Trying selector: {selector}")
-            table = selenium_manager.wait_for_elements(by, selector, timeout=15, log_page_source=False)
+            table = selenium_manager.wait_for_elements(by, selector, timeout=20)
+            
             if table:
-                matched_selector = selector
-                logger.info(f"Table found using selector: {selector}")
-                break
+                test_links = table.find_elements(By.TAG_NAME, "a")
+                if len(test_links) > 0:
+                    logger.info(f"Table found using selector: {selector} with {len(test_links)} links")
+                    break
+                else:
+                    logger.warning(f"Element found but contains no links, trying next selector")
+                    table = None
         
         if not table:
             logger.error("Fixture table not found with any selector")
-            if selenium_manager.driver:
-                page_source = selenium_manager.driver.page_source
-                logger.debug(f"Page source (first 3000 chars): {page_source[:3000]}")
-                
-                try:
-                    all_divs_with_class = selenium_manager.driver.execute_script("""
-                        const divs = document.querySelectorAll('div[class]');
-                        return Array.from(divs).slice(0, 20).map(d => d.className);
-                    """)
-                    logger.debug(f"Available div classes: {all_divs_with_class}")
-                except Exception as e:
-                    logger.warning(f"Could not extract div classes: {e}")
+            try:
+                screenshot_path = '/app/mediafiles/fixture_page_error.png'
+                selenium_manager.driver.save_screenshot(screenshot_path)
+                logger.error(f"Screenshot saved to {screenshot_path}")
+            except:
+                pass
             return []
 
         fixtures = table.find_elements(By.TAG_NAME, "a")
@@ -69,8 +68,11 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
         for fixture_elem in fixtures:
             try:
                 link = fixture_elem.get_attribute("href")
-                text = fixture_elem.text.strip()
                 
+                if not link or '/football/match/' not in link:
+                    continue
+                
+                text = fixture_elem.text.strip()
                 if not text:
                     continue
                 
@@ -366,7 +368,6 @@ def monitor_fixture_score(fixture_id=None):
             return False
 
         match_url = os.getenv("MATCHES_URL")
-
         if not match_url:
             logger.error("MATCHES_URL not set in environment")
             return False
@@ -374,94 +375,128 @@ def monitor_fixture_score(fixture_id=None):
         try:
             selenium_manager = SeleniumManager()
             driver = selenium_manager.get_driver()
-
             if not driver:
-                logger.error("Failed to initialize Selenium driver on attempt")
+                logger.error("Failed to initialize Selenium driver")
                 return False
 
             live_data = extract_fixture_data_selenium(selenium_manager, match_url)
+            
+            if not live_data:
+                logger.warning("No live data extracted from main page")
+                return False
 
         except Exception as e:
-            logger.error("Selenium initialization attempt failed")
+            logger.error(f"Failed to extract fixture data: {e}", exc_info=True)
             if selenium_manager:
                 try:
                     selenium_manager.close()
                 except:
                     pass
-                selenium_manager = None
             return False
 
         try:
-            updates = 0
-            goals_updated = 0
-
             update_fixture_task(selenium_manager, live_data)
+        except Exception as e:
+            logger.error(f"Error updating fixture tasks: {e}", exc_info=True)
 
-            for fixture in fixtures:
-                fixture_updated = False
-
-                for data in live_data:
-                    home_team = find_team(data["home"])
-                    away_team = find_team(data["away"])
-
-                    if not (
-                        fixture.home_team == home_team
-                        and fixture.away_team == away_team
-                    ):
+        updates = 0
+        goals_updated = 0
+        
+        BATCH_SIZE = 3  
+        fixture_batches = [fixtures[i:i + BATCH_SIZE] for i in range(0, len(fixtures), BATCH_SIZE)]
+        
+        for batch_num, fixture_batch in enumerate(fixture_batches, 1):
+            logger.info(f"Processing batch {batch_num}/{len(fixture_batches)} ({len(fixture_batch)} fixtures)")
+            
+            if batch_num > 1:
+                if selenium_manager:
+                    try:
+                        selenium_manager.close()
+                        time.sleep(2)  
+                    except Exception as e:
+                        logger.warning(f"Error closing previous session: {e}")
+                
+                # Reinitialize for next batch
+                try:
+                    selenium_manager = SeleniumManager()
+                    driver = selenium_manager.get_driver()
+                    if not driver:
+                        logger.error(f"Failed to initialize driver for batch {batch_num}")
                         continue
+                except Exception as e:
+                    logger.error(f"Error creating new session for batch {batch_num}: {e}")
+                    continue
 
-                    old_home_score = fixture.home_team_score
-                    old_away_score = fixture.away_team_score
+            for fixture in fixture_batch:
+                try:
+                    fixture_updated = False
 
-                    if fixture.home_team_score != int(
-                        data["home_score"]
-                    ) or fixture.away_team_score != int(data["away_score"]):
+                    for data in live_data:
+                        home_team = find_team(data["home"])
+                        away_team = find_team(data["away"])
 
-                        fixture.home_team_score = int(data["home_score"])
-                        fixture.away_team_score = int(data["away_score"])
-                        updates += 1
-                        fixture_updated = True
+                        if not (fixture.home_team == home_team and fixture.away_team == away_team):
+                            continue
 
-                        logger.info(
-                            f"Score update: {fixture.home_team.name} {old_home_score}->{fixture.home_team_score}, "
-                            f"{fixture.away_team.name} {old_away_score}->{fixture.away_team_score}"
-                        )
+                        old_home_score = fixture.home_team_score
+                        old_away_score = fixture.away_team_score
 
-                    if data["is_playing"]:
-                        if fixture.status != "live":
-                            fixture.status = "live"
+                        if fixture.home_team_score != int(data["home_score"]) or \
+                           fixture.away_team_score != int(data["away_score"]):
+                            
+                            fixture.home_team_score = int(data["home_score"])
+                            fixture.away_team_score = int(data["away_score"])
+                            updates += 1
                             fixture_updated = True
 
-                        try:
-                            home_scorers, away_scorers = get_goal_scorers(
-                                selenium_manager, data["link"]
-                            )
-                            if home_scorers or away_scorers:
-                                update_complete_player_performance(
-                                    fixture, home_scorers, away_scorers
-                                )
-                                goals_updated += 1
-                                logger.info(
-                                    f"Updated player performances for fixture {fixture.id} (status: {fixture.status})"
-                                )
-                        except Exception as e:
-                            logger.warning(
-                                f"Failed to update goal scorers for fixture {fixture.id}: {e}"
+                            logger.info(
+                                f"Score update: {fixture.home_team.name} {old_home_score}->{fixture.home_team_score}, "
+                                f"{fixture.away_team.name} {old_away_score}->{fixture.away_team_score}"
                             )
 
-                if fixture_updated:
-                    fixture.save()
+                        if data["is_playing"]:
+                            if fixture.status != "live":
+                                fixture.status = "live"
+                                fixture_updated = True
 
-                disable_fixture(fixture)
+                            try:
+                                import time
+                                time.sleep(3)
+                                
+                                home_scorers, away_scorers = get_goal_scorers(
+                                    selenium_manager, data["link"]
+                                )
+                                
+                                if home_scorers or away_scorers:
+                                    update_complete_player_performance(
+                                        fixture, home_scorers, away_scorers
+                                    )
+                                    goals_updated += 1
+                                    logger.info(
+                                        f"Updated player performances for fixture {fixture.id} "
+                                        f"(status: {fixture.status})"
+                                    )
+                            except Exception as e:
+                                logger.warning(
+                                    f"Failed to update goal scorers for fixture {fixture.id}: {e}"
+                                )
 
-            logger.info(
-                f"Fixture monitoring completed: {updates} score updates, {goals_updated} goal data updates"
-            )
-            return True
+                        if fixture_updated:
+                            fixture.save()
 
-        except Exception as e:
-            logger.error(f"Error processing fixture data: {e}", exc_info=True)
-            return False
+                        break  
+
+                    disable_fixture(fixture)
+                    
+                except Exception as e:
+                    logger.error(f"Error processing fixture {fixture.id}: {e}", exc_info=True)
+                    continue
+
+        logger.info(
+            f"Fixture monitoring completed: {updates} score updates, "
+            f"{goals_updated} goal data updates"
+        )
+        return True
 
     except Exception as e:
         logger.error(f"Error monitoring fixtures: {e}", exc_info=True)

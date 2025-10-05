@@ -68,7 +68,7 @@ services:
       context: ./docker/local/nginx
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8080:80"
     networks:
       - fpl-vue
 
@@ -108,22 +108,19 @@ services:
   selenium:
     image: selenium/standalone-chrome:latest
     container_name: selenium
-    shm_size: 2gb
+    shm_size: 4gb  
     ports:
       - "4444:4444"
       - "7900:7900"
     environment:
-      - SE_NODE_SESSION_TIMEOUT=120 
-      - SE_NODE_MAX_SESSIONS=5
+      - SE_NODE_SESSION_TIMEOUT=300 
+      - SE_NODE_MAX_SESSIONS=3 
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
-      - SE_START_XVFB=true
-      - SE_SCREEN_WIDTH=1920
-      - SE_SCREEN_HEIGHT=1080
-      - SE_VNC_NO_PASSWORD=1
-    volumes:
-      - /dev/shm:/dev/shm 
+      - SE_SESSION_REQUEST_TIMEOUT=300
+      - SE_NODE_SESSION_RETRY_INTERVAL=5
     networks:
       - fpl-vue
+    restart: unless-stopped
 
 networks:
   fpl-vue:
