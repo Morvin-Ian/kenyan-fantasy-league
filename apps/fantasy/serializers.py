@@ -3,6 +3,8 @@ from rest_framework import serializers
 from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance
 from apps.kpl.models import Gameweek
 from django.db.models import Sum
+from decimal import Decimal
+
 
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
@@ -32,11 +34,11 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
     def get_balance(self, obj):
         total_players_value = (
             obj.players.aggregate(total_value=Sum("current_value"))["total_value"]
-            or 0.00
+            or Decimal('0.00')
         )
 
         budget_value = obj.budget
-        return budget_value - total_players_value
+        return float(budget_value - total_players_value)
 
     def get_total_points(self, obj):
         """
