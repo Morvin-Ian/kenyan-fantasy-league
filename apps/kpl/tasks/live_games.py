@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import time
 from datetime import timedelta
 
 from celery import shared_task
@@ -460,7 +461,6 @@ def monitor_fixture_score(fixture_id=None):
                                 fixture_updated = True
 
                             try:
-                                import time
                                 time.sleep(3)
                                 
                                 home_scorers, away_scorers = get_goal_scorers(
