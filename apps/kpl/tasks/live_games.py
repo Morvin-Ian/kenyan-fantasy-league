@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import time
 from datetime import timedelta
 
 from celery import shared_task
@@ -14,6 +15,7 @@ from apps.fantasy.tasks.player_performance import update_complete_player_perform
 from apps.kpl.models import Fixture, Gameweek
 from config.settings import base
 from util.selenium import SeleniumManager
+
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
@@ -28,6 +30,7 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
             logger.error("Failed to load match URL")
             return []
 
+        import time
         time.sleep(3)
         
         selectors = [
