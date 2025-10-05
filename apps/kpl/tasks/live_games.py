@@ -28,8 +28,6 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
         if not selenium_manager.safe_get(match_url):
             logger.error("Failed to load match URL")
             return []
-
-        time.sleep(3)
         
         selectors = [
             (By.XPATH, "//*[@class='Box kiSsvW']"),
