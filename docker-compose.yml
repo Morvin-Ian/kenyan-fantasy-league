@@ -114,7 +114,7 @@ services:
       - "7900:7900"   # VNC (you can view browser at vnc://localhost:7900, password: 'secret')
     environment:
       - SE_NODE_SESSION_TIMEOUT=60
-      - SE_NODE_MAX_SESSIONS=1
+      - SE_NODE_MAX_SESSIONS=5
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
     networks:
       - fpl-vue
