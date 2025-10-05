@@ -1,5 +1,4 @@
 import { fileURLToPath, URL } from 'node:url'
-
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
@@ -8,8 +7,13 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
-  server:{
-    port:3000
+  server: {
+    host: '0.0.0.0', // ✅ allows external access (not just localhost)
+    port: 3000,      // ✅ keeps your existing port
+    allowedHosts: [
+      'fantasykenya.com', // ✅ allow your domain
+      'www.fantasykenya.com',
+    ],
   },
   resolve: {
     alias: {
@@ -17,3 +21,4 @@ export default defineConfig({
     }
   }
 })
+
