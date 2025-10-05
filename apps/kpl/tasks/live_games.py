@@ -28,36 +28,12 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
         if not selenium_manager.safe_get(match_url):
             logger.error("Failed to load match URL")
             return []
-        
-        selectors = [
-            (By.XPATH, "//*[@class='Box kiSsvW']"),
-            (By.XPATH, "//div[@class='Box kiSsvW' or contains(@class, 'Box kiSsvW')]"),
-            (By.XPATH, "//div[contains(@class, 'Box') and .//a[contains(@href, '/football/match/')]]"),
-        ]
-        
-        table = None
-        
-        for by, selector in selectors:
-            logger.info(f"Trying selector: {selector}")
-            table = selenium_manager.wait_for_elements(by, selector, timeout=20)
-            
-            if table:
-                test_links = table.find_elements(By.TAG_NAME, "a")
-                if len(test_links) > 0:
-                    logger.info(f"Table found using selector: {selector} with {len(test_links)} links")
-                    break
-                else:
-                    logger.warning(f"Element found but contains no links, trying next selector")
-                    table = None
-        
+
+        table = selenium_manager.wait_for_elements(By.XPATH, "//*[@class='Box kiSsvW']")
         if not table:
-            logger.error("Fixture table not found with any selector")
-            try:
-                screenshot_path = '/app/mediafiles/fixture_page_error.png'
-                selenium_manager.driver.save_screenshot(screenshot_path)
-                logger.error(f"Screenshot saved to {screenshot_path}")
-            except:
-                pass
+            logger.warning("Fixture table not found on page")
+            if selenium_manager.driver:
+                logger.debug(selenium_manager.driver.page_source[:2000])
             return []
 
         fixtures = table.find_elements(By.TAG_NAME, "a")
@@ -65,63 +41,49 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
 
         data = []
         for fixture_elem in fixtures:
-            try:
-                link = fixture_elem.get_attribute("href")
-                
-                if not link or '/football/match/' not in link:
-                    continue
-                
-                text = fixture_elem.text.strip()
-                if not text:
-                    continue
-                
-                parts = text.splitlines()
-                logger.info(f"Raw fixture parts: {parts}")
+            link = fixture_elem.get_attribute("href")
+            parts = fixture_elem.text.strip().splitlines()
+            logger.info(f"Raw fixture parts: {parts}")
 
-                if len(parts) >= 4:
-                    if len(parts) >= 6:
-                        date, time, home, away, home_score, away_score = parts[:6]
-                        is_playing = True
-                        if time == "FT":
-                            is_playing = False
-                    else:
-                        date, time, home, away = parts[:4]
-                        home_score, away_score = "0", "0"
+            if len(parts) >= 4:
+                if len(parts) >= 6:
+                    date, time, home, away, home_score, away_score = parts[:6]
+                    is_playing = True
+                    if time == "FT":
                         is_playing = False
+                else:
+                    date, time, home, away = parts[:4]
+                    home_score, away_score = "0", "0"
+                    is_playing = False
 
-                    home_team = find_team(home)
-                    away_team = find_team(away)
+                home_team = find_team(home)
+                away_team = find_team(away)
 
-                    if not home_team or not away_team:
-                        logger.warning(f"Could not resolve teams: {home} vs {away}")
-                        continue
-                    
+                if not home_team or not away_team:
+                    logger.warning(f"Could not resolve teams: {home} vs {away}")
+                else:
                     logger.info(f"Resolved teams: {home_team.name} vs {away_team.name}")
 
-                    fixture_data = {
-                        "date": date,
-                        "time": time,
-                        "home": home,
-                        "away": away,
-                        "home_score": home_score,
-                        "away_score": away_score,
-                        "link": link,
-                        "is_playing": is_playing,
-                    }
-                    logger.info(f"Fixture Data: {fixture_data}")
-                    data.append(fixture_data)
-                else:
-                    logger.warning(f"Unexpected fixture format: {parts}")
-            
-            except Exception as e:
-                logger.warning(f"Error processing fixture element: {e}")
-                continue
-        
-        logger.info(f"Successfully extracted {len(data)} fixtures")
+                fixture_data = {
+                    "date": date,
+                    "time": time,
+                    "home": home,
+                    "away": away,
+                    "home_score": home_score,
+                    "away_score": away_score,
+                    "link": link,
+                    "is_playing": is_playing,
+                }
+                logger.info(f"Fixture Data: {fixture_data}")
+                data.append(fixture_data)
+            else:
+                logger.warning(f"Unexpected fixture format: {parts}")
         return data
 
     except Exception as e:
-        logger.error(f"Could not extract scores from fixture table: {e}", exc_info=True)
+        logger.warning(
+            f"Could not extract scores from fixture table: {e}", exc_info=True
+        )
         return []
 
 

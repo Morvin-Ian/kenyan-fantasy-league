@@ -11,10 +11,9 @@ logger = logging.getLogger(__name__)
 
 
 class SeleniumManager:
-    def __init__(self, timeout=30, enable_network_logging=True):
+    def __init__(self, timeout=30):
         self.timeout = timeout
         self.driver = None
-        self.enable_network_logging = enable_network_logging
 
     def get_driver(self):
         if self.driver:
@@ -35,10 +34,7 @@ class SeleniumManager:
         
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
-        
-        # Enable performance logging to capture network requests
-        if self.enable_network_logging:
-            options.set_capability('goog:loggingPrefs', {'performance': 'ALL'})
+    
         
         try:
             self.driver = webdriver.Remote(
@@ -65,33 +61,6 @@ class SeleniumManager:
         
         return self.driver
 
-    def get_network_logs(self):
-        """Extract HTTP response codes from performance logs"""
-        if not self.driver or not self.enable_network_logging:
-            return []
-        
-        try:
-            import json
-            logs = self.driver.get_log('performance')
-            network_logs = []
-            
-            for entry in logs:
-                log = json.loads(entry['message'])['message']
-                
-                # Look for network response received events
-                if log.get('method') == 'Network.responseReceived':
-                    response = log['params']['response']
-                    network_logs.append({
-                        'url': response['url'],
-                        'status': response['status'],
-                        'statusText': response.get('statusText', ''),
-                        'mimeType': response.get('mimeType', ''),
-                    })
-            
-            return network_logs
-        except Exception as e:
-            logger.warning(f"Could not extract network logs: {e}")
-            return []
 
     def safe_get(self, url, max_retries=3):
         """Navigate to URL with retries and better waiting"""
@@ -123,22 +92,7 @@ class SeleniumManager:
                     logger.info(f"Page loaded successfully")
                     logger.info(f"Final URL: {current_url}")
                     logger.info(f"Page title: {page_title}")
-                    logger.info(f"Page source length: {page_source_length} chars")
-                    
-                    # Get network logs if enabled
-                    if self.enable_network_logging:
-                        network_logs = self.get_network_logs()
-                        main_request = next(
-                            (log for log in network_logs if log['url'] == url),
-                            None
-                        )
-                        if main_request:
-                            logger.info(f"HTTP Status: {main_request['status']} {main_request['statusText']}")
-                            logger.info(f"Content-Type: {main_request['mimeType']}")
-                        
-                        # Log all responses
-                        for log in network_logs[:5]:  # First 5 requests
-                            logger.debug(f"Network: {log['status']} - {log['url'][:100]}")
+                    logger.info(f"Page source length: {page_source_length} chars")                
                     
                     # Log first 500 chars for debugging
                     logger.debug(f"Page content preview: {driver.page_source[:500]}")
