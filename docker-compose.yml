@@ -108,14 +108,20 @@ services:
   selenium:
     image: selenium/standalone-chrome:latest
     container_name: selenium
-    shm_size: 2gb  # prevent browser crashes
+    shm_size: 2gb
     ports:
-      - "4444:4444"   # Selenium Grid / WebDriver
-      - "7900:7900"   # VNC (you can view browser at vnc://localhost:7900, password: 'secret')
+      - "4444:4444"
+      - "7900:7900"
     environment:
-      - SE_NODE_SESSION_TIMEOUT=60
+      - SE_NODE_SESSION_TIMEOUT=120 
       - SE_NODE_MAX_SESSIONS=5
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_START_XVFB=true
+      - SE_SCREEN_WIDTH=1920
+      - SE_SCREEN_HEIGHT=1080
+      - SE_VNC_NO_PASSWORD=1
+    volumes:
+      - /dev/shm:/dev/shm 
     networks:
       - fpl-vue
 
