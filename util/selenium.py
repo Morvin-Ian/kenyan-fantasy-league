@@ -1,7 +1,7 @@
 import logging
 import time
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import TimeoutException, WebDriverException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -34,7 +34,6 @@ class SeleniumManager:
         
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
-    
         
         try:
             self.driver = webdriver.Remote(
@@ -52,7 +51,7 @@ class SeleniumManager:
                 return None
         
         self.driver.set_page_load_timeout(60)
-        self.driver.implicitly_wait(5)
+        self.driver.implicitly_wait(5) 
         
         try:
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
@@ -61,9 +60,7 @@ class SeleniumManager:
         
         return self.driver
 
-
     def safe_get(self, url, max_retries=3):
-        """Navigate to URL with retries and better waiting"""
         driver = self.get_driver()
         if not driver:
             return False
@@ -79,33 +76,19 @@ class SeleniumManager:
                 
                 time.sleep(5)
                 
+                self.dismiss_popups()
+                
                 WebDriverWait(driver, 10).until(
                     ec.presence_of_element_located((By.TAG_NAME, "body"))
                 )
                 
-                # Log page information
-                try:
-                    current_url = driver.current_url
-                    page_title = driver.title
-                    page_source_length = len(driver.page_source)
-                    
-                    logger.info(f"Page loaded successfully")
-                    logger.info(f"Final URL: {current_url}")
-                    logger.info(f"Page title: {page_title}")
-                    logger.info(f"Page source length: {page_source_length} chars")                
-                    
-                    # Log first 500 chars for debugging
-                    logger.debug(f"Page content preview: {driver.page_source[:500]}")
-                    
-                except Exception as log_e:
-                    logger.warning(f"Could not log page details: {log_e}")
-                
+                logger.info("Page loaded successfully")
                 return True
                 
             except Exception as e:
                 logger.error(f"Navigation attempt {attempt + 1} failed: {e}")
                 if attempt < max_retries - 1:
-                    time.sleep(3)
+                    time.sleep(3)  
                     continue
                 return False
         
@@ -176,8 +159,61 @@ class SeleniumManager:
         logger.error(f"None of the selectors found: {selectors}")
         return None, None
 
+    def dismiss_popups(self):
+        if not self.driver:
+            return
+        
+        try:
+            # Handle JS alerts or confirms
+            try:
+                alert = self.driver.switch_to.alert
+                alert.dismiss()
+                logger.info("JavaScript alert dismissed")
+            except:
+                pass  # No alert found
+
+            # Common cookie consent buttons
+            possible_selectors = [
+                (By.XPATH, "//button[contains(text(), 'Accept')]"),
+                (By.XPATH, "//button[contains(text(), 'OK')]"),
+                (By.XPATH, "//button[contains(text(), 'Agree')]"),
+                (By.XPATH, "//button[contains(@id, 'accept')]"),
+                (By.XPATH, "//button[contains(@class, 'accept')]"),
+                (By.XPATH, "//div[contains(@class, 'cookie')]//button"),
+            ]
+            
+            for by, sel in possible_selectors:
+                try:
+                    el = WebDriverWait(self.driver, 2).until(ec.element_to_be_clickable((by, sel)))
+                    el.click()
+                    logger.info(f"Dismissed popup via selector: {sel}")
+                    time.sleep(1)
+                    break
+                except:
+                    continue
+            
+            # Common modal close buttons
+            modal_close_selectors = [
+                (By.CSS_SELECTOR, "[aria-label='Close']"),
+                (By.CSS_SELECTOR, ".modal-close, .close, .btn-close"),
+                (By.XPATH, "//button[contains(text(), 'Close')]"),
+                (By.XPATH, "//div[contains(@class, 'modal')]//button"),
+            ]
+            
+            for by, sel in modal_close_selectors:
+                try:
+                    el = WebDriverWait(self.driver, 2).until(ec.element_to_be_clickable((by, sel)))
+                    el.click()
+                    logger.info(f"Closed modal with selector: {sel}")
+                    time.sleep(1)
+                    break
+                except:
+                    continue
+
+        except Exception as e:
+            logger.warning(f"Failed to dismiss popups: {e}")
+
     def close(self):
-        """Close the driver"""
         if self.driver:
             try:
                 self.driver.quit()

@@ -42,6 +42,7 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
 
         data = []
         for fixture_elem in fixtures:
+            logger.info(f"Processing fixture element: {fixture_elem.text}")
             link = fixture_elem.get_attribute("href")
             parts = fixture_elem.text.strip().splitlines()
             logger.info(f"Raw fixture parts: {parts}")

@@ -68,7 +68,7 @@ services:
       context: ./docker/local/nginx
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8080:80"
     networks:
       - fpl-vue
 
