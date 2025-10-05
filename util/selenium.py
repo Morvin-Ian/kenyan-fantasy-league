@@ -62,7 +62,7 @@ class SeleniumManager:
         try:
             logger.info(f"Navigating to {url}")
             driver.get(url)
-            time.sleep(2)  # Simple wait for page load
+            time.sleep(10) 
             return True
         except Exception as e:
             logger.error(f"Navigation failed: {e}")
@@ -75,8 +75,8 @@ class SeleniumManager:
 
         timeout = timeout or self.timeout
         try:
-            element = WebDriverWait(self.driver, timeout).until(
-                ec.presence_of_element_located((by, selector))
+            element =  WebDriverWait(self.driver, timeout).until(
+                ec.visibility_of_element_located((by, selector))
             )
             return element
         except TimeoutException:

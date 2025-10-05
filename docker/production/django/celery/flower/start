@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -o errexit
+set -o nounset
+
+watchmedo auto-restart -d config/ -p "*.py" -- \
+  celery --broker="redis://redis:6379/0" -A config.celery flower --port=5555

@@ -68,3 +68,36 @@ isort-diff:
 
 isort:
 	docker compose exec api isort . --skip env --skip migrations --skip .venv
+
+
+# ============ PRODUCTION COMMANDS ============
+
+build-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod up --build -d --remove-orphans
+
+up-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+down-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod down
+
+logs-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod logs -f
+
+migrate-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python3 manage.py migrate
+
+makemigrations-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python3 manage.py makemigrations
+
+collectstatic-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python3 manage.py collectstatic --no-input --clear
+
+superuser-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python3 manage.py createsuperuser
+
+shell-prod:
+	docker compose -f docker-compose.prod.yml --env-file .env.prod exec api python3 manage.py shell
+
+manage-db-prod:
+	docker exec -it postgres-db psql -U ${PG_USER} -d ${POSTGRES_DB}

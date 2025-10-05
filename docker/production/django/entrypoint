@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Exit on error, pipe failure, or undefined variables
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# Function to check if required environment variables are set
+check_required_vars() {
+    local required_vars=("POSTGRES_DB" "PG_USER" "PG_PASSWORD" "PG_HOST" "PG_PORT")
+    local missing_vars=()
+    
+    for var in "${required_vars[@]}"; do
+        if [[ -z "${!var:-}" ]]; then
+            missing_vars+=("$var")
+        fi
+    done
+    
+    if [[ ${#missing_vars[@]} -ne 0 ]]; then
+        echo "Error: Missing required environment variables: ${missing_vars[*]}" >&2
+        exit 1
+    fi
+}
+
+# Function to test PostgreSQL connection
+postgres_ready() {
+    python3 << END
+import sys
+import psycopg2
+import time
+
+start_time = time.time()
+try:
+    conn = psycopg2.connect(
+        dbname="${POSTGRES_DB}",
+        user="${PG_USER}",
+        password="${PG_PASSWORD}",
+        host="${PG_HOST}",
+        port="${PG_PORT}",
+    )
+    conn.close()
+    print(f"Successfully connected to PostgreSQL (took {time.time() - start_time:.2f}s)")
+    sys.exit(0)
+except psycopg2.OperationalError as e:
+    print(f"Connection failed: {str(e)}", file=sys.stderr)
+    sys.exit(1)
+END
+}
+
+# Main script
+echo "Checking environment variables..."
+check_required_vars
+
+max_attempts=30
+attempt=1
+
+echo "Waiting for PostgreSQL to become available..."
+until postgres_ready || [ $attempt -gt $max_attempts ]; do
+    echo "Attempt $attempt of $max_attempts: PostgreSQL is not ready yet..." >&2
+    sleep 2
+    attempt=$((attempt + 1))
+done
+
+if [ $attempt -gt $max_attempts ]; then
+    echo "Error: PostgreSQL failed to become available after $max_attempts attempts" >&2
+    exit 1
+fi
+
+echo "PostgreSQL is ready! Starting application..."
+exec "$@"
