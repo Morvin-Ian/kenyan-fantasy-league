@@ -30,6 +30,7 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
             logger.error("Failed to load match URL")
             return []
 
+
         import time
         time.sleep(3)
         
@@ -463,7 +464,6 @@ def monitor_fixture_score(fixture_id=None):
                                 fixture_updated = True
 
                             try:
-                                import time
                                 time.sleep(3)
                                 
                                 home_scorers, away_scorers = get_goal_scorers(
