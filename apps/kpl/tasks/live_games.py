@@ -15,7 +15,6 @@ from apps.fantasy.tasks.player_performance import update_complete_player_perform
 from apps.kpl.models import Fixture, Gameweek
 from config.settings import base
 from util.selenium import SeleniumManager
-from bs4 import BeautifulSoup
 
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -29,40 +28,25 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
 
         if not selenium_manager.safe_get(match_url):
             logger.error("Failed to load match URL")
+            if selenium_manager.driver:
+                logger.debug(f"Failed page source (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
             return []
 
-        # Wait for and get the fixture table container using Selenium
-        table_element = selenium_manager.wait_for_elements(By.XPATH, "//*[@class='Box kiSsvW']")
-        if not table_element:
+        table = selenium_manager.wait_for_elements(By.XPATH, "//*[@class='Box kiSsvW']")
+        if not table:
             logger.warning("Fixture table not found on page")
             if selenium_manager.driver:
-                logger.debug(selenium_manager.driver.page_source[:2000])
+                logger.debug(f"Page source when table not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
             return []
 
-        # Get page source and parse with BeautifulSoup
-        soup = BeautifulSoup(selenium_manager.driver.page_source, 'html.parser')
-        
-        # Find the fixtures container using BeautifulSoup
-        table = soup.find('div', class_='Box kiSsvW')
-        if not table:
-            logger.warning("Fixture table not found by BeautifulSoup")
-            return []
-
-        # Find all fixture links using BeautifulSoup
-        fixtures = table.find_all('a')
+        fixtures = table.find_elements(By.TAG_NAME, "a")
         logger.info(f"Found {len(fixtures)} fixture links")
 
         data = []
-        for fixture in fixtures:
-            # Extract text and link using BeautifulSoup
-            text = fixture.get_text(strip=True, separator='\n')
-            link = fixture.get('href')
-            
-            # Make absolute URL if needed
-            if link and link.startswith('/'):
-                link = f"https://www.sofascore.com{link}"
-            
-            parts = text.split('\n')
+        for fixture_elem in fixtures:
+            logger.info(f"Processing fixture element: {fixture_elem.text}")
+            link = fixture_elem.get_attribute("href")
+            parts = fixture_elem.text.strip().splitlines()
             logger.info(f"Raw fixture parts: {parts}")
 
             if len(parts) >= 4:
@@ -104,6 +88,8 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
         logger.warning(
             f"Could not extract scores from fixture table: {e}", exc_info=True
         )
+        if selenium_manager.driver:
+            logger.debug(f"Exception page source (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
         return []
 
 
@@ -144,6 +130,8 @@ def parse_scorers(text_block):
 def get_goal_scorers(selenium_manager, match_link):
     if not selenium_manager.safe_get(match_link):
         logger.error("Failed to load match link")
+        if selenium_manager.driver:
+            logger.debug(f"Failed match link page source (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
         return [], []
 
     all_section = selenium_manager.wait_for_elements(
@@ -152,6 +140,8 @@ def get_goal_scorers(selenium_manager, match_link):
 
     if not all_section:
         logger.warning("Could not find scorer container section")
+        if selenium_manager.driver:
+            logger.debug(f"Page source when all_section not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
 
     if not all_section:
         logger.error("No scorer sections found at all")
@@ -161,16 +151,22 @@ def get_goal_scorers(selenium_manager, match_link):
         home_section = all_section.find_element(
             By.XPATH, ".//*[contains(@class, 'ai_flex-end')]"
         )
+        logger.info("Found home_section")
     except Exception as e:
         logger.warning(f"Home section not found: {e}")
+        if selenium_manager.driver:
+            logger.debug(f"Page source when home_section not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
         home_section = None
 
     try:
         away_section = all_section.find_element(
             By.XPATH, ".//*[contains(@class, 'ai_flex-start')]"
         )
+        logger.info("Found away_section")
     except Exception as e:
         logger.warning(f"Away section not found: {e}")
+        if selenium_manager.driver:
+            logger.debug(f"Page source when away_section not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
         away_section = None
 
     if not home_section or not away_section:
@@ -178,9 +174,17 @@ def get_goal_scorers(selenium_manager, match_link):
         home_section = selenium_manager.wait_for_elements(
             By.XPATH, "//*[contains(@class, 'ai_flex-end')]"
         )
+        if not home_section:
+            logger.warning("Independent home_section not found")
+            if selenium_manager.driver:
+                logger.debug(f"Page source for independent home_section (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
         away_section = selenium_manager.wait_for_elements(
             By.XPATH, "//*[contains(@class, 'ai_flex-start')]"
         )
+        if not away_section:
+            logger.warning("Independent away_section not found")
+            if selenium_manager.driver:
+                logger.debug(f"Page source for independent away_section (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
 
     away_scorers = parse_scorers(away_section.text if away_section else "")
     home_scorers = parse_scorers(home_section.text if home_section else "")
@@ -298,6 +302,8 @@ def update_fixture_task(selenium_manager, live_data):
                         logger.warning(
                             f"Failed to update goal scorers for fixture {fixture.id}: {e}"
                         )
+                        if selenium_manager.driver:
+                            logger.debug(f"Page source on scorer update failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
 
             elif data["time"].lower() == "postponed":
                 if fixture.status != "postponed":
@@ -364,10 +370,14 @@ def monitor_fixture_score(fixture_id=None):
             
             if not live_data:
                 logger.warning("No live data extracted from main page")
+                if selenium_manager.driver:
+                    logger.debug(f"Page source after extraction failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
                 return False
 
         except Exception as e:
             logger.error(f"Failed to extract fixture data: {e}", exc_info=True)
+            if selenium_manager and selenium_manager.driver:
+                logger.debug(f"Page source on extraction failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
             if selenium_manager:
                 try:
                     selenium_manager.close()
@@ -379,6 +389,8 @@ def monitor_fixture_score(fixture_id=None):
             update_fixture_task(selenium_manager, live_data)
         except Exception as e:
             logger.error(f"Error updating fixture tasks: {e}", exc_info=True)
+            if selenium_manager and selenium_manager.driver:
+                logger.debug(f"Page source on update task failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
 
         updates = 0
         goals_updated = 0
@@ -460,6 +472,8 @@ def monitor_fixture_score(fixture_id=None):
                                 logger.warning(
                                     f"Failed to update goal scorers for fixture {fixture.id}: {e}"
                                 )
+                                if selenium_manager.driver:
+                                    logger.debug(f"Page source on scorer update failure in monitor (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
 
                         if fixture_updated:
                             fixture.save()
@@ -470,6 +484,8 @@ def monitor_fixture_score(fixture_id=None):
                     
                 except Exception as e:
                     logger.error(f"Error processing fixture {fixture.id}: {e}", exc_info=True)
+                    if selenium_manager and selenium_manager.driver:
+                        logger.debug(f"Page source on fixture processing failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
                     continue
 
         logger.info(
@@ -480,6 +496,8 @@ def monitor_fixture_score(fixture_id=None):
 
     except Exception as e:
         logger.error(f"Error monitoring fixtures: {e}", exc_info=True)
+        if selenium_manager and selenium_manager.driver:
+            logger.debug(f"Page source on overall monitoring failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}")
         return False
 
     finally:

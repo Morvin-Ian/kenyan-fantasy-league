@@ -1,3 +1,4 @@
+
 import logging
 import time
 from selenium import webdriver
@@ -55,6 +56,7 @@ class SeleniumManager:
         
         try:
             self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+            logger.info("Stealth script executed successfully")
         except Exception as e:
             logger.warning(f"Could not execute stealth script: {e}")
         
@@ -63,6 +65,7 @@ class SeleniumManager:
     def safe_get(self, url, max_retries=3):
         driver = self.get_driver()
         if not driver:
+            logger.error("Driver not available for safe_get")
             return False
         
         for attempt in range(max_retries):
@@ -83,10 +86,12 @@ class SeleniumManager:
                 )
                 
                 logger.info("Page loaded successfully")
+                logger.debug(f"Loaded page source (first 2000 chars): {driver.page_source[:2000]}")
                 return True
                 
             except Exception as e:
                 logger.error(f"Navigation attempt {attempt + 1} failed: {e}")
+                logger.debug(f"Failed page source during attempt {attempt + 1} (first 2000 chars): {driver.page_source[:2000]} if available")
                 if attempt < max_retries - 1:
                     time.sleep(3)  
                     continue
@@ -96,6 +101,7 @@ class SeleniumManager:
 
     def wait_for_elements(self, by, selector, timeout=None, log_page_source=True):
         if not self.driver:
+            logger.error("Driver not available for wait_for_elements")
             return None
         
         timeout = timeout or self.timeout
@@ -108,6 +114,7 @@ class SeleniumManager:
             return element
             
         except TimeoutException:
+            logger.warning(f"Timeout waiting for visibility of {selector}")
             try:
                 element = WebDriverWait(self.driver, 5).until(
                     ec.presence_of_element_located((by, selector))
@@ -136,10 +143,13 @@ class SeleniumManager:
                 
         except Exception as e:
             logger.error(f"Error finding element {selector}: {e}", exc_info=True)
+            if log_page_source:
+                logger.debug(f"Page source on error (first 2000 chars): {self.driver.page_source[:2000]}")
             return None
 
     def wait_for_any_elements(self, selectors, timeout=None):
         if not self.driver:
+            logger.error("Driver not available for wait_for_any_elements")
             return None, None
         
         timeout = timeout or self.timeout
@@ -157,10 +167,12 @@ class SeleniumManager:
             time.sleep(0.5)
         
         logger.error(f"None of the selectors found: {selectors}")
+        logger.debug(f"Page source when no selectors found (first 2000 chars): {self.driver.page_source[:2000]}")
         return None, None
 
     def dismiss_popups(self):
         if not self.driver:
+            logger.error("Driver not available for dismiss_popups")
             return
         
         try:
@@ -170,7 +182,7 @@ class SeleniumManager:
                 alert.dismiss()
                 logger.info("JavaScript alert dismissed")
             except:
-                pass  # No alert found
+                logger.debug("No JavaScript alert found")
 
             # Common cookie consent buttons
             possible_selectors = [
@@ -182,15 +194,21 @@ class SeleniumManager:
                 (By.XPATH, "//div[contains(@class, 'cookie')]//button"),
             ]
             
+            dismissed = False
             for by, sel in possible_selectors:
                 try:
                     el = WebDriverWait(self.driver, 2).until(ec.element_to_be_clickable((by, sel)))
                     el.click()
                     logger.info(f"Dismissed popup via selector: {sel}")
                     time.sleep(1)
+                    dismissed = True
                     break
                 except:
+                    logger.debug(f"Selector not found for popup: {sel}")
                     continue
+            
+            if not dismissed:
+                logger.debug("No cookie popup dismissed")
             
             # Common modal close buttons
             modal_close_selectors = [
@@ -200,18 +218,25 @@ class SeleniumManager:
                 (By.XPATH, "//div[contains(@class, 'modal')]//button"),
             ]
             
+            dismissed_modal = False
             for by, sel in modal_close_selectors:
                 try:
                     el = WebDriverWait(self.driver, 2).until(ec.element_to_be_clickable((by, sel)))
                     el.click()
                     logger.info(f"Closed modal with selector: {sel}")
                     time.sleep(1)
+                    dismissed_modal = True
                     break
                 except:
+                    logger.debug(f"Selector not found for modal: {sel}")
                     continue
+            
+            if not dismissed_modal:
+                logger.debug("No modal dismissed")
 
         except Exception as e:
             logger.warning(f"Failed to dismiss popups: {e}")
+            logger.debug(f"Page source on popup dismiss failure (first 2000 chars): {self.driver.page_source[:2000]}")
 
     def close(self):
         if self.driver:
