@@ -93,7 +93,7 @@ export const useKplStore = defineStore('kpl', {
         while (nextUrl) {
           // Handle absolute URLs returned by the API - on Production
           if (nextUrl.startsWith('http://')) {
-            nextUrl = nextUrl.replace(/^https?:\/\/[^\/]+/, '');
+            nextUrl = nextUrl.replace(/^http:\/\//, 'https://');
           }
 
           const response: { data: PaginatedResponse<Player> } = await apiClient.get(nextUrl);
