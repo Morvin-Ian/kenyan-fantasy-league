@@ -43,9 +43,11 @@ services:
     depends_on:
       - api
     volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
       - ./docker/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      
     build:
       context: ./client  
       dockerfile: ./production/Dockerfile 
