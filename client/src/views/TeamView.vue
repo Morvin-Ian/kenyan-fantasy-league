@@ -2,39 +2,23 @@
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
     <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
-      <div class="relative">
-        <div v-if="hasUnsavedChanges" 
-            class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
-          <button @click="saveTeamChanges"
-            class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105">
-            <span class="mr-1">Save Changes</span>
-          </button>
+        <div class="relative">
+          <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
+            <button @click="saveTeamChanges"
+              class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105">
+              <span class="mr-1">Save Changes</span>
+            </button>
+          </div>
         </div>
-      </div>
 
 
 
-        <Pitch 
-          :goalkeeper="goalkeeper" 
-          :defenders="defenders" 
-          :midfielders="midfielders" 
-          :forwards="forwards"
-          :bench-players="benchPlayers" 
-          :switch-source="switchSource" 
-          :switch-active="switchActive"
-          @player-click="handlePlayerClick"
-          @formation-change="handleFormationChange" 
-        />
+        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
+          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
+          @player-click="handlePlayerClick" @formation-change="handleFormationChange" />
 
-        <MessageAlert 
-          v-if="message.text" 
-          :type="message.type"
-          :text="message.text"
-          :dismissible="message.dismissible"
-          :auto-dismiss="message.autoDismiss"
-          @dismiss="clearMessage"
-          class="absolute top-4 left-0 right-0 z-20 mx-4"
-        />
+        <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
+          :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
 
         <!-- Save Changes Button for Larger Devices (Bottom) -->
         <div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
@@ -45,13 +29,8 @@
         </div>
       </div>
 
-      <Sidebar 
-        :total-points="totalPoints" 
-        :average-points="averagePoints" 
-        :highest-points="highestPoints"
-        :overall-rank="overallRank" 
-        :team="userTeamName" 
-      />
+      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+        :overall-rank="overallRank" :team="userTeamName" />
     </div>
 
     <div v-else
@@ -64,34 +43,18 @@
         Your Team</button>
     </div>
 
-    <PlayerModal v-if="userTeam && userTeam.length" 
-      :show-modal="showModal" 
-      :selected-player="selectedPlayer"
-      @close-modal="closeModal" 
-      @initiate-switch="initiateSwitch" 
-      @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain" 
-      @make-vice-captain="makeViceCaptain" 
-    />
+    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
 
-    <SearchPlayer 
-      :show-search-modal="showSearchModal" 
-      :selectedPlayer="selectedPlayer" 
-      @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer" 
-    />
+    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" />
 
     <div v-if="showCreateTeamModal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
-          <MessageAlert 
-            v-if="modalMessage.text" 
-            :type="modalMessage.type"
-            :text="modalMessage.text"
-            :dismissible="modalMessage.dismissible"
-            @dismiss="clearModalMessage"
-            class="mb-4"
-          />
+        <MessageAlert v-if="modalMessage.text" :type="modalMessage.type" :text="modalMessage.text"
+          :dismissible="modalMessage.dismissible" @dismiss="clearModalMessage" class="mb-4" />
         <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
         <form @submit.prevent="createTeam">
           <div class="mb-4">
@@ -111,7 +74,7 @@
               <option value="4-3-3">4-3-3</option>
             </select>
           </div>
-          
+
           <div class="flex justify-end gap-4">
             <button type="button" @click="showCreateTeamModal = false"
               class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
@@ -332,7 +295,7 @@ function initializeTeamState() {
   if (!hasGoalkeeperOnBench) {
     benchPlayersRef.value.push(createPlaceholderPlayer("GKP", 0, false));
   }
-  
+
   // Reduce the benchPlayersRef array to count how many players are on the bench for each position
   const benchCounts = benchPlayersRef.value.reduce((accumulator, player) => {
     // If the position already exists in the accumulator, increment its count
@@ -340,11 +303,11 @@ function initializeTeamState() {
     accumulator[player.position] = (accumulator[player.position] || 0) + 1;
     return accumulator;
   }, {
-    GKP: 0, 
-    DEF: 0, 
-    MID: 0, 
-    FWD: 0  
-  } as Record<string, number>); 
+    GKP: 0,
+    DEF: 0,
+    MID: 0,
+    FWD: 0
+  } as Record<string, number>);
 
 
   let benchIndex = benchPlayersRef.value.length;
@@ -643,8 +606,8 @@ function performSwitch(targetPlayer: Player) {
 
 const saveTeamChanges = async () => {
   try {
-     const teamData: TeamData = {
-      formation: currentFormation.value, 
+    const teamData: TeamData = {
+      formation: currentFormation.value,
       startingEleven: {
         goalkeeper: startingElevenRef.value.goalkeeper.id.startsWith("placeholder") ? null : startingElevenRef.value.goalkeeper,
         defenders: startingElevenRef.value.defenders.filter((p) => !p.id.startsWith("placeholder")),
@@ -655,9 +618,9 @@ const saveTeamChanges = async () => {
     };
 
     await fantasyStore.saveFantasyTeamPlayers(teamData);
-    if(fantasyStore.error){
+    if (fantasyStore.error) {
       showMessage(fantasyStore.error, "error");
-        return
+      return
     }
 
     await fantasyStore.fetchUserFantasyTeam();
@@ -681,27 +644,32 @@ async function createTeam() {
       showModalMessage("Please select a formation.", "error");
       return;
     }
-    await fantasyStore.createFantasyTeam(teamName.value, selectedFormation.value);
-    
-    if(fantasyStore.error){
-      showModalMessage(fantasyStore.error, "error");
+
+    const response = await fantasyStore.createFantasyTeam(
+      teamName.value,
+      selectedFormation.value
+    );
+
+    if (response && (response.status === 200 || response.status === 201)) {
+      toggleModal();
       teamName.value = "";
       selectedFormation.value = "";
-      fantasyStore.error = null; 
-      return
-    }
 
-    toggleModal();
-    teamName.value = "";
-    selectedFormation.value = "";
-    await fantasyStore.fetchUserFantasyTeam();
-    await fantasyStore.fetchFantasyTeamPlayers();
-    initializeTeamState();
-    showMessage("Team created successfully!", "success");
+      await fantasyStore.fetchUserFantasyTeam();
+      await fantasyStore.fetchFantasyTeamPlayers();
+      initializeTeamState();
+
+      showMessage("Team created successfully!", "success");
+    } else {
+      const message = fantasyStore.error || "Failed to create team.";
+      showModalMessage(message, "error");
+    }
   } catch (error) {
+    console.error(error);
     showModalMessage("Failed to create team. Please try again.", "error");
   }
 }
+
 
 function isValidFormationChange(sourcePlayer: Player, targetPlayer: Player | KplPlayer): boolean {
   if (sourcePlayer.position === targetPlayer.position) return true;

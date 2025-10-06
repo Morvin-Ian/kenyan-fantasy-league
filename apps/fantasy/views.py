@@ -4,6 +4,8 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from django.db import IntegrityError, transaction
+from rest_framework.exceptions import ValidationError
 
 from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance
 from apps.kpl.models import Gameweek, Player
@@ -23,22 +25,25 @@ class FantasyTeamViewSet(ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
 
+
     def perform_create(self, serializer):
         user = self.request.user
 
         if FantasyTeam.objects.filter(user=user).exists():
-            raise ValidationError(
-                "You already have a fantasy team.", code=status.HTTP_400_BAD_REQUEST
-            )
+            raise ValidationError({"detail": "You already have a fantasy team."})
 
         team_name = serializer.validated_data.get("name")
         if team_name and FantasyTeam.objects.filter(name__iexact=team_name).exists():
-            raise ValidationError(
-                f"A team with the name '{team_name}' already exists.",
-                code=status.HTTP_400_BAD_REQUEST,
-            )
-        return FantasyService.create_fantasy_team(user, serializer.validated_data)
+            raise ValidationError({"detail": f"A team with the name '{team_name}' already exists."})
 
+        try:
+            with transaction.atomic():
+                team = FantasyService.create_fantasy_team(user, serializer.validated_data)
+                serializer.instance = team  
+        except IntegrityError:
+            raise ValidationError({"detail": f"A team with the name '{team_name}' already exists."})
+    
+    
     @action(detail=False, methods=["get"], url_path="user-team")
     def get_user_team(self, request):
         try:

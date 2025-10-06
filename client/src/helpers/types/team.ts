@@ -5,7 +5,7 @@ export interface Player {
   name: string;
   position: string;
   age?: number;
-  current_value:number;
+  current_value:string;
   jersey_number?: number;
   team: Team;
 }
@@ -76,7 +76,7 @@ export interface Player {
   name: string;
   position: string;
   age?: number;
-  current_value: number;
+  current_value: string;
   jersey_number?: number;
   team: Team;
 }

@@ -56,9 +56,25 @@ export const useFantasyStore = defineStore("fantasy", {
         this.isLoading = true;
         const response = await apiClient.post("/fantasy/teams/", { name, formation });
         this.userTeam = response.data;
+        return response;
       } catch (error: any) {
-        const errorMessage = error.response?.data[0] || "Failed to create team. Please try again.";
+        let errorMessage = "Failed to create team. Please try again.";
+
+        if (error.response?.data) {
+          const data = error.response.data;
+
+          if (typeof data === "object") {
+            const firstKey = Object.keys(data)[0];
+            if (firstKey && Array.isArray(data[firstKey])) {
+              errorMessage = data[firstKey][0];
+            } else if (data.detail) {
+              errorMessage = data.detail;
+            }
+          }
+        }
+
         this.error = errorMessage;
+        return error.response;
       } finally {
         this.isLoading = false;
       }
@@ -100,7 +116,7 @@ export const useFantasyStore = defineStore("fantasy", {
             params: gameweekId ? { gameweek_id: gameweekId } : {},
           }
         );
-        this.gameweekStatus = response.data;  
+        this.gameweekStatus = response.data;
         return response.data;
       } catch (error) {
         this.error = error instanceof Error ? error.message : String(error);

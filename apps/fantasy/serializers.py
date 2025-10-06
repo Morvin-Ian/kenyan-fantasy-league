@@ -32,13 +32,16 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         return active_gameweek.number if active_gameweek else None
 
     def get_balance(self, obj):
+        if not hasattr(obj, "players"):
+            return 0.0
+        
         total_players_value = (
             obj.players.aggregate(total_value=Sum("current_value"))["total_value"]
             or Decimal('0.00')
         )
+        
+        return float(Decimal(str(obj.budget)) - total_players_value)
 
-        budget_value = obj.budget
-        return float(budget_value - total_players_value)
 
     def get_total_points(self, obj):
         """

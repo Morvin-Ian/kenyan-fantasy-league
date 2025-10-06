@@ -76,6 +76,7 @@
               <tr>
                 <th class="px-2 sm:px-4 py-2 text-left text-gray-700 font-semibold text-xs">Player</th>
                 <th class="px-2 sm:px-4 py-2 text-left text-gray-700 font-semibold text-xs">Position</th>
+                <th class="px-2 sm:px-4 py-2 text-left text-gray-700 font-semibold text-xs">Price</th>
                 <th class="px-2 sm:px-4 py-2 text-left text-gray-700 font-semibold text-xs">Action</th>
               </tr>
             </thead>
@@ -109,6 +110,11 @@
                   </span>
                 </td>
                 <td class="px-2 sm:px-4 py-2">
+                  <div class="flex items-center">
+                    <span class="font-semibold text-gray-900 text-xs sm:text-sm">{{ parseFloat(player.current_value).toFixed(1) }}M</span>
+                  </div>
+                </td>
+                <td class="px-2 sm:px-4 py-2">
                   <button @click="selectPlayerForTransfer(player)" class="px-2 sm:px-3 py-1 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-md transition-all duration-300 hover:shadow-lg hover:from-gray-600 hover:to-gray-700 transform hover:-translate-y-1 flex items-center text-xs">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -118,7 +124,7 @@
                 </td>
               </tr>
               <tr v-if="paginatedPlayers.length === 0">
-                <td colspan="3" class="text-center py-4 sm:py-8 text-gray-500 bg-gray-50/50">
+                <td colspan="4" class="text-center py-4 sm:py-8 text-gray-500 bg-gray-50/50">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
