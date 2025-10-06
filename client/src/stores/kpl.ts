@@ -18,7 +18,7 @@ export const useKplStore = defineStore('kpl', {
     players: [] as Player[],
     fixtureLineups: new Map<string, Lineup[]>()
   }),
-  
+
   actions: {
     async fetchTeams() {
       try {
@@ -90,19 +90,21 @@ export const useKplStore = defineStore('kpl', {
     async fetchPlayers() {
       try {
         let nextUrl: string | null = "/kpl/players/";
-
         while (nextUrl) {
+          if (nextUrl.startsWith('http://')) {
+            nextUrl = nextUrl.replace(/^https?:\/\/[^\/]+/, '');
+          }
+
           const response: { data: PaginatedResponse<Player> } = await apiClient.get(nextUrl);
           this.players = this.players.concat(response.data.results);
           nextUrl = response.data.next;
         }
-
       } catch (error) {
         console.error("Error fetching players:", error);
       }
     },
 
-    async uploadLineupCsv (formData: FormData) {
+    async uploadLineupCsv(formData: FormData) {
       try {
         const response = await apiClient.post(`/kpl/fixtures/upload-lineup-csv/`, formData, {
           headers: {
