@@ -91,6 +91,7 @@ export const useKplStore = defineStore('kpl', {
       try {
         let nextUrl: string | null = "/kpl/players/";
         while (nextUrl) {
+          // Handle absolute URLs returned by the API - on Production
           if (nextUrl.startsWith('http://')) {
             nextUrl = nextUrl.replace(/^https?:\/\/[^\/]+/, '');
           }
