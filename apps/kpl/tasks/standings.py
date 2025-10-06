@@ -2,6 +2,7 @@ import logging
 import logging.config
 import os
 from datetime import datetime
+from django.core.cache import cache
 
 import requests
 from bs4 import BeautifulSoup
@@ -244,5 +245,5 @@ def get_kpl_table():
         logger.error(f"Logo update failed: {str(e)}", exc_info=True)
 
     final_result = f"{first_response} - {second_response}"
-
+    cache.delete_many(cache.keys("standings_list_page_*"))
     return final_result
