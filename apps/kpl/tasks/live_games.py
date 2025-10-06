@@ -15,6 +15,7 @@ from apps.fantasy.tasks.player_performance import update_complete_player_perform
 from apps.kpl.models import Fixture, Gameweek
 from config.settings import base
 from util.selenium import SeleniumManager
+from bs4 import BeautifulSoup
 
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -30,21 +31,38 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
             logger.error("Failed to load match URL")
             return []
 
-        table = selenium_manager.wait_for_elements(By.XPATH, "//*[@class='Box kiSsvW']")
-        if not table:
+        # Wait for and get the fixture table container using Selenium
+        table_element = selenium_manager.wait_for_elements(By.XPATH, "//*[@class='Box kiSsvW']")
+        if not table_element:
             logger.warning("Fixture table not found on page")
             if selenium_manager.driver:
                 logger.debug(selenium_manager.driver.page_source[:2000])
             return []
 
-        fixtures = table.find_elements(By.TAG_NAME, "a")
+        # Get page source and parse with BeautifulSoup
+        soup = BeautifulSoup(selenium_manager.driver.page_source, 'html.parser')
+        
+        # Find the fixtures container using BeautifulSoup
+        table = soup.find('div', class_='Box kiSsvW')
+        if not table:
+            logger.warning("Fixture table not found by BeautifulSoup")
+            return []
+
+        # Find all fixture links using BeautifulSoup
+        fixtures = table.find_all('a')
         logger.info(f"Found {len(fixtures)} fixture links")
 
         data = []
-        for fixture_elem in fixtures:
-            logger.info(f"Processing fixture element: {fixture_elem.text}")
-            link = fixture_elem.get_attribute("href")
-            parts = fixture_elem.text.strip().splitlines()
+        for fixture in fixtures:
+            # Extract text and link using BeautifulSoup
+            text = fixture.get_text(strip=True, separator='\n')
+            link = fixture.get('href')
+            
+            # Make absolute URL if needed
+            if link and link.startswith('/'):
+                link = f"https://www.sofascore.com{link}"
+            
+            parts = text.split('\n')
             logger.info(f"Raw fixture parts: {parts}")
 
             if len(parts) >= 4:
