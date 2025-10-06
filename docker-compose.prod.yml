@@ -50,7 +50,7 @@ services:
       context: ./client  
       dockerfile: ./production/Dockerfile 
     ports:
-      - "8080:80"
+      - "80:80"
     networks:
       - fpl-vue
 
@@ -63,7 +63,7 @@ services:
     volumes:
       - .:/app
     env_file:
-      - .env
+      - .env.prod
     depends_on:
       - redis
       - postgres-db
@@ -79,7 +79,7 @@ services:
     volumes:
       - .:/app
     env_file:
-      - .env
+      - .env.prod
     depends_on:
       - redis
       - postgres-db

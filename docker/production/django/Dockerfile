@@ -21,23 +21,23 @@ RUN pip3 install --upgrade pip
 COPY ./requirements.txt /app/requirements.txt
 RUN pip3 install -r requirements.txt
 
-COPY ./docker/local/django/entrypoint /entrypoint
+COPY ./docker/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-COPY ./docker/local/django/start /start
+COPY ./docker/production/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-COPY ./docker/local/django/celery/flower/start /start-flower
+COPY ./docker/production/django/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
-COPY ./docker/local/django/celery/worker/start /start-celeryworker
+COPY ./docker/production/django/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
-COPY ./docker/local/django/celery/beat/start /start-celerybeat
+COPY ./docker/production/django/celery/beat/start /start-celerybeat
 RUN sed -i 's/\r$//g' /start-celerybeat
 RUN chmod +x /start-celerybeat
 
