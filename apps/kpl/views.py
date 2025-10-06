@@ -54,9 +54,9 @@ class StandingViewSet(ReadOnlyModelViewSet):
         page_number = request.query_params.get("page", 1)
         cache_key = f"standings_list_page_{page_number}"
 
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return Response(cached_data)
+        # cached_data = cache.get(cache_key)
+        # if cached_data:
+        #     return Response(cached_data)
 
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
