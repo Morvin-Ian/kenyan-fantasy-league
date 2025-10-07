@@ -85,15 +85,25 @@ export const useFantasyStore = defineStore("fantasy", {
       try {
         this.isLoading = true;
         const response = await apiClient.get(`/fantasy/players/gameweek-players/`);
-        this.fantasyPlayers = response.data;
+
+        if (Array.isArray(response.data)) {
+          this.fantasyPlayers = response.data;
+        } else if (response.data && typeof response.data === 'object') {
+          console.warn('Received object instead of array:', response.data);
+          this.fantasyPlayers = [];
+        } else {
+          this.fantasyPlayers = [];
+        }
       } catch (error) {
+        console.error('Error fetching fantasy players:', error);
         this.error = error instanceof Error ? error.message : String(error);
+        this.fantasyPlayers = [];
       } finally {
         this.isLoading = false;
       }
     },
 
-      async fetchTeamOfWeek() {
+    async fetchTeamOfWeek() {
       try {
         this.isLoading = true;
         const response = await apiClient.get(`/fantasy/performance/gameweek-team/`);

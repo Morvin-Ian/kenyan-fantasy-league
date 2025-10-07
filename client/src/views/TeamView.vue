@@ -245,7 +245,15 @@ const closeSearchModal = () => {
 };
 
 function initializeTeamState() {
-  const players = fantasyStore.fantasyPlayers || [];
+  let players: Player[] = [];
+  
+  if (Array.isArray(fantasyStore.fantasyPlayers)) {
+    players = fantasyStore.fantasyPlayers;
+  } else if (fantasyStore.fantasyPlayers && typeof fantasyStore.fantasyPlayers === 'object') {
+    console.error('fantasyPlayers is not an array:', fantasyStore.fantasyPlayers);
+    players = [];
+  }
+
   const rawFormation = selectedFormation.value || fantasyStore.userTeam[0]?.formation || "4-4-2";
   const formationString = (Object.keys(benchCompositions).includes(rawFormation)
     ? rawFormation
