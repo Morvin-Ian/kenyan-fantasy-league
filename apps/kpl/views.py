@@ -202,9 +202,9 @@ class PlayerViewSet(ModelViewSet):
         team_id = request.query_params.get("team_id", "")
         cache_key = f"players_active_list_page_{page_number}_team_{team_id}"
 
-        # cached_data = cache.get(cache_key)
-        # if cached_data:
-        #     return Response(cached_data)
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
 
         queryset = self.get_queryset()
 

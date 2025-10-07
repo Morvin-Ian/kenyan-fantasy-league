@@ -2,11 +2,12 @@ import random
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.kpl.models import Player
 
-from ..models import FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer
+from ..models import FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer, TeamSelection
 
 
 class FantasyService:
@@ -33,6 +34,43 @@ class FantasyService:
         starting_eleven: dict,
         bench_players: list,
     ) -> dict:
+        current_gameweek = Gameweek.objects.filter(is_active=True).first()
+        if not current_gameweek:
+            try:
+                current_gameweek = Gameweek.objects.get(number=1)
+            except Gameweek.DoesNotExist:
+                raise ValidationError("No Gameweek with number 1 exists.")
+
+        existing_selection = TeamSelection.objects.filter(
+            fantasy_team=fantasy_team, gameweek=current_gameweek
+        ).first()
+
+        if current_gameweek.is_deadline_passed:
+            if existing_selection:
+                raise ValidationError(
+                    f"Gameweek {current_gameweek.number} transfer deadline has passed. "
+                    "You cannot make changes to your team."
+                )
+            else:
+                next_gameweek = (
+                    Gameweek.objects.filter(number__gt=current_gameweek.number)
+                    .order_by("number")
+                    .first()
+                )
+
+                if not next_gameweek:
+                    next_gameweek = Gameweek.objects.create(
+                        number=current_gameweek.number + 1,
+                        start_date=timezone.now().date() + timezone.timedelta(days=7),
+                        end_date=timezone.now().date() + timezone.timedelta(days=14),
+                        transfer_deadline=timezone.now() + timezone.timedelta(days=6),
+                        is_active=False,
+                    )
+
+                target_gameweek = next_gameweek
+        else:
+            target_gameweek = current_gameweek
+
         FantasyService._validate_team_composition(
             formation, fantasy_team, starting_eleven, bench_players
         )
@@ -66,23 +104,36 @@ class FantasyService:
 
         all_player_ids = []
         players_to_update = {}
+        captain_id = None
+        vice_captain_id = None
+        starter_ids = []
 
         goalkeeper = starting_eleven.get("goalkeeper")
         if goalkeeper:
             player_id = goalkeeper.get("player") or goalkeeper.get("id")
             all_player_ids.append(player_id)
+            starter_ids.append(player_id)
             players_to_update[player_id] = FantasyService._build_player_data(
                 goalkeeper, is_starter=True
             )
+            if goalkeeper.get("is_captain"):
+                captain_id = player_id
+            if goalkeeper.get("is_vice_captain"):
+                vice_captain_id = player_id
 
         for position in ["defenders", "midfielders", "forwards"]:
             position_players = starting_eleven.get(position, [])
             for player_data in position_players:
                 player_id = player_data.get("player") or player_data.get("id")
                 all_player_ids.append(player_id)
+                starter_ids.append(player_id)
                 players_to_update[player_id] = FantasyService._build_player_data(
                     player_data, is_starter=True
                 )
+                if player_data.get("is_captain"):
+                    captain_id = player_id
+                if player_data.get("is_vice_captain"):
+                    vice_captain_id = player_id
 
         for player_data in bench_players:
             player_id = player_data.get("player") or player_data.get("id")
@@ -110,16 +161,9 @@ class FantasyService:
                 f"Insufficient transfer budget. Required: {transfer_cost}, Available: {fantasy_team.transfer_budget}"
             )
 
-        current_gameweek = Gameweek.objects.filter(is_active=True).first()
-        if not current_gameweek:
-            try:
-                current_gameweek = Gameweek.objects.get(number=1)
-            except Gameweek.DoesNotExist:
-                raise ValidationError("No Gameweek with number 1 exists.")
-
+        # Handle transfers
         for player_id_out in players_to_remove:
             player_out = Player.objects.get(id=player_id_out)
-            # For simplicity, assume one-to-one replacement or no direct replacement
             player_in_id = players_to_add.pop() if players_to_add else None
             player_in = Player.objects.get(id=player_in_id) if player_in_id else None
             transfer_cost_per_player = 4 if num_transfers > free_transfers else 0
@@ -131,6 +175,7 @@ class FantasyService:
                 transfer_cost=transfer_cost_per_player,
             )
 
+        # Update transfer budget and free transfers
         if num_transfers > free_transfers:
             fantasy_team.transfer_budget -= transfer_cost
             fantasy_team.free_transfers = 0
@@ -138,6 +183,7 @@ class FantasyService:
             fantasy_team.free_transfers -= num_transfers
         fantasy_team.save()
 
+        # Remove players not in squad
         fantasy_team.players.exclude(player__id__in=all_player_ids).delete()
 
         existing_players = {
@@ -188,6 +234,16 @@ class FantasyService:
 
         fantasy_team.clean()
 
+        # Create or update TeamSelection for current gameweek
+        team_selection = FantasyService._create_team_selection(
+            fantasy_team=fantasy_team,
+            gameweek=target_gameweek,
+            formation=formation,
+            captain_id=captain_id,
+            vice_captain_id=vice_captain_id,
+            starter_ids=starter_ids,
+        )
+
         return {
             "players_created": len(players_to_create),
             "players_updated": len(players_to_bulk_update),
@@ -195,7 +251,55 @@ class FantasyService:
             "transfer_cost": transfer_cost,
             "remaining_free_transfers": fantasy_team.free_transfers,
             "remaining_transfer_budget": float(fantasy_team.transfer_budget),
+            "team_selection_id": str(team_selection.id),
+            "gameweek": current_gameweek.number,
         }
+
+    @staticmethod
+    def _create_team_selection(
+        fantasy_team: FantasyTeam,
+        gameweek: Gameweek,
+        formation: str,
+        captain_id: str,
+        vice_captain_id: str,
+        starter_ids: list,
+    ) -> TeamSelection:
+        """Create or update team selection for the gameweek"""
+        captain = FantasyPlayer.objects.get(
+            fantasy_team=fantasy_team, player__id=captain_id
+        )
+        vice_captain = FantasyPlayer.objects.get(
+            fantasy_team=fantasy_team, player__id=vice_captain_id
+        )
+        starters = FantasyPlayer.objects.filter(
+            fantasy_team=fantasy_team, player__id__in=starter_ids
+        )
+
+        bench = FantasyPlayer.objects.filter(fantasy_team=fantasy_team).exclude(
+            player__id__in=starter_ids
+        )
+
+        team_selection, created = TeamSelection.objects.get_or_create(
+            fantasy_team=fantasy_team,
+            gameweek=gameweek,
+            defaults={
+                "formation": formation,
+                "captain": captain,
+                "vice_captain": vice_captain,
+                "is_finalized": False,
+            },
+        )
+
+        if not created:
+            team_selection.formation = formation
+            team_selection.captain = captain
+            team_selection.vice_captain = vice_captain
+            team_selection.save()
+
+        team_selection.starters.set(starters)
+        team_selection.bench.set(bench)
+
+        return team_selection
 
     @staticmethod
     def _assign_captain_and_vice(
@@ -214,7 +318,7 @@ class FantasyService:
                 all_starters.append((position, player_data))
 
         if not has_captain:
-            pos_idx, player_idx = random.randint(0, len(all_starters) - 1), 0
+            pos_idx = random.randint(0, len(all_starters) - 1)
             position_key, captain_player = all_starters[pos_idx]
 
             if position_key == "goalkeeper":
@@ -227,14 +331,13 @@ class FantasyService:
                         "id"
                     )
                     if str(player_id) == str(captain_id):
-                        player_idx = i
+                        starting_eleven[position_key][i]["is_captain"] = True
                         break
-                starting_eleven[position_key][player_idx]["is_captain"] = True
 
             all_starters.pop(pos_idx)
 
         if not has_vice_captain and all_starters:
-            pos_idx, player_idx = random.randint(0, len(all_starters) - 1), 0
+            pos_idx = random.randint(0, len(all_starters) - 1)
             position_key, vice_captain_player = all_starters[pos_idx]
 
             if position_key == "goalkeeper":
@@ -247,9 +350,8 @@ class FantasyService:
                         "player"
                     ) or vice_captain_player.get("id")
                     if str(player_id) == str(vice_captain_id):
-                        player_idx = i
+                        starting_eleven[position_key][i]["is_vice_captain"] = True
                         break
-                starting_eleven[position_key][player_idx]["is_vice_captain"] = True
 
         return starting_eleven
 

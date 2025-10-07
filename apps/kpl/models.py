@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.utils import timezone
 from util.models import TimeStampedUUIDModel
 
 FIXTURE_STATUS = [
@@ -97,6 +97,12 @@ class Gameweek(TimeStampedUUIDModel):
             )
             self.number = max_number + 1
         super().save(*args, **kwargs)
+
+    @property
+    def is_deadline_passed(self):
+        return (
+            timezone.now() > self.transfer_deadline if self.transfer_deadline else False
+        )
 
 
 class Fixture(TimeStampedUUIDModel):

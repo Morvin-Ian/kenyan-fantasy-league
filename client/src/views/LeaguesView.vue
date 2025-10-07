@@ -2,7 +2,6 @@
   <div class=" p-4 sm:p-6 lg:p-8">
     <div class="max-w-5xl mx-auto">
 
-
       <!-- Main Content -->
       <div class="bg-white/90 rounded-2xl border border-gray-100 p-6 sm:p-8 lg:p-10 shadow-lg glass-effect animate-slide-in">
         <!-- Section Title -->
@@ -15,10 +14,11 @@
           </p>
         </div>
 
-        <!-- League Options -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-          <!-- Private Leagues -->
-          <div class="border border-gray-100 rounded-xl p-5 sm:p-6 bg-white/80 glass-effect card">
+          <div class="border border-gray-100 rounded-xl p-5 sm:p-6 bg-white/80 glass-effect card relative">
+            <div class="absolute -top-2 -right-2 bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+              Coming Soon
+            </div>
             <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
               Private Leagues
             </h3>
@@ -26,17 +26,19 @@
               Create or join exclusive leagues with friends and rivals
             </p>
             <div class="space-y-3">
-              <button class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-primary">
+              <button class="w-full bg-gradient-to-r from-gray-400 to-gray-600 text-white py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium cursor-not-allowed opacity-70" disabled>
                 Create League
               </button>
-              <button class="w-full border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-secondary">
+              <button class="w-full border border-gray-200 text-gray-400 py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium cursor-not-allowed" disabled>
                 Join League
               </button>
             </div>
           </div>
 
-          <!-- Public Leagues -->
-          <div class="border border-gray-100 rounded-xl p-5 sm:p-6 bg-white/80 glass-effect card">
+          <div class="border border-gray-100 rounded-xl p-5 sm:p-6 bg-white/80 glass-effect card relative">
+            <div class="absolute -top-2 -right-2 bg-gray-500 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-lg">
+              Coming Soon
+            </div>
             <h3 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
               Public Leagues
             </h3>
@@ -44,10 +46,10 @@
               Compete with the Kenyan football community
             </p>
             <div class="space-y-3">
-              <button class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-primary">
+              <button class="w-full bg-gradient-to-r from-gray-400 to-gray-600 text-white py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium cursor-not-allowed opacity-70" disabled>
                 Create League
               </button>
-              <button class="w-full border border-gray-200 text-gray-700 py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium btn-secondary">
+              <button class="w-full border border-gray-200 text-gray-400 py-2.5 px-4 rounded-lg text-sm sm:text-base font-medium cursor-not-allowed" disabled>
                 Join League
               </button>
             </div>

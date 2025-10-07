@@ -90,9 +90,9 @@ export const useKplStore = defineStore('kpl', {
     async fetchPlayers() {
       try {
         let nextUrl: string | null = "/kpl/players/";
+        const isProduction = true;
         while (nextUrl) {
-          // Handle absolute URLs returned by the API - on Production
-          if (nextUrl.startsWith('http://')) {
+          if (isProduction && nextUrl.startsWith('http://')) {
             nextUrl = nextUrl.replace(/^http:\/\//, 'https://');
           }
 

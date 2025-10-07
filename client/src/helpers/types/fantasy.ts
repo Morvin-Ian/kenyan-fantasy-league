@@ -9,6 +9,7 @@ export interface FantasyTeam {
   free_transfers: number;
   total_points: number;
   overall_rank: number | null;
+  best_week: number | null;
   transfer_budget: string;
 }
 

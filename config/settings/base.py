@@ -54,8 +54,8 @@ CSRF_TRUSTED_ORIGINS = [
     "http://api:8000",
     "http://nginx:80",
     "http://[::1]:8080",
-    'https://fantasykenya.com',
-    'https://www.fantasykenya.com',
+    "https://fantasykenya.com",
+    "https://www.fantasykenya.com",
 ]
 
 

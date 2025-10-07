@@ -185,6 +185,7 @@ class TeamSelection(TimeStampedUUIDModel):
         FantasyPlayer, on_delete=models.PROTECT, related_name="vice_captain_selections"
     )
     starters = models.ManyToManyField(FantasyPlayer, related_name="starter_selections")
+    bench = models.ManyToManyField(FantasyPlayer, related_name="bench_selections")
     is_finalized = models.BooleanField(default=False)
 
     class Meta:

@@ -14,6 +14,7 @@ export const useFantasyStore = defineStore("fantasy", {
   state: () => ({
     fantasyTeams: [] as FantasyTeam[],
     fantasyPlayers: [] as FantasyPlayer[],
+    teamOfWeek: [] as FantasyPlayer[],
     userTeam: [] as FantasyTeam[],
     goalsLeaderboard: [] as PlayerGoalsLeaderboard[],
     gameweekStatus: null as GameweekStatusResponse | null,
@@ -83,8 +84,20 @@ export const useFantasyStore = defineStore("fantasy", {
     async fetchFantasyTeamPlayers() {
       try {
         this.isLoading = true;
-        const response = await apiClient.get(`/fantasy/players/team-players`);
+        const response = await apiClient.get(`/fantasy/players/gameweek-players/`);
         this.fantasyPlayers = response.data;
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : String(error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+      async fetchTeamOfWeek() {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.get(`/fantasy/performance/gameweek-team/`);
+        this.teamOfWeek = response.data;
       } catch (error) {
         this.error = error instanceof Error ? error.message : String(error);
       } finally {

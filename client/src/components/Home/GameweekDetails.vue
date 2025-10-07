@@ -1,17 +1,14 @@
 <template>
-  <div
-    class="bg-gradient-to-br from-gray-50 to-blue-50 p-2 sm:p-4 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl mx-1 sm:mx-2 md:mx-4 shadow-lg mb-3">
+  <div class="bg-gradient-to-br from-gray-50 to-blue-50 p-2 sm:p-4 md:p-6 lg:p-8 rounded-xl sm:rounded-2xl mx-1 sm:mx-2 md:mx-4 shadow-lg mb-3">
     <div class="mx-auto">
-
       <div class="grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <!-- Left Column (Gameweek Status) -->
         <div class="xl:col-span-2 flex flex-col gap-3 sm:gap-4 md:gap-6">
-          <div
-            class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-md overflow-hidden border border-gray-100">
+          <div class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-md overflow-hidden border border-gray-100">
             <div class="bg-gray-50 px-4 py-3 flex items-center justify-between">
               <h2 class="text-lg md:text-xl font-bold text-gray-900 flex items-center">
-                <span class="mr-2">Gameweek {{ gameweekStatus?.gameweek.number }}</span>
-                <span v-if="gameweekStatus"
-                  class="bg-gray-800 text-xs text-white font-semibold px-2 py-0.5 rounded-full">
+                <span class="mr-2">Gameweek {{ gameweekStatus.gameweek.number }}</span>
+                <span class="bg-gray-800 text-xs text-white font-semibold px-2 py-0.5 rounded-full">
                   {{ gameweekStatus.gameweek.status }}
                 </span>
               </h2>
@@ -28,12 +25,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(day, index) in gameweekStatus?.match_days" :key="index"
+                  <tr v-for="(day, index) in gameweekStatus.match_days" :key="index"
                     class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
                     <td class="py-2.5 px-3">
                       <div class="flex items-center space-x-2">
-                        <div
-                          class="w-9 h-9 rounded-md bg-gray-200 flex items-center justify-center text-gray-800 font-semibold text-sm">
+                        <div class="w-9 h-9 rounded-md bg-gray-200 flex items-center justify-center text-gray-800 font-semibold text-sm">
                           {{ day.date }}
                         </div>
                         <div>
@@ -76,41 +72,13 @@
               </table>
             </div>
           </div>
-
-
-          <div
-            class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100">
-            <div class="bg-gradient-to-r from-gray-800 to-gray-900 p-4 sm:p-6 md:p-8">
-              <h2
-                class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-white mb-4 sm:mb-6 flex items-center">
-                Gameweek {{ gameweekStatus?.gameweek.number }} Stats
-              </h2>
-
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 lg:gap-5">
-                <div v-for="(stat, index) in gameStats" :key="index" :style="{ animationDelay: `${index * 100}ms` }"
-                  class="animate-slide-up bg-white/10 backdrop-blur-sm p-2 sm:p-3 md:p-4 rounded-xl sm:rounded-2xl text-gray-200 hover:bg-white/20 transition-all duration-200 transform hover:-translate-y-1 border border-white/10">
-                  <div class="text-xs uppercase tracking-wider mb-1 sm:mb-2 font-medium opacity-75">{{ stat.label }}
-                  </div>
-                  <div class="text-sm sm:text-lg md:text-xl font-light">{{ stat.value }}</div>
-                </div>
-              </div>
-
-              <router-link to="/fkl_team" class="mt-4 sm:mt-6 px-4 py-2 text-white font-light bg-white/20 hover:bg-white/30 
-         rounded-xl transition-all duration-200 flex items-center justify-center 
-         group shadow-lg hover:shadow-xl border border-white/10 text-sm sm:text-base w-fit">
-                <span>View My Team</span>
-              </router-link>
-            </div>
-          </div>
         </div>
 
         <!-- Right Column (Team of the Week) -->
-        <div
-          class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100">
+        <div class="animate-fade-in bg-white rounded-lg sm:rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:shadow-xl border border-gray-100">
           <div class="bg-gray-800 p-4 sm:p-6 md:p-8">
             <div class="flex items-center text-white mb-2">
-              <div
-                class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-600 flex items-center justify-center mr-2 sm:mr-3">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gray-600 flex items-center justify-center mr-2 sm:mr-3">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 text-gray-300"
                   fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -118,8 +86,8 @@
                 </svg>
               </div>
               <div>
-                <h2 class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">Team of the Week</h2>
-                <p class="text-gray-300 text-xs sm:text-sm">Top performers from GW34</p>
+                <h2 class="text-base sm:text-lg md:text-xl lg:text-2xl font-bold">Team of the Week {{ isTeamWeekComplete ? '- (Complete)' : '- (Incomplete)' }}</h2>
+                <p class="text-gray-300 text-xs sm:text-sm">Top performers from GW{{ gameweekStatus.gameweek.number }}</p>
               </div>
             </div>
           </div>
@@ -135,7 +103,12 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(player, index) in teamOfWeek" :key="index"
+                <tr v-if="!isTeamComplete">
+                  <td colspan="4" class="p-4 text-center text-gray-500 text-sm font-medium">
+                    {{ errorMessage }}
+                  </td>
+                </tr>
+                <tr v-else v-for="(player, index) in formattedTeamOfWeek" :key="index"
                   class="border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150">
                   <td class="py-2 sm:py-3 text-center text-gray-400">{{ index + 1 }}</td>
                   <td class="py-2 sm:py-3">
@@ -150,13 +123,6 @@
                   </td>
                   <td class="py-2 sm:py-3">
                     <div class="flex items-center">
-                      <span class="w-2 h-2 rounded-full flex-shrink-0" :class="{
-                        'bg-red-500': player.clubColor.includes('red'),
-                        'bg-gray-500': player.clubColor.includes('blue'),
-                        'bg-green-500': player.clubColor.includes('green'),
-                        'bg-purple-500': player.clubColor.includes('purple'),
-                        'bg-orange-500': player.clubColor.includes('orange')
-                      }"></span>
                       <span class="ml-1 sm:ml-2 font-medium text-gray-900 truncate">{{ player.name }}</span>
                       <span class="ml-1 sm:ml-2 text-xs text-gray-500 hidden sm:inline">{{ player.club }}</span>
                     </div>
@@ -168,7 +134,7 @@
                   }">{{ player.points }}</td>
                 </tr>
               </tbody>
-              <tfoot>
+              <tfoot v-if="isTeamComplete">
                 <tr>
                   <td colspan="4" class="py-3 sm:py-4 text-right">
                     <div class="flex items-center justify-end">
@@ -189,44 +155,77 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useFantasyStore } from '@/stores/fantasy';
-import { storeToRefs } from "pinia";
+import { storeToRefs } from 'pinia';
 
 const fantasyStore = useFantasyStore();
-const { gameweekStatus } = storeToRefs(fantasyStore);
+const { gameweekStatus, teamOfWeek } = storeToRefs(fantasyStore);
 
+const formattedTeamOfWeek = ref([]);
+const isTeamWeekComplete = ref(false);
+const errorMessage = ref('Team of the Week data not available');
 
-const gameStats = ref([
-  { label: 'Highest Points', value: '132' },
-  { label: 'Average Points', value: '47' },
-  { label: 'Transfers Made', value: '23.7M' },
-  { label: 'Most Transferred', value: 'Olunga' },
-  { label: 'Wildcards Played', value: '310K' },
-  { label: 'Most Captained', value: 'Akumu' }
-]);
+const isTeamComplete = computed(() => formattedTeamOfWeek.value && formattedTeamOfWeek.value.length > 0);
+const totalPoints = computed(() => isTeamComplete.value ? formattedTeamOfWeek.value.reduce((sum, p) => sum + p.points, 0) : 0);
 
-const teamOfWeek = ref([
-  { position: 'GKP', name: 'Origi', club: 'GOR', clubColor: 'text-red-600', points: 13 },
-  { position: 'DEF', name: 'Otieno', club: 'KCB', clubColor: 'text-green-600', points: 15 },
-  { position: 'DEF', name: 'Onyango', club: 'KCB', clubColor: 'text-green-600', points: 13 },
-  { position: 'DEF', name: 'Omurwa', club: 'TUS', clubColor: 'text-blue-600', points: 11 },
-  { position: 'DEF', name: 'Ochieng', club: 'GOR', clubColor: 'text-red-600', points: 11 },
-  { position: 'MID', name: 'Miheso', club: 'BDH', clubColor: 'text-orange-600', points: 11 },
-  { position: 'MID', name: 'Akumu', club: 'TUS', clubColor: 'text-blue-600', points: 10 },
-  { position: 'MID', name: 'Muguna', club: 'GOR', clubColor: 'text-red-600', points: 10 },
-  { position: 'MID', name: 'Mutinda', club: 'AFC', clubColor: 'text-purple-600', points: 10 },
-  { position: 'FWD', name: 'Olunga', club: 'BDH', clubColor: 'text-orange-600', points: 15 }
-]);
+const fetchTeamOfWeek = async () => {
+  try {
+    await fantasyStore.fetchTeamOfWeek();
 
-const totalPoints = computed(() => {
-  return teamOfWeek.value.reduce((sum, player) => sum + player.points, 0);
+    const data = teamOfWeek.value; 
+    if (!data) return;
+
+    const formatted = [];
+
+    data.goalkeeper?.slice(0, 1).forEach((gkp) => {
+      formatted.push(formatPlayer(gkp, 'GKP'));
+    });
+
+    isTeamWeekComplete.value = data.complete;
+
+    data.defenders
+      ?.sort((a, b) => b.fantasy_points - a.fantasy_points)
+      .slice(0, 5)
+      .forEach((def) => formatted.push(formatPlayer(def, 'DEF')));
+
+    data.midfielders
+      ?.sort((a, b) => b.fantasy_points - a.fantasy_points)
+      .slice(0, 5)
+      .forEach((mid) => formatted.push(formatPlayer(mid, 'MID')));
+
+    data.forwards
+      ?.sort((a, b) => b.fantasy_points - a.fantasy_points)
+      .slice(0, 3)
+      .forEach((fwd) => formatted.push(formatPlayer(fwd, 'FWD')));
+
+    formattedTeamOfWeek.value = formatted;
+  } catch (err) {
+    console.error('Error fetching team of the week:', err);
+  }
+};
+
+const formatPlayer = (player, position) => ({
+  position,
+  name: player.name,
+  club: player.team,
+  clubColor: getClubColor(player.team),
+  points: player.fantasy_points,
 });
+
+const getClubColor = (team) => {
+  const colors = {
+    'AFC Leopards': 'red',
+    'Gor Mahia': 'green',
+    'Posta Rangers': 'orange',
+    'Kakamega Homeboyz': 'yellow',
+    'Nairobi United': 'purple',
+    'Mara Sugar': 'blue',
+  };
+  return colors[team] || 'gray';
+};
 
 onMounted(async () => {
-  if (!gameweekStatus.value) {
-    await fantasyStore.fetchGameweekStatus();
-  }
+  await fetchTeamOfWeek();
 });
-
 </script>
 
 <style scoped>

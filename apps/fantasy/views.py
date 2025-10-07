@@ -5,15 +5,20 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.db import IntegrityError, transaction
-from rest_framework.exceptions import ValidationError
 
-from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance
+from apps.fantasy.models import (
+    FantasyPlayer,
+    FantasyTeam,
+    PlayerPerformance,
+    TeamSelection,
+)
 from apps.kpl.models import Gameweek, Player
 
 from .serializers import (
     FantasyPlayerSerializer,
     FantasyTeamSerializer,
     PlayerPerformanceSerializer,
+    TeamSelectionSerializer,
 )
 from .services.fantasy import FantasyService
 from .services.gameweek_status import GameweekStatusService
@@ -25,7 +30,6 @@ class FantasyTeamViewSet(ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
 
-
     def perform_create(self, serializer):
         user = self.request.user
 
@@ -34,16 +38,21 @@ class FantasyTeamViewSet(ModelViewSet):
 
         team_name = serializer.validated_data.get("name")
         if team_name and FantasyTeam.objects.filter(name__iexact=team_name).exists():
-            raise ValidationError({"detail": f"A team with the name '{team_name}' already exists."})
+            raise ValidationError(
+                {"detail": f"A team with the name '{team_name}' already exists."}
+            )
 
         try:
             with transaction.atomic():
-                team = FantasyService.create_fantasy_team(user, serializer.validated_data)
-                serializer.instance = team  
+                team = FantasyService.create_fantasy_team(
+                    user, serializer.validated_data
+                )
+                serializer.instance = team
         except IntegrityError:
-            raise ValidationError({"detail": f"A team with the name '{team_name}' already exists."})
-    
-    
+            raise ValidationError(
+                {"detail": f"A team with the name '{team_name}' already exists."}
+            )
+
     @action(detail=False, methods=["get"], url_path="user-team")
     def get_user_team(self, request):
         try:
@@ -82,6 +91,60 @@ class FantasyPlayerViewSet(ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    @action(detail=False, methods=["get"], url_path="gameweek-players")
+    def get_gameweek_selection(self, request):
+        try:
+            fantasy_team = FantasyTeam.objects.get(user=request.user)
+            gameweek_number = request.query_params.get("gameweek")
+
+            if gameweek_number:
+                gameweek = Gameweek.objects.get(number=gameweek_number)
+            else:
+                last_selection = (
+                    TeamSelection.objects.filter(fantasy_team=fantasy_team)
+                    .order_by("-gameweek__number")
+                    .first()
+                )
+
+                gameweek = last_selection.gameweek if last_selection else None
+                if not gameweek:
+                    gameweek = Gameweek.objects.filter(is_active=True).first()
+
+            try:
+                team_selection = TeamSelection.objects.get(
+                    fantasy_team=fantasy_team, gameweek=gameweek
+                )
+
+                players = list(team_selection.starters.all()) + list(
+                    team_selection.bench.all()
+                )
+
+                serializer = FantasyPlayerSerializer(players, many=True)
+                return Response(serializer.data, status=status.HTTP_200_OK)
+
+            except TeamSelection.DoesNotExist:
+                return Response(
+                    {
+                        "detail": f"No team selection found for gameweek {gameweek.number}",
+                        "gameweek": gameweek.number,
+                    },
+                    status=status.HTTP_200_OK,
+                )
+
+        except FantasyTeam.DoesNotExist:
+            return Response(
+                {"detail": "Fantasy team not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Gameweek.DoesNotExist:
+            return Response(
+                {"detail": "Gameweek not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "An unexpected error occurred.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
     @action(detail=False, methods=["post"], url_path="save-team-players")
     def save_team_players(self, request):
         try:
@@ -97,10 +160,14 @@ class FantasyPlayerViewSet(ModelViewSet):
                 bench_players=bench_players,
             )
 
+            team_selection = TeamSelection.objects.get(id=result["team_selection_id"])
+            selection_serializer = TeamSelectionSerializer(team_selection)
+
             return Response(
                 {
                     "detail": "Team squad updated successfully.",
-                    **result,
+                    "team_selection": selection_serializer.data,
+                    **{k: v for k, v in result.items() if k != "team_selection_id"},
                 },
                 status=status.HTTP_200_OK,
             )
@@ -173,17 +240,72 @@ class PlayerPerformanceViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(detail=False, methods=["get"], url_path="gameweek-team")
+    def team_of_the_week(self, request):
+        gameweek_number = request.query_params.get("gameweek")
+        if gameweek_number:
+            gameweek = Gameweek.objects.filter(number=gameweek_number).first()
+        else:
+            gameweek = Gameweek.objects.filter(is_active=True).first()
+
+        if not gameweek:
+            return Response(
+                {"detail": "No valid gameweek found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        performances = PlayerPerformance.objects.filter(
+            gameweek=gameweek
+        ).select_related("player", "player__team")
+
+        def get_top_players(position, min_count, max_count):
+            qs = performances.filter(player__position=position).order_by(
+                "-fantasy_points"
+            )[:max_count]
+            return list(qs)
+
+        gkps = get_top_players("GKP", 1, 1)
+        defs = get_top_players("DEF", 3, 5)
+        mids = get_top_players("MID", 3, 5)
+        fwds = get_top_players("FWD", 1, 3)
+
+        def serialize(perfs):
+            return [
+                {
+                    "player_id": p.player.id,
+                    "name": p.player.name,
+                    "team": p.player.team.name if p.player.team else None,
+                    "position": p.player.position,
+                    "fantasy_points": p.fantasy_points,
+                    "goals_scored": p.goals_scored,
+                    "assists": p.assists,
+                    "clean_sheets": p.clean_sheets,
+                    "saves": p.saves,
+                    "minutes_played": p.minutes_played,
+                }
+                for p in perfs
+            ]
+
+        total_players = len(gkps) + len(defs) + len(mids) + len(fwds)
+        team_complete = total_players == 11
+
+        return Response(
+            {
+                "gameweek": gameweek.number,
+                "complete": team_complete,
+                "goalkeeper": serialize(gkps),
+                "defenders": serialize(defs),
+                "midfielders": serialize(mids),
+                "forwards": serialize(fwds),
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class GameweekViewSet(ModelViewSet):
     queryset = Gameweek.objects.all()
 
     @action(detail=False, methods=["get"], url_path="status")
     def get_gameweek_status(self, request):
-        """
-        Usage:
-          - /api/gameweeks/status/ (active gameweek)
-          - /api/gameweeks/status/?gameweek_id=5 (specific gameweek)
-        """
         gameweek_id = request.query_params.get("gameweek_id")
         service = GameweekStatusService()
         data = service.get_comprehensive_gameweek_status(gameweek_id=gameweek_id)

@@ -13,7 +13,8 @@
         </div>
         <div class="text-right flex-shrink-0">
           <div class="text-xs text-gray-400 uppercase tracking-wide">Gameweek</div>
-          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ fantasyStore.userTeam[0].gameweek }}</div>
+          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ fantasyStore.userTeam[0].gameweek }}
+          </div>
         </div>
       </div>
     </div>
@@ -30,14 +31,15 @@
       <div class="space-y-1 sm:space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Balance</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">KES {{ fantasyStore.userTeam[0].balance}}m</span>
+          <span class="text-xs sm:text-sm font-semibold text-green-600">KES {{
+            fantasyStore.userTeam[0].balance }}m</span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Formation</span>
           <span class="text-xs sm:text-sm font-semibold text-green-600">{{ fantasyStore.userTeam[0].formation
           }}</span>
         </div>
-            <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Free Transfers</span>
           <span class="text-xs sm:text-sm font-semibold text-green-600">{{ fantasyStore.userTeam[0].free_transfers
           }}</span>
@@ -53,7 +55,8 @@
           <div class="flex items-center justify-between">
             <div class="min-w-0 flex-1">
               <div class="text-blue-100 text-xs uppercase tracking-wide mb-1">Total Points</div>
-              <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">{{ fantasyStore.userTeam[0].total_points }}
+              <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
+                {{ fantasyStore.userTeam[0].total_points }}
               </div>
             </div>
             <div
@@ -67,12 +70,22 @@
           </div>
         </div>
 
+
         <div
           class="group bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
           <div class="flex items-center justify-between">
             <div class="min-w-0 flex-1">
-              <div class="text-purple-100 text-xs uppercase tracking-wide mb-1">Best Week</div>
-              <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">{{ highestPoints }}</div>
+              <div class="text-orange-100 text-xs uppercase tracking-wide mb-1">Best Week</div>
+
+              <!-- Show best week data if available -->
+              <div v-if="fantasyStore.userTeam[0].best_week" class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
+                {{ fantasyStore.userTeam[0].best_week }} pts
+              </div>
+
+              <!-- Show message if no best week yet -->
+              <div v-else class="text-xs sm:text-sm lg:text-base text-orange-100 opacity-90">
+                Haven't played yet
+              </div>
             </div>
             <div
               class="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
@@ -113,18 +126,21 @@
     <div v-if="showTransferPopup"
       class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start sm:items-center justify-center z-50 p-2 sm:p-4 overflow-y-auto"
       @click="showTransferPopup = false">
-      
+
       <!-- Mobile: Full height container with padding -->
-      <div class="w-full max-w-sm sm:max-w-md lg:max-w-lg min-h-full sm:min-h-0 flex flex-col sm:block pt-4 sm:pt-0 pb-4 sm:pb-0"
+      <div
+        class="w-full max-w-sm sm:max-w-md lg:max-w-lg min-h-full sm:min-h-0 flex flex-col sm:block pt-4 sm:pt-0 pb-4 sm:pb-0"
         @click.stop>
-        
-        <div class="bg-white rounded-xl sm:rounded-2xl shadow-2xl flex-1 sm:flex-initial transform transition-all duration-300 scale-100 overflow-hidden">
+
+        <div
+          class="bg-white rounded-xl sm:rounded-2xl shadow-2xl flex-1 sm:flex-initial transform transition-all duration-300 scale-100 overflow-hidden">
 
           <!-- Popup Header - More compact on mobile -->
           <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 sm:p-6 text-white">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-                <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <div
+                  class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
                   <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
@@ -147,55 +163,64 @@
           <!-- Popup Content - Scrollable on mobile -->
           <div class="p-4 sm:p-6 flex-1 overflow-y-auto">
             <div class="space-y-3 sm:space-y-4">
-              
+
               <!-- Step 1 - More compact on mobile -->
-              <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-blue-50 rounded-lg sm:rounded-xl border border-blue-200">
+              <div
+                class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-blue-50 rounded-lg sm:rounded-xl border border-blue-200">
                 <div
                   class="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
                   1
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 class="font-semibold text-gray-800 mb-1 text-sm sm:text-base">Select Player to Transfer Out</h4>
-                  <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">Click on any player card in your squad that you want to replace.</p>
+                  <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">Click on any player card in your squad
+                    that you want to replace.</p>
                 </div>
               </div>
 
               <!-- Step 2 -->
-              <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-green-50 rounded-lg sm:rounded-xl border border-green-200">
+              <div
+                class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-green-50 rounded-lg sm:rounded-xl border border-green-200">
                 <div
                   class="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
                   2
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 class="font-semibold text-gray-800 mb-1 text-sm sm:text-base">Click Transfer Button</h4>
-                  <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">After selecting a player, click the "Transfer" button that appears on their card.</p>
+                  <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">After selecting a player, click the
+                    "Transfer" button that appears on their card.</p>
                 </div>
               </div>
 
               <!-- Step 3 -->
-              <div class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-purple-50 rounded-lg sm:rounded-xl border border-purple-200">
+              <div
+                class="flex items-start space-x-3 sm:space-x-4 p-3 sm:p-4 bg-purple-50 rounded-lg sm:rounded-xl border border-purple-200">
                 <div
                   class="w-6 h-6 sm:w-8 sm:h-8 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs sm:text-sm font-bold flex-shrink-0">
                   3
                 </div>
                 <div class="min-w-0 flex-1">
                   <h4 class="font-semibold text-gray-800 mb-1 text-sm sm:text-base">Choose Replacement</h4>
-                  <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">Browse and select a new player to add to your squad from the available options.</p>
+                  <p class="text-xs sm:text-sm text-gray-600 leading-relaxed">Browse and select a new player to add to
+                    your squad from the available options.</p>
                 </div>
               </div>
             </div>
 
             <!-- Transfer Info - More compact spacing -->
-            <div class="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg sm:rounded-xl border border-yellow-200">
+            <div
+              class="mt-4 sm:mt-6 p-3 sm:p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg sm:rounded-xl border border-yellow-200">
               <div class="flex items-center space-x-2 mb-2 sm:mb-3">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 flex-shrink-0" fill="none" stroke="currentColor"
+                  viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 <h4 class="font-semibold text-yellow-800 text-sm sm:text-base">Transfer Information</h4>
               </div>
               <div class="text-xs sm:text-sm text-yellow-700 space-y-1">
-                <p>• You have <span class="font-semibold">{{ fantasyStore.userTeam[0].free_transfers }}</span> free transfer(s) this gameweek</p>
+                <p>• You have <span class="font-semibold">{{ fantasyStore.userTeam[0].free_transfers }}</span> free
+                  transfer(s) this gameweek</p>
                 <p>• Additional transfers cost 4 points each</p>
                 <p>• Available budget: <span class="font-semibold">KES {{ inBank.toFixed(1) }}m</span></p>
               </div>
