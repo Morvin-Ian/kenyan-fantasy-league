@@ -245,11 +245,7 @@ const closeSearchModal = () => {
 };
 
 function initializeTeamState() {
-  // Ensure players is always an array
-  const players = Array.isArray(fantasyStore.fantasyPlayers) 
-    ? fantasyStore.fantasyPlayers 
-    : [];
-  
+  const players = fantasyStore.fantasyPlayers || [];
   const rawFormation = selectedFormation.value || fantasyStore.userTeam[0]?.formation || "4-4-2";
   const formationString = (Object.keys(benchCompositions).includes(rawFormation)
     ? rawFormation
@@ -269,7 +265,7 @@ function initializeTeamState() {
 
   benchPlayersRef.value = [];
 
-  // Populate with actual players - now safe because players is guaranteed to be an array
+  //  populate with actual players
   players.forEach((player: Player) => {
     if (player.is_starter) {
       if (player.position === "GKP") startingElevenRef.value.goalkeeper = player;
@@ -281,7 +277,7 @@ function initializeTeamState() {
     }
   });
 
-  // Fill remaining starting positions with placeholders
+  // Fill remaining starting positions with placeholders (If there is No team players for Starting 11)
   if (!startingElevenRef.value.goalkeeper.id || startingElevenRef.value.goalkeeper.id.startsWith("placeholder")) {
     startingElevenRef.value.goalkeeper = createPlaceholderPlayer("GKP", 0);
   }
@@ -300,7 +296,10 @@ function initializeTeamState() {
     benchPlayersRef.value.push(createPlaceholderPlayer("GKP", 0, false));
   }
 
+  // Reduce the benchPlayersRef array to count how many players are on the bench for each position
   const benchCounts = benchPlayersRef.value.reduce((accumulator, player) => {
+    // If the position already exists in the accumulator, increment its count
+    // Otherwise, initialize it to 1
     accumulator[player.position] = (accumulator[player.position] || 0) + 1;
     return accumulator;
   }, {
@@ -309,6 +308,7 @@ function initializeTeamState() {
     MID: 0,
     FWD: 0
   } as Record<string, number>);
+
 
   let benchIndex = benchPlayersRef.value.length;
 
