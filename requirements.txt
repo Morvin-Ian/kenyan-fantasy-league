@@ -15,7 +15,7 @@ click-repl==0.3.0
 cryptography==43.0.1
 defusedxml==0.8.0rc2
 Django==4.2.8
-django-appconf==1.0.6
+django-appconf==1.1.0
 django-autoslug==1.9.9
 django-celery-beat==2.6.0
 django-celery-email==3.0.0
