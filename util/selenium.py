@@ -6,9 +6,11 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium_stealth import stealth
+from fake_useragent import UserAgent
+import random
 
 logger = logging.getLogger(__name__)
-
 
 class SeleniumManager:
     def __init__(self, timeout=30):
@@ -26,24 +28,13 @@ class SeleniumManager:
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        
-        options.add_argument("--disable-extensions")
-        options.add_argument("--disable-software-rasterizer")
-        options.add_argument("--disable-dev-tools")
-        options.add_argument("--disable-background-networking")
-        options.add_argument("--disable-background-timer-throttling")
-        
-        options.add_argument("--disable-features=VizDisplayCompositor")
-        options.add_argument("--max_old_space_size=512")
 
-        options.add_argument(
-            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-        )
+        # Random User-Agent
+        ua = UserAgent()
+        options.add_argument(f"user-agent={ua.random}")
 
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
-        options.page_load_strategy = 'normal' 
 
         try:
             self.driver = webdriver.Remote(
@@ -59,18 +50,26 @@ class SeleniumManager:
                 logger.error(f"Both drivers failed: {local_e}")
                 return None
 
+        stealth(self.driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True)
+
         self.driver.set_page_load_timeout(60)
         self.driver.implicitly_wait(5)
-
-        try:
-            self.driver.execute_script(
-                "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-            )
-            logger.info("Stealth script executed successfully")
-        except Exception as e:
-            logger.warning(f"Could not execute stealth script: {e}")
-
         return self.driver
+
+    def check_for_captcha(self):
+        try:
+            captcha = self.driver.find_element(By.XPATH, "//*[contains(@id, 'recaptcha')]")
+            logger.warning("CAPTCHA detected on page")
+            return True
+        except:
+            logger.debug("No CAPTCHA detected")
+            return False
 
     def safe_get(self, url, max_retries=3):
         driver = self.get_driver()
@@ -80,17 +79,18 @@ class SeleniumManager:
 
         for attempt in range(max_retries):
             try:
-                logger.info(
-                    f"Navigating to {url} (attempt {attempt + 1}/{max_retries})"
-                )
+                logger.info(f"Navigating to {url} (attempt {attempt + 1}/{max_retries})")
                 driver.get(url)
 
                 WebDriverWait(driver, 20).until(
-                    lambda d: d.execute_script("return document.readyState")
-                    == "complete"
+                    lambda d: d.execute_script("return document.readyState") == "complete"
                 )
 
                 time.sleep(5)
+
+                if self.check_for_captcha():
+                    logger.error("CAPTCHA detected, cannot proceed without solving")
+                    return False
 
                 self.dismiss_popups()
 
@@ -99,22 +99,13 @@ class SeleniumManager:
                 )
 
                 logger.info("Page loaded successfully")
-                logger.debug(
-                    f"Loaded page source (first 2000 chars): {driver.page_source[:2000]}"
-                )
                 return True
-
             except Exception as e:
                 logger.error(f"Navigation attempt {attempt + 1} failed: {e}")
-                logger.debug(
-                    f"Failed page source during attempt {attempt + 1} (first 2000 chars): {driver.page_source[:2000]} if available"
-                )
                 if attempt < max_retries - 1:
-                    time.sleep(3)
+                    time.sleep(random.uniform(3, 6))  # Random delay
                     continue
                 return False
-
-        return False
 
     def wait_for_elements(self, by, selector, timeout=None, log_page_source=True):
         if not self.driver:
