@@ -31,6 +31,7 @@ export interface RegisterData {
 export interface AuthState {
   user: User | null;
   token: string | null;
+  refresh: string | null;
   isLoading: boolean;
   error: string | null;
 }

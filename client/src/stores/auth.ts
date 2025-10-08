@@ -9,12 +9,14 @@ import type {
   PasswordResetData,
 } from "@/helpers/types/auth";
 import apiClient from "@/axios-interceptor";
+import { ref } from "vue";
 
 
 export const useAuthStore = defineStore("auth", {
   state: (): AuthState => ({
     user: null,
     token: localStorage.getItem("token"),
+    refresh: localStorage.getItem("refresh"),
     isLoading: false,
     error: null,
   }),
@@ -41,13 +43,21 @@ export const useAuthStore = defineStore("auth", {
     setUser(user: User | null): void {
       this.user = user;
     },
-    setToken(token: string | null): void {
+
+    setToken(token: string | null, refresh: string | null): void {
       this.token = token;
-      if (token) {
-        localStorage.setItem("token", token);
-      } else {
-        localStorage.removeItem("token");
-      }
+      this.refresh = refresh;
+
+      const setOrRemove = (key: string, value: string | null) => {
+        if (value) {
+          localStorage.setItem(key, value);
+        } else {
+          localStorage.removeItem(key);
+        }
+      };
+
+      setOrRemove("token", token);
+      setOrRemove("refresh", refresh);
     },
 
     async login(credentials: LoginCredentials): Promise<AuthResponse | void> {
@@ -59,7 +69,7 @@ export const useAuthStore = defineStore("auth", {
           "/auth/jwt/create/",
           credentials,
         );
-        this.setToken(data.access);
+        this.setToken(data.access, data.refresh);
 
         if (credentials.rememberMe) {
           localStorage.setItem("rememberMe", "true");
@@ -71,6 +81,20 @@ export const useAuthStore = defineStore("auth", {
         throw new Error(errorMessage);
       } finally {
         this.setLoading(false);
+      }
+    },
+
+
+    async refreshToken(): Promise<void> {
+      const refresh = this.refresh;
+      if (!refresh) throw new Error("No refresh token");
+
+      try {
+        const { data } = await apiClient.post<AuthResponse>("/auth/jwt/refresh/", { refresh });
+        this.setToken(data.access, refresh); 
+      } catch (error: any) {
+        this.logout();
+        throw new Error("Session expired");
       }
     },
 
@@ -131,7 +155,7 @@ export const useAuthStore = defineStore("auth", {
     },
 
     async logout(): Promise<void> {
-      this.setToken(null);
+      this.setToken(null, null);
       this.setUser(null);
       localStorage.removeItem("rememberMe");
     },
@@ -206,8 +230,9 @@ export const useAuthStore = defineStore("auth", {
 
     async initialize(): Promise<void> {
       const token = localStorage.getItem("token");
+      const refresh = localStorage.getItem("refresh");
       if (token) {
-        this.setToken(token);
+        this.setToken(token, refresh);
         await this.refreshUserProfile();
       }
     },

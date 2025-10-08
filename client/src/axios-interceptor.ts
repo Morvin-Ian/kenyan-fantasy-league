@@ -2,7 +2,6 @@ import axios from "axios";
 import { useAuthStore } from "./stores/auth";
 import router from "@/router"; 
 import type {
-  AxiosResponse,
   AxiosError,
   InternalAxiosRequestConfig,
   AxiosRequestHeaders,
@@ -14,12 +13,24 @@ const apiClient = axios.create({
 });
 
 
-// token to requests except for login and register
+let isRefreshing = false;
+let subscribers: ((token: string) => void)[] = [];
+
+function onTokenRefreshed(token: string) {
+  subscribers.forEach((callback) => callback(token));
+  subscribers = [];
+}
+
+function addSubscriber(callback: (token: string) => void) {
+  subscribers.push(callback);
+}
+
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem("token");
     const isAuthEndpoint =
       config.url?.includes("/jwt/create") ||
+      config.url?.includes("/jwt/refresh") ||
       config.url?.includes("/auth/users/");
 
     if (token && !isAuthEndpoint) {
@@ -34,16 +45,41 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use(
-  (response: AxiosResponse): AxiosResponse => response,
-  async (error: AxiosError) => {
+  (response) => response,
+  async (error) => {
     const authStore = useAuthStore();
+    const originalRequest = error.config;
 
-    if (error.response?.status === 401) {
-        authStore.logout();
-        router.push("/sign-in"); 
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      if (!isRefreshing) {
+        isRefreshing = true;
+
+        try {
+          await authStore.refreshToken(); 
+          isRefreshing = false;
+          const newToken = authStore.token!;
+          onTokenRefreshed(newToken);
+          return apiClient(originalRequest); 
+        } catch (e) {
+          isRefreshing = false;
+          authStore.logout();
+          router.push("/sign-in");
+          return Promise.reject(e);
+        }
+      }
+
+      return new Promise((resolve) => {
+        addSubscriber((token: string) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          resolve(apiClient(originalRequest));
+        });
+      });
     }
 
-    return Promise.reject(error); 
-  }
+    return Promise.reject(error);
+  },
 );
+
 export default apiClient;

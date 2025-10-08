@@ -195,8 +195,8 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "AUTH_HEADERS_TYPES": ("Bearer", "JWT"),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=4),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
     "SIGNING_KEY": os.getenv("SIGNING_KEY"),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
@@ -302,11 +302,7 @@ CELERY_BEAT_SCHEDULE = {
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
         "schedule": crontab(day_of_week=4, hour=0, minute=0),  # Thursday at midnight
-    },
-    # "scan-upcoming-fixtures-for-lineups": {
-    #     "task": "apps.kpl.tasks.lineups.scan_upcoming_fixtures_for_lineups",
-    #     "schedule": timedelta(minutes=10).total_seconds(),
-    # },
+    }
 }
 
 

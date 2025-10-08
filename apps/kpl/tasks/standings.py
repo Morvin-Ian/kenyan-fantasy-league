@@ -11,7 +11,7 @@ from celery import shared_task
 from apps.kpl.models import Standing, Team
 from config.settings import base
 from util.views import headers
-
+from django_redis import get_redis_connection
 from .fixtures import find_team
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -245,5 +245,13 @@ def get_kpl_table():
         logger.error(f"Logo update failed: {str(e)}", exc_info=True)
 
     final_result = f"{first_response} - {second_response}"
-    cache.delete_many(cache.keys("standings_list_page_*"))
+
+    redis_conn = get_redis_connection("default")
+    keys = redis_conn.keys("standings_list_page_*")
+    if keys:
+        redis_conn.delete(*keys)
+        logger.info(f"Deleted {len(keys)} cache keys matching standings_list_page_*")
+    else:
+        logger.info("No cache keys found for standings_list_page_*")
+
     return final_result

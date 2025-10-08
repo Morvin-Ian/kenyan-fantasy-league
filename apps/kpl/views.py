@@ -54,9 +54,9 @@ class StandingViewSet(ReadOnlyModelViewSet):
         page_number = request.query_params.get("page", 1)
         cache_key = f"standings_list_page_{page_number}"
 
-        # cached_data = cache.get(cache_key)
-        # if cached_data:
-        #     return Response(cached_data)
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
 
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
@@ -65,12 +65,12 @@ class StandingViewSet(ReadOnlyModelViewSet):
             serializer = self.get_serializer(page, many=True)
             paginated_response = self.get_paginated_response(serializer.data)
             cache.set(cache_key, paginated_response.data, timeout=86400)
-            return Response(paginated_response.data)
+            return Response(paginated_response.data, status=status.HTTP_200_OK)
 
         serializer = self.get_serializer(queryset, many=True)
         data = serializer.data
         cache.set(cache_key, data, timeout=86400)
-        return Response(data)
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class FixtureViewSet(ReadOnlyModelViewSet):
