@@ -88,7 +88,7 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
         return data
 
     except Exception as e:
-        logger.warning(
+        logger.error(
             f"Could not extract scores from fixture table: {e}", exc_info=True
         )
         if selenium_manager.driver:
@@ -132,85 +132,76 @@ def parse_scorers(text_block):
     return scorers
 
 
-def get_goal_scorers(selenium_manager, match_link):
-    if not selenium_manager.safe_get(match_link):
-        logger.error("Failed to load match link")
-        if selenium_manager.driver:
-            logger.debug(
-                f"Failed match link page source (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-            )
-        return [], []
+def get_goal_scorers(selenium_manager, match_link, max_retries=2):
+    """
+    Fetch goal scorers with retry logic
+    """
+    for attempt in range(max_retries):
+        try:
+            if not selenium_manager.safe_get(match_link):
+                logger.warning(f"Failed to load match link (attempt {attempt + 1}/{max_retries})")
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    continue
+                return [], []
 
-    all_section = selenium_manager.wait_for_elements(
-        By.XPATH, "//*[contains(@class, 'ai_flex-start')]"
-    )
-
-    if not all_section:
-        logger.warning("Could not find scorer container section")
-        if selenium_manager.driver:
-            logger.debug(
-                f"Page source when all_section not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
+            all_section = selenium_manager.wait_for_elements(
+                By.XPATH, "//*[contains(@class, 'ai_flex-start')]", timeout=10
             )
 
-    if not all_section:
-        logger.error("No scorer sections found at all")
-        return [], []
+            if not all_section:
+                logger.warning("Could not find scorer container section")
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    continue
+                return [], []
 
-    try:
-        home_section = all_section.find_element(
-            By.XPATH, ".//*[contains(@class, 'ai_flex-end')]"
-        )
-        logger.info("Found home_section")
-    except Exception as e:
-        logger.warning(f"Home section not found: {e}")
-        if selenium_manager.driver:
-            logger.debug(
-                f"Page source when home_section not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-            )
-        home_section = None
-
-    try:
-        away_section = all_section.find_element(
-            By.XPATH, ".//*[contains(@class, 'ai_flex-start')]"
-        )
-        logger.info("Found away_section")
-    except Exception as e:
-        logger.warning(f"Away section not found: {e}")
-        if selenium_manager.driver:
-            logger.debug(
-                f"Page source when away_section not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-            )
-        away_section = None
-
-    if not home_section or not away_section:
-        logger.info("Trying independent section lookup")
-        home_section = selenium_manager.wait_for_elements(
-            By.XPATH, "//*[contains(@class, 'ai_flex-end')]"
-        )
-        if not home_section:
-            logger.warning("Independent home_section not found")
-            if selenium_manager.driver:
-                logger.debug(
-                    f"Page source for independent home_section (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
+            try:
+                home_section = all_section.find_element(
+                    By.XPATH, ".//*[contains(@class, 'ai_flex-end')]"
                 )
-        away_section = selenium_manager.wait_for_elements(
-            By.XPATH, "//*[contains(@class, 'ai_flex-start')]"
-        )
-        if not away_section:
-            logger.warning("Independent away_section not found")
-            if selenium_manager.driver:
-                logger.debug(
-                    f"Page source for independent away_section (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
+                logger.info("Found home_section")
+            except Exception as e:
+                logger.warning(f"Home section not found: {e}")
+                home_section = None
+
+            try:
+                away_section = all_section.find_element(
+                    By.XPATH, ".//*[contains(@class, 'ai_flex-start')]"
+                )
+                logger.info("Found away_section")
+            except Exception as e:
+                logger.warning(f"Away section not found: {e}")
+                away_section = None
+
+            if not home_section or not away_section:
+                logger.info("Trying independent section lookup")
+                home_section = selenium_manager.wait_for_elements(
+                    By.XPATH, "//*[contains(@class, 'ai_flex-end')]", timeout=5
+                )
+                away_section = selenium_manager.wait_for_elements(
+                    By.XPATH, "//*[contains(@class, 'ai_flex-start')]", timeout=5
                 )
 
-    away_scorers = parse_scorers(away_section.text if away_section else "")
-    home_scorers = parse_scorers(home_section.text if home_section else "")
+            away_scorers = parse_scorers(away_section.text if away_section else "")
+            home_scorers = parse_scorers(home_section.text if home_section else "")
 
-    logger.info(
-        f"Extracted {len(home_scorers)} home scorers and {len(away_scorers)} away scorers"
-    )
+            logger.info(
+                f"Extracted {len(home_scorers)} home scorers and {len(away_scorers)} away scorers"
+            )
 
-    return home_scorers, away_scorers
+            return home_scorers, away_scorers
+
+        except Exception as e:
+            logger.warning(
+                f"Error getting goal scorers (attempt {attempt + 1}/{max_retries}): {e}"
+            )
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            return [], []
+
+    return [], []
 
 
 def update_fixture_task(selenium_manager, live_data):
@@ -287,7 +278,6 @@ def update_fixture_task(selenium_manager, live_data):
                     logger.info(f"Updated fixture {fixture.id} status to completed")
 
                 if pt:
-                    # completed matches never have enabled tasks
                     pt.enabled = False
                     pt.expires = timezone.now()
                     pt.save(update_fields=["enabled", "expires"])
@@ -316,19 +306,16 @@ def update_fixture_task(selenium_manager, live_data):
                                 f"Updated player performances for fixture {fixture.id} (completed)"
                             )
                     except Exception as e:
-                        logger.warning(
-                            f"Failed to update goal scorers for fixture {fixture.id}: {e}"
+                        logger.error(
+                            f"Failed to update goal scorers for fixture {fixture.id}: {e}",
+                            exc_info=True
                         )
-                        if selenium_manager.driver:
-                            logger.debug(
-                                f"Page source on scorer update failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-                            )
 
             elif data["time"].lower() == "postponed":
                 if fixture.status != "postponed":
                     fixture.status = "postponed"
                     fixture.save(update_fields=["status"])
-                    logger.info(f"Updated fixture {fixture.id} status to completed")
+                    logger.info(f"Updated fixture {fixture.id} status to postponed")
 
                 if pt:
                     pt.enabled = False
@@ -337,6 +324,7 @@ def update_fixture_task(selenium_manager, live_data):
                         f"Disabled PeriodicTask for postponed fixture {fixture.id}"
                     )
 
+    # Handle stale fixtures
     stale_fixtures = Fixture.objects.filter(
         status__in=["completed", "postponed"]
     ).exclude(id__in=matched_fixture_ids)
@@ -356,6 +344,9 @@ def update_fixture_task(selenium_manager, live_data):
 @shared_task
 def monitor_fixture_score(fixture_id=None):
     selenium_manager = None
+    successful_updates = 0
+    failed_updates = 0
+    
     try:
         from .fixtures import find_team
 
@@ -379,7 +370,7 @@ def monitor_fixture_score(fixture_id=None):
             return False
 
         try:
-            selenium_manager = SeleniumManager()
+            selenium_manager = SeleniumManager(timeout=30)
             driver = selenium_manager.get_driver()
             if not driver:
                 logger.error("Failed to initialize Selenium driver")
@@ -389,18 +380,10 @@ def monitor_fixture_score(fixture_id=None):
 
             if not live_data:
                 logger.warning("No live data extracted from main page")
-                if selenium_manager.driver:
-                    logger.debug(
-                        f"Page source after extraction failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-                    )
                 return False
 
         except Exception as e:
             logger.error(f"Failed to extract fixture data: {e}", exc_info=True)
-            if selenium_manager and selenium_manager.driver:
-                logger.debug(
-                    f"Page source on extraction failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-                )
             if selenium_manager:
                 try:
                     selenium_manager.close()
@@ -412,145 +395,109 @@ def monitor_fixture_score(fixture_id=None):
             update_fixture_task(selenium_manager, live_data)
         except Exception as e:
             logger.error(f"Error updating fixture tasks: {e}", exc_info=True)
-            if selenium_manager and selenium_manager.driver:
-                logger.debug(
-                    f"Page source on update task failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-                )
 
         updates = 0
         goals_updated = 0
 
-        BATCH_SIZE = 3
-        fixture_batches = [
-            fixtures[i : i + BATCH_SIZE] for i in range(0, len(fixtures), BATCH_SIZE)
-        ]
+        # Process fixtures without recreating selenium manager
+        for fixture in fixtures:
+            try:
+                fixture_updated = False
 
-        for batch_num, fixture_batch in enumerate(fixture_batches, 1):
-            logger.info(
-                f"Processing batch {batch_num}/{len(fixture_batches)} ({len(fixture_batch)} fixtures)"
-            )
+                for data in live_data:
+                    home_team = find_team(data["home"])
+                    away_team = find_team(data["away"])
 
-            if batch_num > 1:
-                if selenium_manager:
-                    try:
-                        selenium_manager.close()
-                        time.sleep(2)
-                    except Exception as e:
-                        logger.warning(f"Error closing previous session: {e}")
-
-                # Reinitialize for next batch
-                try:
-                    selenium_manager = SeleniumManager()
-                    driver = selenium_manager.get_driver()
-                    if not driver:
-                        logger.error(
-                            f"Failed to initialize driver for batch {batch_num}"
-                        )
+                    if not (
+                        fixture.home_team == home_team
+                        and fixture.away_team == away_team
+                    ):
                         continue
-                except Exception as e:
-                    logger.error(
-                        f"Error creating new session for batch {batch_num}: {e}"
-                    )
-                    continue
 
-            for fixture in fixture_batch:
-                try:
-                    fixture_updated = False
+                    old_home_score = fixture.home_team_score
+                    old_away_score = fixture.away_team_score
 
-                    for data in live_data:
-                        home_team = find_team(data["home"])
-                        away_team = find_team(data["away"])
+                    if fixture.home_team_score != int(
+                        data["home_score"]
+                    ) or fixture.away_team_score != int(data["away_score"]):
 
-                        if not (
-                            fixture.home_team == home_team
-                            and fixture.away_team == away_team
-                        ):
-                            continue
+                        fixture.home_team_score = int(data["home_score"])
+                        fixture.away_team_score = int(data["away_score"])
+                        updates += 1
+                        fixture_updated = True
 
-                        old_home_score = fixture.home_team_score
-                        old_away_score = fixture.away_team_score
+                        logger.info(
+                            f"Score update: {fixture.home_team.name} {old_home_score}->{fixture.home_team_score}, "
+                            f"{fixture.away_team.name} {old_away_score}->{fixture.away_team_score}"
+                        )
 
-                        if fixture.home_team_score != int(
-                            data["home_score"]
-                        ) or fixture.away_team_score != int(data["away_score"]):
-
-                            fixture.home_team_score = int(data["home_score"])
-                            fixture.away_team_score = int(data["away_score"])
-                            updates += 1
+                    if data["is_playing"]:
+                        if fixture.status != "live":
+                            fixture.status = "live"
                             fixture_updated = True
 
-                            logger.info(
-                                f"Score update: {fixture.home_team.name} {old_home_score}->{fixture.home_team_score}, "
-                                f"{fixture.away_team.name} {old_away_score}->{fixture.away_team_score}"
+                        try:
+                            time.sleep(2)  # Brief delay before fetching scorers
+
+                            home_scorers, away_scorers = get_goal_scorers(
+                                selenium_manager, data["link"]
                             )
 
-                        if data["is_playing"]:
-                            if fixture.status != "live":
-                                fixture.status = "live"
-                                fixture_updated = True
-
-                            try:
-                                time.sleep(3)
-
-                                home_scorers, away_scorers = get_goal_scorers(
-                                    selenium_manager, data["link"]
+                            if home_scorers or away_scorers:
+                                update_complete_player_performance(
+                                    fixture, home_scorers, away_scorers
                                 )
-
-                                if home_scorers or away_scorers:
-                                    update_complete_player_performance(
-                                        fixture, home_scorers, away_scorers
-                                    )
-                                    goals_updated += 1
-                                    logger.info(
-                                        f"Updated player performances for fixture {fixture.id} "
-                                        f"(status: {fixture.status})"
-                                    )
-                            except Exception as e:
+                                goals_updated += 1
+                                successful_updates += 1
+                                logger.info(
+                                    f"Updated player performances for fixture {fixture.id} "
+                                    f"(status: {fixture.status})"
+                                )
+                            else:
                                 logger.warning(
-                                    f"Failed to update goal scorers for fixture {fixture.id}: {e}"
+                                    f"No scorers found for fixture {fixture.id}"
                                 )
-                                if selenium_manager.driver:
-                                    logger.debug(
-                                        f"Page source on scorer update failure in monitor (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-                                    )
+                        except Exception as e:
+                            failed_updates += 1
+                            logger.error(
+                                f"Failed to update goal scorers for fixture {fixture.id}: {e}",
+                                exc_info=True
+                            )
 
-                        if fixture_updated:
-                            fixture.save()
+                    if fixture_updated:
+                        fixture.save()
 
-                        break
+                    break
 
-                    disable_fixture(fixture)
+                disable_fixture(fixture)
 
-                except Exception as e:
-                    logger.error(
-                        f"Error processing fixture {fixture.id}: {e}", exc_info=True
-                    )
-                    if selenium_manager and selenium_manager.driver:
-                        logger.debug(
-                            f"Page source on fixture processing failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-                        )
-                    continue
+            except Exception as e:
+                failed_updates += 1
+                logger.error(
+                    f"Error processing fixture {fixture.id}: {e}", exc_info=True
+                )
+                continue
 
         logger.info(
             f"Fixture monitoring completed: {updates} score updates, "
-            f"{goals_updated} goal data updates"
+            f"{goals_updated} goal data updates, "
+            f"{successful_updates} successful, {failed_updates} failed"
         )
-        return True
+        
+        # Return True only if we had some success or no fixtures to process
+        return failed_updates == 0 or successful_updates > 0
 
     except Exception as e:
         logger.error(f"Error monitoring fixtures: {e}", exc_info=True)
-        if selenium_manager and selenium_manager.driver:
-            logger.debug(
-                f"Page source on overall monitoring failure (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
-            )
         return False
 
     finally:
         if selenium_manager:
             try:
                 selenium_manager.close()
+                logger.info("Selenium manager closed successfully")
             except Exception as e:
-                logger.warning(f"Error closing selenium manager: {e}")
+                logger.error(f"Error closing selenium manager: {e}")
 
 
 @shared_task
@@ -566,6 +513,7 @@ def setup_gameweek_monitoring():
         )
 
         if not fixtures.exists():
+            logger.info("No fixtures found for active gameweek")
             return "No fixtures found for active gameweek"
 
         schedule, created = IntervalSchedule.objects.get_or_create(
@@ -585,10 +533,13 @@ def setup_gameweek_monitoring():
 
             if existing_task:
                 existing_task.enabled = True
-                existing_task.save()
+                existing_task.start_time = start_time
+                existing_task.expires = end_time
+                existing_task.save(update_fields=["enabled", "start_time", "expires"])
+                tasks_updated += 1
                 logger.info(f"Updated monitoring task for fixture {fixture.id}")
             else:
-                task = PeriodicTask.objects.create(
+                PeriodicTask.objects.create(
                     interval=schedule,
                     name=task_name,
                     task="apps.kpl.tasks.live_games.monitor_fixture_score",
@@ -598,6 +549,8 @@ def setup_gameweek_monitoring():
                     expires=end_time,
                     enabled=True,
                 )
+                tasks_created += 1
+                logger.info(f"Created monitoring task for fixture {fixture.id}")
 
         logger.info(
             f"Created {tasks_created} new tasks, updated {tasks_updated} tasks for gameweek {active_gameweek.number}"
@@ -605,19 +558,22 @@ def setup_gameweek_monitoring():
         return f"Set up {tasks_created + tasks_updated} monitoring tasks for gameweek {active_gameweek.number}"
 
     except Exception as e:
-        logger.error(f"Error setting up gameweek monitoring: {e}")
+        logger.error(f"Error setting up gameweek monitoring: {e}", exc_info=True)
         return f"Error setting up gameweek monitoring: {e}"
 
 
 def disable_fixture(fixture):
+    """Disable monitoring task for completed fixtures"""
     if fixture.status == "completed":
         task_name = f"monitor_fixture_{fixture.id}_{fixture.gameweek.number}"
         try:
             periodic_task = PeriodicTask.objects.get(name=task_name)
-            periodic_task.enabled = False
-            periodic_task.save(update_fields=["enabled"])
-            logger.info(f"Disabled monitoring task for completed fixture {fixture.id}")
+            if periodic_task.enabled:
+                periodic_task.enabled = False
+                periodic_task.expires = timezone.now()
+                periodic_task.save(update_fields=["enabled", "expires"])
+                logger.info(f"Disabled monitoring task for completed fixture {fixture.id}")
         except PeriodicTask.DoesNotExist:
-            logger.warning(f"Periodic task {task_name} not found for disabling")
+            logger.debug(f"Periodic task {task_name} not found (already deleted or never created)")
         except Exception as e:
-            logger.error(f"Error disabling task {task_name}: {e}")
+            logger.error(f"Error disabling task {task_name}: {e}", exc_info=True)

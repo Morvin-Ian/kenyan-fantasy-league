@@ -94,14 +94,16 @@ services:
     container_name: selenium
     shm_size: 2gb
     ports:
-      - "4444:4444"
-      - "7900:7900"
+      - "127.0.0.1:4444:4444" 
     environment:
-      - SE_NODE_SESSION_TIMEOUT=60
-      - SE_NODE_MAX_SESSIONS=1
+      - SE_NODE_SESSION_TIMEOUT=300 
+      - SE_NODE_MAX_SESSIONS=3 
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+      - SE_SESSION_REQUEST_TIMEOUT=300
+      - SE_NODE_SESSION_RETRY_INTERVAL=5
     networks:
       - fpl-vue
+    restart: always
 
 networks:
   fpl-vue:
