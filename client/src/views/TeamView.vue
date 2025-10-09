@@ -4,9 +4,16 @@
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
         <div class="relative">
           <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
-            <button @click="saveTeamChanges"
-              class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105">
-              <span class="mr-1">Save Changes</span>
+            <button @click="saveTeamChanges" :disabled="isSaving"
+              class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+              <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-dark" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
+              </svg>
+              <span class="mr-1">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
             </button>
           </div>
         </div>
@@ -21,70 +28,76 @@
           :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
 
         <!-- Save Changes Button for Larger Devices (Bottom) -->
-        <div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
-          <button @click="saveTeamChanges"
-            class="animate-slide-up bg-white hover:bg-white text-dark font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105">
-            <span class="mr-2">Save Changes</span>
+        <<div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
+          <button @click="saveTeamChanges" :disabled="isSaving"
+            class="animate-slide-up bg-white hover:bg-white text-dark font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+            <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-dark" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+              </path>
+            </svg>
+            <span class="mr-2">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
           </button>
+      </div>
+    </div>
+
+    <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+      :overall-rank="overallRank" :team="userTeamName" />
+  </div>
+
+  <div v-else
+    class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
+    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
+    <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
+      creating your team now.</p>
+    <button @click="toggleModal"
+      class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
+      Your Team</button>
+  </div>
+
+  <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+    @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+    @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+
+  <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+    @select-player="handlePlayerTransfer" />
+
+  <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
+      <MessageAlert v-if="modalMessage.text" :type="modalMessage.type" :text="modalMessage.text"
+        :dismissible="modalMessage.dismissible" @dismiss="clearModalMessage" class="mb-4" />
+      <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
+      <form @submit.prevent="createTeam">
+        <div class="mb-4">
+          <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
+          <input v-model="teamName" id="teamName" type="text"
+            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+            placeholder="Enter your team name" required />
         </div>
-      </div>
+        <div class="mb-4">
+          <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
+          <select v-model="selectedFormation" id="formation"
+            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+            required>
+            <option value="" disabled>Select a formation</option>
+            <option value="3-4-3">3-4-3</option>
+            <option value="4-4-2">4-4-2</option>
+            <option value="4-3-3">4-3-3</option>
+          </select>
+        </div>
 
-      <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-        :overall-rank="overallRank" :team="userTeamName" />
+        <div class="flex justify-end gap-4">
+          <button type="button" @click="showCreateTeamModal = false"
+            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
+          <button type="submit"
+            class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
+            Team</button>
+        </div>
+      </form>
     </div>
-
-    <div v-else
-      class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
-      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
-      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
-        creating your team now.</p>
-      <button @click="toggleModal"
-        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
-        Your Team</button>
-    </div>
-
-    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
-      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
-
-    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer" />
-
-    <div v-if="showCreateTeamModal"
-      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
-        <MessageAlert v-if="modalMessage.text" :type="modalMessage.type" :text="modalMessage.text"
-          :dismissible="modalMessage.dismissible" @dismiss="clearModalMessage" class="mb-4" />
-        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
-        <form @submit.prevent="createTeam">
-          <div class="mb-4">
-            <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
-            <input v-model="teamName" id="teamName" type="text"
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-              placeholder="Enter your team name" required />
-          </div>
-          <div class="mb-4">
-            <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
-            <select v-model="selectedFormation" id="formation"
-              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-              required>
-              <option value="" disabled>Select a formation</option>
-              <option value="3-4-3">3-4-3</option>
-              <option value="4-4-2">4-4-2</option>
-              <option value="4-3-3">4-3-3</option>
-            </select>
-          </div>
-
-          <div class="flex justify-end gap-4">
-            <button type="button" @click="showCreateTeamModal = false"
-              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
-            <button type="submit"
-              class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
-              Team</button>
-          </div>
-        </form>
-      </div>
-    </div>
+  </div>
   </div>
 </template>
 
@@ -123,6 +136,7 @@ const showCreateTeamModal = ref(false);
 const teamName = ref("");
 const selectedFormation = ref("");
 const hasUnsavedChanges = ref(false);
+const isSaving = ref(false);
 const initialTeamState = ref<{
   startingEleven: StartingEleven;
   benchPlayers: Player[];
@@ -246,7 +260,7 @@ const closeSearchModal = () => {
 
 function initializeTeamState() {
   let players: Player[] = [];
-  
+
   if (Array.isArray(fantasyStore.fantasyPlayers)) {
     players = fantasyStore.fantasyPlayers;
   } else if (fantasyStore.fantasyPlayers && typeof fantasyStore.fantasyPlayers === 'object') {
@@ -614,6 +628,8 @@ function performSwitch(targetPlayer: Player) {
 
 const saveTeamChanges = async () => {
   try {
+    isSaving.value = true;
+
     const teamData: TeamData = {
       formation: currentFormation.value,
       startingEleven: {
@@ -625,20 +641,21 @@ const saveTeamChanges = async () => {
       benchPlayers: benchPlayersRef.value.filter((p) => !p.id.startsWith("placeholder")),
     };
 
-    await fantasyStore.saveFantasyTeamPlayers(teamData);
-    if (fantasyStore.error) {
-      showMessage(fantasyStore.error, "error");
-      return
+    const response = await fantasyStore.saveFantasyTeamPlayers(teamData);
+    
+    if (response && response.status === 200) {
+      await fantasyStore.fetchUserFantasyTeam();
+      await fantasyStore.fetchFantasyTeamPlayers();
+      initializeTeamState();
+      hasUnsavedChanges.value = false;
+      showMessage("Team changes saved successfully!", "success");
+    } else {
+      showMessage(fantasyStore.error || "Failed to save team changes.", "error");
     }
-
-    await fantasyStore.fetchUserFantasyTeam();
-    await fantasyStore.fetchFantasyTeamPlayers();
-    initializeTeamState();
-
-    hasUnsavedChanges.value = false;
-    showMessage("Team changes saved successfully!", "success");
   } catch (error) {
     showMessage("Failed to save team changes. Please try again.", "error");
+  } finally {
+    isSaving.value = false;
   }
 };
 
@@ -954,11 +971,11 @@ onMounted(async () => {
       router.push("/sign-in");
       return;
     }
-    
+
     if (!fantasyStore.userTeam || !fantasyStore.userTeam.length) {
       await fantasyStore.fetchUserFantasyTeam();
     }
-    
+
     if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
       if (!fantasyStore.fantasyPlayers || !fantasyStore.fantasyPlayers.length) {
         await fantasyStore.fetchFantasyTeamPlayers();
