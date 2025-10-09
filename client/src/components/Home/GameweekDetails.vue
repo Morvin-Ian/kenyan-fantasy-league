@@ -162,7 +162,7 @@ const { gameweekStatus, teamOfWeek } = storeToRefs(fantasyStore);
 
 const formattedTeamOfWeek = ref([]);
 const isTeamWeekComplete = ref(false);
-const errorMessage = ref('Team of the Week data not available');
+const errorMessage = ref('Team of the Week not available');
 
 const isTeamComplete = computed(() => formattedTeamOfWeek.value && formattedTeamOfWeek.value.length > 0);
 const totalPoints = computed(() => isTeamComplete.value ? formattedTeamOfWeek.value.reduce((sum, p) => sum + p.points, 0) : 0);
