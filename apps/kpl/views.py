@@ -85,7 +85,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) == "list":
-            return qs.filter(gameweek__is_active=True)
+            return qs.all()
         return qs
 
     def get_permissions(self):

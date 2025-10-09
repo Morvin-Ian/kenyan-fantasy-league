@@ -28,16 +28,22 @@
 
       <div v-else-if="fixtures.length > 0" class="space-y-3 sm:space-y-4 md:space-y-6">
         <FixtureHeader />
+        
         <FixtureTabs 
           :activeTab="activeTab" 
           :upcomingCount="upcomingAndLiveFixtures.length"
           :finishedCount="finishedFixtures.length" 
           :postponedCount="postponedFixtures.length"
-          @update-tab="activeTab = $event" 
+          :availableGameweeks="availableGameweeks"
+          :activeGameweek="activeGameweek"
+          :selectedGameweek="selectedGameweek"
+          @update-tab="activeTab = $event"
+          @update-gameweek="selectedGameweek = $event"
         />
+
         <FixtureList 
           :activeTab="activeTab" 
-          :fixtures="currentFixtures" 
+          :fixtures="filteredFixtures" 
           :currentPage="currentPage"
           :itemsPerPage="itemsPerPage" 
           @open-upload="openUploadModal"
@@ -75,6 +81,7 @@ const { fixtures } = storeToRefs(kplStore);
 const isLoading = ref(false);
 const activeTab = ref('upcoming');
 const currentPage = ref(1);
+const selectedGameweek = ref<string | number>('all');
 const itemsPerPage = 5;
 
 const isUploadModalOpen = ref(false);
@@ -83,11 +90,66 @@ const isViewEventsModalOpen = ref(false);
 const selectedFixture = ref(null);
 const selectedFixtureForView = ref(null); 
 
+const availableGameweeks = computed(() => {
+  const gameweeks = new Set<number>();
+  fixtures.value.forEach(fixture => {
+    if (fixture.gameweek) {
+      gameweeks.add(fixture.gameweek);
+    }
+  });
+  return Array.from(gameweeks).sort((a, b) => a - b);
+});
+
+const activeGameweek = computed(() => {
+  const activeFixture = fixtures.value.find(fixture => fixture.is_active === true);
+  return activeFixture?.gameweek || availableGameweeks.value[availableGameweeks.value.length - 1] || 1;
+});
+
+const fixturesByGameweek = computed(() => {
+  if (selectedGameweek.value === 'all') {
+    return fixtures.value;
+  }
+  return fixtures.value.filter(fixture => fixture.gameweek === selectedGameweek.value);
+});
+
+const upcomingAndLiveFixtures = computed(() => {
+  return fixturesByGameweek.value.filter(fixture =>
+    fixture.status === 'upcoming' || fixture.status === 'live'
+  );
+});
+
+const finishedFixtures = computed(() => {
+  return fixturesByGameweek.value
+    .filter(fixture => fixture.status === 'completed')
+    .sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
+});
+
+const postponedFixtures = computed(() => {
+  return fixturesByGameweek.value.filter(fixture => fixture.status === 'postponed');
+});
+
+const filteredFixtures = computed(() => {
+  if (activeTab.value === 'upcoming') return upcomingAndLiveFixtures.value;
+  if (activeTab.value === 'finished') return finishedFixtures.value;
+  if (activeTab.value === 'postponed') return postponedFixtures.value;
+  return [];
+});
+
+const totalPages = computed(() => Math.ceil(filteredFixtures.value.length / itemsPerPage) || 1);
+
 watch(() => fixtures.value, (newFixtures) => {
   if (newFixtures.length === 0) {
     fetchFixtures();
+  } else {
+    if (selectedGameweek.value === 'all') {
+      selectedGameweek.value = activeGameweek.value;
+    }
   }
 }, { immediate: true });
+
+watch([selectedGameweek, activeTab], () => {
+  currentPage.value = 1;
+});
 
 async function fetchFixtures() {
   try {
@@ -99,32 +161,6 @@ async function fetchFixtures() {
     isLoading.value = false;
   }
 }
-
-const upcomingAndLiveFixtures = computed(() => {
-  return fixtures.value.filter(fixture =>
-    fixture.status === 'upcoming' || fixture.status === 'live'
-  );
-});
-
-const finishedFixtures = computed(() => {
-  return fixtures.value
-    .filter(fixture => fixture.status === 'completed')
-    .sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
-});
-
-const postponedFixtures = computed(() => {
-  return fixtures.value.filter(fixture => fixture.status === 'postponed');
-});
-
-const currentFixtures = computed(() => {
-  if (activeTab.value === 'upcoming') return upcomingAndLiveFixtures.value;
-  if (activeTab.value === 'finished') return finishedFixtures.value;
-  if (activeTab.value === 'postponed') return postponedFixtures.value;
-  return [];
-});
-
-const totalPages = computed(() => Math.ceil(currentFixtures.value.length / itemsPerPage) || 1);
-
 
 const openUploadModal = (fixture: any) => {
   selectedFixture.value = fixture;
@@ -175,5 +211,4 @@ const handleEventsSaveSuccess = () => {
 const handleUploadSuccess = () => {
   console.log('Lineup uploaded successfully');
 };
-
 </script>

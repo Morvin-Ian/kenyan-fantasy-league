@@ -497,7 +497,7 @@ class GameweekStatusService:
         self, current_gameweek: Gameweek, stat_type: str
     ) -> str:
         """Compare statistics to the previous gameweek"""
-        return "up"  # or "down" or "neutral"
+        return "up" 
 
     def _get_additional_stats(self, fixtures: List[Fixture]) -> List[Dict[str, Any]]:
         """Get additional interesting statistics"""
