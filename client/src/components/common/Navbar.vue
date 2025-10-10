@@ -1,7 +1,7 @@
 <template>
     <div>
         <!-- Desktop Navigation -->
-        <nav class="bg-white ">
+        <nav class="bg-white">
             <div class="md:hidden fixed inset-x-0 top-0 bg-white flex justify-center py-1">
                 <router-link to="/">
                     <img src="/logo.png" alt="Logo" class="h-14 w-auto" />
@@ -13,13 +13,23 @@
                         <img src="/logo.png" alt="Logo" class="h-20 w-auto" />
                         <div class="flex items-center space-x-4">
                             <template v-for="item in navItems" :key="item.name">
-                                <router-link :to="item.href" :class="[
-                                    'px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200',
-                                    isActive(item.href)
-                                        ? 'text-red-600 bg-red-50'
-                                        : 'text-gray-600 hover:text-red-600 hover:bg-red-50',
-                                ]">
+                                <router-link :to="item.href" 
+                                    :class="[
+                                        'px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 relative',
+                                        isActive(item.href)
+                                            ? 'text-red-600 bg-red-50'
+                                            : 'text-gray-600 hover:text-red-600 hover:bg-red-50',
+                                        isNavigating && 'pointer-events-none opacity-60'
+                                    ]">
                                     {{ item.name }}
+                                    <!-- Loading indicator -->
+                                    <span v-if="isNavigating && isActive(item.href)" 
+                                        class="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                                        <span class="flex h-1 w-1">
+                                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                            <span class="relative inline-flex rounded-full h-1 w-1 bg-red-500"></span>
+                                        </span>
+                                    </span>
                                 </router-link>
                             </template>
                         </div>
@@ -65,25 +75,31 @@
             </div>
         </nav>
 
-        <!-- Mobile Bottom Navigation (Fixed to Bottom) -->
+        <!-- Mobile Bottom Navigation -->
         <nav class="md:hidden fixed inset-x-0 bottom-0 bg-white rounded-t-2xl border-t border-gray-300 shadow-lg">
             <div class="grid grid-cols-5 h-16">
                 <router-link v-for="item in mobileNavItems" :key="item.name" :to="item.href"
-                    class="flex flex-col items-center justify-center transition-colors duration-200"
-                    :class="[isActive(item.href) ? 'text-red-600' : 'text-gray-600 hover:text-red-600']">
-
-                    <!-- Replace icon per item -->
+                    class="flex flex-col items-center justify-center transition-colors duration-200 relative"
+                    :class="[
+                        isActive(item.href) ? 'text-red-600' : 'text-gray-600 hover:text-red-600',
+                        isNavigating && 'pointer-events-none opacity-60'
+                    ]">
                     <component :is="item.icon" class="h-5 w-5" />
-
                     <span class="text-xs mt-1">{{ item.name }}</span>
+                    
+                    <!-- Loading indicator for mobile -->
+                    <span v-if="isNavigating && isActive(item.href)" 
+                        class="absolute top-1 right-1/2 transform translate-x-1/2">
+                        <span class="flex h-1.5 w-1.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                        </span>
+                    </span>
                 </router-link>
             </div>
         </nav>
-
-
     </div>
 </template>
-
 
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
@@ -99,14 +115,21 @@ import {
     ChartBarIcon,
 } from "@heroicons/vue/24/solid";
 
-
 const isAccountOpen = ref(false);
-const isAuthenticated = ref(true);
+const isNavigating = ref(false);
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
-// Simplified navigation items
+router.beforeEach((to, from, next) => {
+    isNavigating.value = true;
+    next();
+});
+
+router.afterEach(() => {
+    isNavigating.value = false;
+});
+
 const navItems = ref([
     { name: "Home", href: "/", current: false },
     { name: "Leagues", href: "/leagues", current: false },
@@ -115,7 +138,6 @@ const navItems = ref([
     { name: "Standings", href: "/standings", current: false },
 ]);
 
-// Mobile navigation items with icons
 const mobileNavItems = ref([
     { name: "Home", href: "/", icon: HomeIcon },
     { name: "Team", href: "/fkl_team", icon: UsersIcon },
@@ -123,7 +145,6 @@ const mobileNavItems = ref([
     { name: "Standings", href: "/standings", icon: ChartBarIcon },
     { name: "Account", href: "/profile", icon: UserIcon },
 ]);
-
 
 const accountItems = ref([
     { name: "Profile", action: () => handleProfile() },
