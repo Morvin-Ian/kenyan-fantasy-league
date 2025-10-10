@@ -5,6 +5,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.db import IntegrityError, transaction
+from django.utils import timezone
+from datetime import datetime
 
 from apps.fantasy.models import (
     FantasyPlayer,
@@ -247,6 +249,13 @@ class PlayerPerformanceViewSet(ModelViewSet):
             gameweek = Gameweek.objects.filter(number=gameweek_number).first()
         else:
             gameweek = Gameweek.objects.filter(is_active=True).first()
+            if gameweek:
+                now = timezone.now()
+                start_datetime = timezone.make_aware(
+                    datetime.combine(gameweek.start_date, datetime.min.time())
+                )
+                if now < start_datetime and gameweek.number > 1:
+                    gameweek = Gameweek.objects.filter(number=gameweek.number - 1).first()
 
         if not gameweek:
             return Response(

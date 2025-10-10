@@ -1,6 +1,14 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
-    <div v-if="userTeam && userTeam.length" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+    <div v-if="isInitializing" class="flex justify-center items-center min-h-screen">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
+        <p class="mt-4 text-gray-600">Loading your team...</p>
+      </div>
+    </div>
+
+
+    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
         <div class="relative">
           <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
@@ -20,12 +28,26 @@
 
 
 
-        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
-          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
-          @player-click="handlePlayerClick" @formation-change="handleFormationChange" />
+        <Pitch 
+          :goalkeeper="goalkeeper" 
+          :defenders="defenders" 
+          :midfielders="midfielders" 
+          :forwards="forwards"
+          :bench-players="benchPlayers" 
+          :switch-source="switchSource" 
+          :switch-active="switchActive"
+          @player-click="handlePlayerClick" 
+          @formation-change="handleFormationChange" 
+        />
 
-        <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
-          :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
+        <MessageAlert v-if="message.text" 
+          :type="message.type" 
+          :text="message.text" 
+          :dismissible="message.dismissible"
+          :auto-dismiss="message.autoDismiss" 
+          @dismiss="clearMessage"
+          class="absolute top-4 left-0 right-0 z-20 mx-4"
+         />
 
         <!-- Save Changes Button for Larger Devices (Bottom) -->
         <<div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
@@ -43,11 +65,16 @@
       </div>
     </div>
 
-    <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-      :overall-rank="overallRank" :team="userTeamName" />
+    <Sidebar 
+      :total-points="totalPoints" 
+      :average-points="averagePoints" 
+      :highest-points="highestPoints"
+      :overall-rank="overallRank" 
+      :team="userTeamName"
+     />
   </div>
 
-  <div v-else
+  <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
     class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
     <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
     <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
@@ -57,12 +84,22 @@
       Your Team</button>
   </div>
 
-  <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
-    @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
-    @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+  <PlayerModal v-if="userTeam && userTeam.length" 
+    :show-modal="showModal" 
+    :selected-player="selectedPlayer"
+    @close-modal="closeModal" 
+    @initiate-switch="initiateSwitch" 
+    @transfer-player="initiateTransfer"
+    @make-captain="makeCaptain" 
+    @make-vice-captain="makeViceCaptain" 
+  />
 
-  <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
-    @select-player="handlePlayerTransfer" />
+  <SearchPlayer 
+    :show-search-modal="showSearchModal" 
+    :selectedPlayer="selectedPlayer" 
+    @close-modal="closeSearchModal"
+    @select-player="handlePlayerTransfer"
+   />
 
   <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
     <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
@@ -137,6 +174,7 @@ const teamName = ref("");
 const selectedFormation = ref("");
 const hasUnsavedChanges = ref(false);
 const isSaving = ref(false);
+const isInitializing = ref(true);
 const initialTeamState = ref<{
   startingEleven: StartingEleven;
   benchPlayers: Player[];
@@ -642,7 +680,7 @@ const saveTeamChanges = async () => {
     };
 
     const response = await fantasyStore.saveFantasyTeamPlayers(teamData);
-    
+
     if (response && response.status === 200) {
       await fantasyStore.fetchUserFantasyTeam();
       await fantasyStore.fetchFantasyTeamPlayers();
@@ -966,25 +1004,24 @@ const makeViceCaptain = () => {
 
 onMounted(async () => {
   try {
-    authStore.initialize();
+    isInitializing.value = true;
+    
     if (!authStore.isAuthenticated) {
       router.push("/sign-in");
       return;
     }
 
-    if (!fantasyStore.userTeam || !fantasyStore.userTeam.length) {
-      await fantasyStore.fetchUserFantasyTeam();
-    }
+    await fantasyStore.fetchUserFantasyTeam();
 
     if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
-      if (!fantasyStore.fantasyPlayers || !fantasyStore.fantasyPlayers.length) {
-        await fantasyStore.fetchFantasyTeamPlayers();
-      }
+      await fantasyStore.fetchFantasyTeamPlayers();
       initializeTeamState();
     }
   } catch (error) {
     console.error("Error initializing team:", error);
     showMessage("Failed to load team data. Please refresh the page.", "error");
+  } finally {
+    isInitializing.value = false;
   }
 });
 </script>

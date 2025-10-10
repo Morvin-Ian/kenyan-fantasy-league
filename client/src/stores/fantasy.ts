@@ -43,10 +43,13 @@ export const useFantasyStore = defineStore("fantasy", {
     async fetchUserFantasyTeam() {
       try {
         this.isLoading = true;
+        this.error = null;
         const response = await apiClient.get(`/fantasy/teams/user-team`);
         this.userTeam = response.data;
+        return response.data;
       } catch (error) {
         this.error = error instanceof Error ? error.message : String(error);
+        return null;
       } finally {
         this.isLoading = false;
       }

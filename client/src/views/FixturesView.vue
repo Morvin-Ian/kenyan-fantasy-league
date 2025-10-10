@@ -1,8 +1,13 @@
 ﻿<template>
   <div class="bg-gray-50">
     <div class="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8">
-      <LoadingSpinner v-if="isLoading" />
-      
+      <div v-if="isLoading" class="flex justify-center items-center min-h-screen">
+        <div class="text-center">
+          <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
+          <p class="mt-4 text-gray-600">Loading fixture ...</p>
+        </div>
+      </div>      
+
       <LineupUploadModal 
         v-if="selectedFixture" 
         :isOpen="isUploadModalOpen" 
@@ -72,7 +77,6 @@ import FixtureTabs from '@/components/Fixtures/FixtureTabs.vue';
 import FixtureList from '@/components/Fixtures/FixtureList.vue';
 import Pagination from '@/components/Fixtures/Pagination.vue';
 import EmptyState from '@/components/Fixtures/EmptyState.vue';
-import LoadingSpinner from '@/components/Fixtures/LoadingSpinner.vue';
 import MatchEventsModal from '@/components/Fixtures/MatchEventsModal.vue'
 import ViewEventsModal from '@/components/Fixtures/ViewEventsModal.vue'
 
@@ -112,20 +116,25 @@ const fixturesByGameweek = computed(() => {
   return fixtures.value.filter(fixture => fixture.gameweek === selectedGameweek.value);
 });
 
+const sortedFixturesByGameweek = computed(() => {
+  return [...fixturesByGameweek.value].sort((a, b) => 
+    new Date(a.match_date).getTime() - new Date(b.match_date).getTime()
+  );
+});
+
 const upcomingAndLiveFixtures = computed(() => {
-  return fixturesByGameweek.value.filter(fixture =>
+  return sortedFixturesByGameweek.value.filter(fixture =>
     fixture.status === 'upcoming' || fixture.status === 'live'
   );
 });
 
 const finishedFixtures = computed(() => {
-  return fixturesByGameweek.value
-    .filter(fixture => fixture.status === 'completed')
-    .sort((a, b) => new Date(b.match_date).getTime() - new Date(a.match_date).getTime());
+  return sortedFixturesByGameweek.value
+    .filter(fixture => fixture.status === 'completed');
 });
 
 const postponedFixtures = computed(() => {
-  return fixturesByGameweek.value.filter(fixture => fixture.status === 'postponed');
+  return sortedFixturesByGameweek.value.filter(fixture => fixture.status === 'postponed');
 });
 
 const filteredFixtures = computed(() => {

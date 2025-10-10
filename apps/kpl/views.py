@@ -2,6 +2,7 @@ import logging
 import logging.config
 
 from django.core.cache import cache
+from django.db.models import Subquery
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -15,6 +16,7 @@ from apps.kpl.models import (
     Player,
     Standing,
     Team,
+    Gameweek
 )
 from config.settings import base
 
@@ -85,9 +87,17 @@ class FixtureViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) == "list":
-            return qs.all()
+            active_gw_subquery = Gameweek.objects.filter(
+                is_active=True
+            ).values('number')[:1]  
+            
+            qs = qs.filter(
+                gameweek__number__lte=Subquery(active_gw_subquery),
+                gameweek__number__gte=1
+            ).select_related('gameweek').order_by('-match_date')
+        
         return qs
-
+    
     def get_permissions(self):
         if getattr(self.request, "method", "").upper() == "POST" and getattr(
             self, "action", None

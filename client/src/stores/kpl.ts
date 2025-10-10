@@ -40,29 +40,18 @@ export const useKplStore = defineStore('kpl', {
 
     async fetchFixtures(includeLineups: boolean = true) {
       try {
-        const query = includeLineups ? "" : "";
+        const baseQuery = '?up_to_active=true';
+        const query = includeLineups ? baseQuery : baseQuery;
         let allFixtures: any[] = [];
         let currentPage = 1;
         let shouldFetchNext = true;
 
         while (shouldFetchNext) {
-          const pageQuery = query
-            ? `${query}&page=${currentPage}`
-            : `?page=${currentPage}`;
-
+          const pageQuery = `${query}&page=${currentPage}`;
           const response = await apiClient.get(`/kpl/fixtures/${pageQuery}`);
           const { results, next } = response.data;
-
-          // Add current page results to our collection
           allFixtures = [...allFixtures, ...results];
-
-          // Check if any fixture in current page is active
-          const hasActiveFixture = results.some((fixture: any) => fixture.is_active === true);
-
-          // Only continue to next page if:
-          // 1. No active fixtures found in current page
-          // 2. There is a next page available
-          shouldFetchNext = !hasActiveFixture && next !== null;
+          shouldFetchNext = next !== null;
           currentPage++;
         }
 
@@ -120,7 +109,7 @@ export const useKplStore = defineStore('kpl', {
 
     async fetchAllData() {
       await Promise.all([
-        this.fetchTeams(),
+        // this.fetchTeams(),
         this.fetchStandings(),
         this.fetchFixtures(true)
       ]);
