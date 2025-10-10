@@ -1,11 +1,9 @@
 import csv
 import io
 import logging
-from typing import Dict, List, Tuple
-from decimal import Decimal
+from typing import Dict, List
 
 from django.db import transaction
-from django.utils import timezone
 
 from apps.kpl.models import (
     Fixture,
@@ -178,31 +176,35 @@ class LineupService:
         for player in players:
             existing_performance = PlayerPerformance.objects.filter(
                 player=player,
-                gameweek=gameweek
+                fixture=fixture  
             ).first()
             
             if existing_performance:
-                existing_performance.points = (
-                    existing_performance.points + Decimal('3.0')
-                )
+                existing_performance.fantasy_points += 3  
                 existing_performance.minutes_played = max(
                     existing_performance.minutes_played or 0, 
-                    90  
+                    60  
                 )
-                existing_performance.updated_at = timezone.now()
                 existing_performance.save()
                 created_count += 1
                 logger.info(f"Updated existing performance for {player.name} with +3 starting points")
             else:
+                # Create new performance
                 PlayerPerformance.objects.create(
                     player=player,
                     gameweek=gameweek,
-                    points=Decimal('3.0'),
-                    minutes_played=90,  
                     fixture=fixture,
-                    team=player.team,
-                    created_at=timezone.now(),
-                    updated_at=timezone.now()
+                    fantasy_points=3,  
+                    minutes_played=60, 
+                    yellow_cards=0,
+                    red_cards=0,
+                    goals_scored=0,
+                    assists=0,
+                    clean_sheets=0,
+                    saves=0,
+                    own_goals=0,
+                    penalties_saved=0,
+                    penalties_missed=0,
                 )
                 created_count += 1
                 logger.info(f"Created new performance for {player.name} with 3 starting points")
