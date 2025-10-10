@@ -1004,23 +1004,26 @@ const makeViceCaptain = () => {
 
 onMounted(async () => {
   try {
-    isInitializing.value = true;
-    
+    authStore.initialize();
     if (!authStore.isAuthenticated) {
       router.push("/sign-in");
       return;
     }
 
-    await fantasyStore.fetchUserFantasyTeam();
+    if (!fantasyStore.userTeam || !fantasyStore.userTeam.length) {
+      await fantasyStore.fetchUserFantasyTeam();
+    }
 
     if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
-      await fantasyStore.fetchFantasyTeamPlayers();
+      if (!fantasyStore.fantasyPlayers || !fantasyStore.fantasyPlayers.length) {
+        await fantasyStore.fetchFantasyTeamPlayers();
+      }
       initializeTeamState();
     }
   } catch (error) {
     console.error("Error initializing team:", error);
     showMessage("Failed to load team data. Please refresh the page.", "error");
-  } finally {
+  }finally{
     isInitializing.value = false;
   }
 });
