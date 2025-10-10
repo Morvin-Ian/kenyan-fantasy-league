@@ -109,7 +109,7 @@ export const useKplStore = defineStore('kpl', {
 
     async fetchAllData() {
       await Promise.all([
-        // this.fetchTeams(),
+        this.fetchTeams(),
         this.fetchStandings(),
         this.fetchFixtures(true)
       ]);

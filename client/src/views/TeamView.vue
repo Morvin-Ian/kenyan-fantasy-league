@@ -1,5 +1,13 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
+    <div v-if="isInitializing" class="flex justify-center items-center min-h-screen">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
+        <p class="mt-4 text-gray-600">Loading your team...</p>
+      </div>
+    </div>
+
+
     <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
         <div class="relative">
