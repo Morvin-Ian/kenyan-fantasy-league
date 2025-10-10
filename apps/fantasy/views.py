@@ -269,13 +269,97 @@ class PlayerPerformanceViewSet(ModelViewSet):
         def get_top_players(position, min_count, max_count):
             qs = performances.filter(player__position=position).order_by(
                 "-fantasy_points"
-            )[:max_count]
+            )
             return list(qs)
 
-        gkps = get_top_players("GKP", 1, 1)
-        defs = get_top_players("DEF", 3, 5)
-        mids = get_top_players("MID", 3, 5)
-        fwds = get_top_players("FWD", 1, 3)
+        def select_players_with_team_limit(players, required_count, team_counts):
+            selected = []
+            temp_team_counts = team_counts.copy()
+            
+            for player in players:
+                if len(selected) >= required_count:
+                    break
+                    
+                player_team = player.player.team.name if player.player.team else "Unknown"
+                if temp_team_counts.get(player_team, 0) < 3:
+                    selected.append(player)
+                    temp_team_counts[player_team] = temp_team_counts.get(player_team, 0) + 1
+            
+            return selected, temp_team_counts
+
+        team_counts = {}
+        
+        all_gkps = get_top_players("GKP", 1, 1)
+        gkps, team_counts = select_players_with_team_limit(all_gkps, 1, team_counts)
+        
+        if not gkps and all_gkps:
+            gkps = [all_gkps[0]]
+            team_name = all_gkps[0].player.team.name if all_gkps[0].player.team else "Unknown"
+            team_counts[team_name] = team_counts.get(team_name, 0) + 1
+
+        # Select defenders (need 3-5, aim for 4 in a balanced team)
+        all_defs = get_top_players("DEF", 3, 5)
+        defs, team_counts = select_players_with_team_limit(all_defs, 4, team_counts)
+        
+        # Select midfielders (need 3-5, aim for 4 in a balanced team)
+        all_mids = get_top_players("MID", 3, 5)
+        mids, team_counts = select_players_with_team_limit(all_mids, 4, team_counts)
+        
+        # Select forwards (need 1-3, aim for 2 in a balanced team)
+        all_fwds = get_top_players("FWD", 1, 3)
+        fwds, team_counts = select_players_with_team_limit(all_fwds, 2, team_counts)
+
+        total_so_far = len(gkps) + len(defs) + len(mids) + len(fwds)
+        
+        # Fill remaining spots to reach 11 players
+        if total_so_far < 11:
+            remaining_players = []
+            selected_ids = {p.player.id for p in gkps + defs + mids + fwds}
+            
+            for perf in performances.exclude(player_id__in=selected_ids).order_by('-fantasy_points'):
+                remaining_players.append(perf)
+            
+            position_limits = {
+                'DEF': (3, 5, len(defs)),
+                'MID': (3, 5, len(mids)), 
+                'FWD': (1, 3, len(fwds))
+            }
+            
+            for position, (min_pos, max_pos, current_count) in position_limits.items():
+                if current_count < max_pos and total_so_far < 11:
+                    needed = min(max_pos - current_count, 11 - total_so_far)
+                    position_players = [p for p in remaining_players if p.player.position == position]
+                    
+                    additional_players, team_counts = select_players_with_team_limit(
+                        position_players, needed, team_counts
+                    )
+                    
+                    if position == 'DEF':
+                        defs.extend(additional_players)
+                    elif position == 'MID':
+                        mids.extend(additional_players)
+                    elif position == 'FWD':
+                        fwds.extend(additional_players)
+                    
+                    total_so_far += len(additional_players)
+                    
+                    # Remove selected players from remaining list
+                    for player in additional_players:
+                        remaining_players.remove(player)
+
+        if len(defs) < 3:
+            needed = 3 - len(defs)
+            additional_defs = [p for p in all_defs if p not in defs][:needed]
+            defs.extend(additional_defs)
+        
+        if len(mids) < 3:
+            needed = 3 - len(mids)
+            additional_mids = [p for p in all_mids if p not in mids][:needed]
+            mids.extend(additional_mids)
+            
+        if len(fwds) < 1:
+            additional_fwds = [p for p in all_fwds if p not in fwds][:1]
+            fwds.extend(additional_fwds)
 
         def serialize(perfs):
             return [
@@ -297,10 +381,17 @@ class PlayerPerformanceViewSet(ModelViewSet):
         total_players = len(gkps) + len(defs) + len(mids) + len(fwds)
         team_complete = total_players == 11
 
+        final_team_counts = {}
+        for position_group in [gkps, defs, mids, fwds]:
+            for player in position_group:
+                team_name = player.player.team.name if player.player.team else "Unknown"
+                final_team_counts[team_name] = final_team_counts.get(team_name, 0) + 1
+
         return Response(
             {
                 "gameweek": gameweek.number,
                 "complete": team_complete,
+                "team_distribution": final_team_counts,
                 "goalkeeper": serialize(gkps),
                 "defenders": serialize(defs),
                 "midfielders": serialize(mids),
@@ -308,7 +399,6 @@ class PlayerPerformanceViewSet(ModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
-
 
 class GameweekViewSet(ModelViewSet):
     queryset = Gameweek.objects.all()
