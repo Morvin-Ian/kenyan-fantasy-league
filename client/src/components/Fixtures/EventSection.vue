@@ -73,7 +73,7 @@ interface Event {
   event_id?: string
   player_out?: string
   player_in?: string
-  fixture?: { // Add this property
+  fixture?: {
     home_team?: {
       id: string
     }

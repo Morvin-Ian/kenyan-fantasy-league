@@ -214,6 +214,7 @@ class PlayerViewSet(ModelViewSet):
 
         cached_data = cache.get(cache_key)
         if cached_data:
+            print(cached_data)
             return Response(cached_data)
 
         queryset = self.get_queryset()
@@ -309,7 +310,7 @@ class MatchEventsViewSet(ModelViewSet):
         {
             "fixture_id": "uuid",
             "assists": [
-                {"player_name": "John Doe", "team_id": "uuid", "count": 1}
+                {"player_name": "John Doe", "team_id": "uuid", "count": 1, "is_captain": true}
             ]
         }
         """
@@ -369,7 +370,48 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["post"], url_path="update-substitutions")
+    @action(detail=False, methods=["post"], url_path="update-goals")
+    def update_goals(self, request, pk=None):
+        """
+        Request body:
+        {
+            "fixture_id": "uuid",
+            "goals": [
+                {"player_name": "John Doe", "team_id": "uuid", "count": 1}
+            ]
+        }
+        """
+        fixture = self._get_fixture(request)
+        if not fixture:
+            return Response(
+                {"error": "Fixture not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+
+        goals_data = request.data.get("goals", [])
+        if not goals_data:
+            return Response(
+                {"error": "goals list is required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+            
+        is_own_goal = request.data.get("is_own_goal", False)
+        
+        if is_own_goal:
+            result = MatchEventService.update_own_goals(fixture, goals_data)
+        else:
+            result = MatchEventService.update_goals(fixture, goals_data)
+
+        return Response(
+            {
+                "success": True,
+                "updated_count": len(result["updated_players"]),
+                "updated_players": result["updated_players"],
+                "errors": result["errors"],
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=["post"], url_path="update-substitutions")  
     def update_substitutions(self, request, pk=None):
         """
         Request body:
@@ -410,7 +452,7 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["post"], url_path="update-minutes")
+    @action(detail=False, methods=["post"], url_path="update-minutes") 
     def update_minutes(self, request, pk=None):
         """
         Request body:
@@ -446,13 +488,13 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=True, methods=["post"], url_path="update-goalkeeper-stats")
+    @action(detail=False, methods=["post"], url_path="update-goalkeeper-stats") 
     def update_goalkeeper_stats(self, request, pk=None):
         """
         Request body:
         {
             "fixture_id": "uuid",
-            "saves": [{"player_name": "GK Name", "team_id": "uuid", "count": 6}],
+            "saves": [{"player_name": "GK Name", "team_id": "uuid", "count": 6, "is_captain": true}],
             "penalties_saved": [{"player_name": "GK Name", "team_id": "uuid", "count": 1}],
             "penalties_missed": [{"player_name": "Player Name", "team_id": "uuid", "count": 1}]
         }

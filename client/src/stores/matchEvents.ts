@@ -12,7 +12,7 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
   const updateAssists = async (fixtureId: string, assists: Assist[]): Promise<ApiResponse> => {
     isSaving.value = true
     error.value = null
-    
+
     try {
       const response = await apiClient.post('/kpl/match-events/update-assists/', {
         fixture_id: fixtureId,
@@ -30,13 +30,13 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
   }
 
   const updateCards = async (
-    fixtureId: string, 
-    yellowCards: Card[], 
+    fixtureId: string,
+    yellowCards: Card[],
     redCards: Card[]
   ): Promise<ApiResponse> => {
     isSaving.value = true
     error.value = null
-    
+
     try {
       const response = await apiClient.post('/kpl/match-events/update-cards/', {
         fixture_id: fixtureId,
@@ -55,12 +55,12 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
   }
 
   const updateSubstitutions = async (
-    fixtureId: string, 
+    fixtureId: string,
     substitutions: Substitution[]
   ): Promise<ApiResponse> => {
     isSaving.value = true
     error.value = null
-    
+
     try {
       const response = await apiClient.post('/kpl/match-events/update-substitutions/', {
         fixture_id: fixtureId,
@@ -78,12 +78,12 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
   }
 
   const updateMinutes = async (
-    fixtureId: string, 
+    fixtureId: string,
     minutes: Minute[]
   ): Promise<ApiResponse> => {
     isSaving.value = true
     error.value = null
-    
+
     try {
       const response = await apiClient.post('/kpl/match-events/update-minutes/', {
         fixture_id: fixtureId,
@@ -101,16 +101,18 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
   }
 
   const updateGoals = async (
-    fixtureId: string, 
-    goals: Goal[]
+    fixtureId: string,
+    goals: Goal[],
+    isOwnGoal: boolean = false
   ): Promise<ApiResponse> => {
     isSaving.value = true
     error.value = null
-    
+
     try {
       const response = await apiClient.post('/kpl/match-events/update-goals/', {
         fixture_id: fixtureId,
-        goals: goals.filter(g => g.player_name && g.team_id)
+        goals: goals.filter(g => g.player_name && g.team_id),
+        is_own_goal: isOwnGoal
       })
 
       const data: ApiResponse = response.data
@@ -123,6 +125,7 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
     }
   }
 
+
   const updateGoalkeeperStats = async (
     fixtureId: string,
     saves: Array<{ player_name: string; team_id: string; count: number }>,
@@ -131,7 +134,7 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
   ): Promise<ApiResponse> => {
     isSaving.value = true
     error.value = null
-    
+
     try {
       const response = await apiClient.post('/kpl/match-events/update-goalkeeper-stats/', {
         fixture_id: fixtureId,
@@ -154,6 +157,7 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
     fixtureId: string,
     events: {
       goals?: Goal[]
+      ownGoals?: Goal[]
       assists?: Assist[]
       yellowCards?: Card[]
       redCards?: Card[]
@@ -166,16 +170,22 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
     const allErrors: any[] = []
 
     try {
-      // Save goals first (if any)
       if (events.goals && events.goals.length > 0) {
         try {
-          await updateGoals(fixtureId, events.goals)
+          await updateGoals(fixtureId, events.goals, false)
         } catch (err) {
           allErrors.push({ type: 'goals', error: err })
         }
       }
 
-      // Save assists
+      if (events.ownGoals && events.ownGoals.length > 0) {
+        try {
+          await updateGoals(fixtureId, events.ownGoals, true)
+        } catch (err) {
+          allErrors.push({ type: 'own_goals', error: err })
+        }
+      }
+
       if (events.assists && events.assists.length > 0) {
         try {
           await updateAssists(fixtureId, events.assists)
@@ -184,13 +194,12 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
         }
       }
 
-      // Save cards
-      if ((events.yellowCards && events.yellowCards.length > 0) || 
-          (events.redCards && events.redCards.length > 0)) {
+      if ((events.yellowCards && events.yellowCards.length > 0) ||
+        (events.redCards && events.redCards.length > 0)) {
         try {
           await updateCards(
-            fixtureId, 
-            events.yellowCards || [], 
+            fixtureId,
+            events.yellowCards || [],
             events.redCards || []
           )
         } catch (err) {
@@ -198,7 +207,6 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
         }
       }
 
-      // Save substitutions
       if (events.substitutions && events.substitutions.length > 0) {
         try {
           await updateSubstitutions(fixtureId, events.substitutions)
@@ -207,7 +215,6 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
         }
       }
 
-      // Save minutes
       if (events.minutes && events.minutes.length > 0) {
         try {
           await updateMinutes(fixtureId, events.minutes)
@@ -224,7 +231,6 @@ export const useMatchEventsStore = defineStore('matchEvents', () => {
       isSaving.value = false
     }
   }
-
   const clearError = () => {
     error.value = null
   }

@@ -2,7 +2,8 @@
   <div v-if="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-bold">Match Events - {{ fixture?.home_team?.name }} vs {{ fixture?.away_team?.name }}</h2>
+        <h2 class="text-xl font-bold">Match Events - {{ fixture?.home_team?.name }} vs {{ fixture?.away_team?.name }}
+        </h2>
         <button @click="close" class="text-gray-500 hover:text-gray-700">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -21,15 +22,27 @@
         <div class="border rounded-lg p-4">
           <h3 class="font-semibold mb-3">Goals</h3>
           <div class="space-y-2">
-            <div v-for="(goal, index) in goals" :key="index" class="flex items-center space-x-2">
-              <input v-model="goal.player_name" placeholder="Player name" class="flex-1 border rounded px-3 py-2" />
-              <select v-model="goal.team_id" class="border rounded px-3 py-2">
-                <option value="">Select Team</option>
-                <option :value="fixture?.home_team?.id">{{ fixture?.home_team?.name }}</option>
-                <option :value="fixture?.away_team?.id">{{ fixture?.away_team?.name }}</option>
-              </select>
-              <input v-model.number="goal.count" type="number" placeholder="Count" class="w-20 border rounded px-3 py-2" />
-              <button @click="removeGoal(index)" class="text-red-500 hover:text-red-700">Remove</button>
+            <div v-for="(goal, index) in goals" :key="index" class="border rounded p-3 space-y-2">
+              <div class="flex items-center space-x-2">
+                <input v-model="goal.player_name" placeholder="Player name" class="flex-1 border rounded px-3 py-2" />
+                <select v-model="goal.team_id" class="border rounded px-3 py-2">
+                  <option value="">Select Team</option>
+                  <option :value="fixture?.home_team?.id">{{ fixture?.home_team?.name }}</option>
+                  <option :value="fixture?.away_team?.id">{{ fixture?.away_team?.name }}</option>
+                </select>
+                <input v-model.number="goal.count" type="number" placeholder="Count"
+                  class="w-20 border rounded px-3 py-2" />
+              </div>
+              <div class="flex items-center space-x-2">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input v-model="goal.is_own_goal" type="checkbox"
+                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  <span class="text-sm text-gray-700">Own Goal (-2 points)</span>
+                </label>
+                <button @click="removeGoal(index)" class="ml-auto text-red-500 hover:text-red-700">
+                  Remove
+                </button>
+              </div>
             </div>
             <button @click="addGoal" class="text-blue-500 hover:text-blue-700">+ Add Goal</button>
           </div>
@@ -46,7 +59,8 @@
                 <option :value="fixture?.home_team?.id">{{ fixture?.home_team?.name }}</option>
                 <option :value="fixture?.away_team?.id">{{ fixture?.away_team?.name }}</option>
               </select>
-              <input v-model.number="assist.count" type="number" placeholder="Count" class="w-20 border rounded px-3 py-2" />
+              <input v-model.number="assist.count" type="number" placeholder="Count"
+                class="w-20 border rounded px-3 py-2" />
               <button @click="removeAssist(index)" class="text-red-500 hover:text-red-700">Remove</button>
             </div>
             <button @click="addAssist" class="text-blue-500 hover:text-blue-700">+ Add Assist</button>
@@ -108,7 +122,8 @@
                   <option :value="fixture?.home_team?.id">{{ fixture?.home_team?.name }}</option>
                   <option :value="fixture?.away_team?.id">{{ fixture?.away_team?.name }}</option>
                 </select>
-                <input v-model.number="sub.minute" type="number" placeholder="Minute" class="w-24 border rounded px-3 py-2" />
+                <input v-model.number="sub.minute" type="number" placeholder="Minute"
+                  class="w-24 border rounded px-3 py-2" />
                 <button @click="removeSubstitution(index)" class="text-red-500 hover:text-red-700">Remove</button>
               </div>
             </div>
@@ -127,7 +142,8 @@
                 <option :value="fixture?.home_team?.id">{{ fixture?.home_team?.name }}</option>
                 <option :value="fixture?.away_team?.id">{{ fixture?.away_team?.name }}</option>
               </select>
-              <input v-model.number="minute.minutes_played" type="number" placeholder="Minutes" class="w-24 border rounded px-3 py-2" />
+              <input v-model.number="minute.minutes_played" type="number" placeholder="Minutes"
+                class="w-24 border rounded px-3 py-2" />
               <button @click="removeMinute(index)" class="text-red-500 hover:text-red-700">Remove</button>
             </div>
             <button @click="addMinute" class="text-blue-500 hover:text-blue-700">+ Add Minutes</button>
@@ -139,11 +155,8 @@
           <button @click="close" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
             Cancel
           </button>
-          <button 
-            @click="saveEvents" 
-            :disabled="store.isSaving"
-            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
-          >
+          <button @click="saveEvents" :disabled="store.isSaving"
+            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50">
             {{ store.isSaving ? 'Saving...' : 'Save All Events' }}
           </button>
         </div>
@@ -155,7 +168,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useMatchEventsStore } from '@/stores/matchEvents'
-import type {  Goal, Assist, Card, Substitution, Minute } from '@/helpers/types/matchEvents'
+import type { Goal, Assist, Card, Substitution, Minute } from '@/helpers/types/matchEvents'
 
 interface Props {
   isOpen: boolean
@@ -195,7 +208,12 @@ const close = () => {
 }
 
 const addGoal = () => {
-  goals.value.push({ player_name: '', team_id: '', count: 1 })
+  goals.value.push({ 
+    player_name: '', 
+    team_id: '', 
+    count: 1,
+    is_own_goal: false 
+  })
 }
 
 const removeGoal = (index: number) => {
@@ -241,18 +259,30 @@ const addMinute = () => {
 const removeMinute = (index: number) => {
   minutes.value.splice(index, 1)
 }
-
 const saveEvents = async () => {
   if (!props.fixture) return
 
   try {
-    const result = await store.saveAllEvents(props.fixture.id, {
+    const regularGoals = goals.value.filter(g => !g.is_own_goal)
+    const ownGoals = goals.value.filter(g => g.is_own_goal)
+
+    const events: any = {
       assists: assists.value,
       yellowCards: yellowCards.value,
       redCards: redCards.value,
       substitutions: substitutions.value,
       minutes: minutes.value
-    })
+    }
+
+    if (regularGoals.length > 0) {
+      events.goals = regularGoals
+    }
+
+    if (ownGoals.length > 0) {
+      events.ownGoals = ownGoals
+    }
+
+    const result = await store.saveAllEvents(props.fixture.id, events)
 
     if (result.success) {
       emit('save-success')

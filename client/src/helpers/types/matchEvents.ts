@@ -2,7 +2,8 @@
 export interface Goal {
   player_name: string
   team_id: string
-  count: number
+  count: number,
+  is_own_goal?: boolean
 }
 
 export interface Assist {
