@@ -12,7 +12,7 @@ class TeamOfTheWeekService:
 
         gameweek = Gameweek.objects.filter(is_active=True).first()
         if gameweek:
-            now = timezone.now().datet()
+            now = timezone.now().date()
             start_date = gameweek.start_date
             if now < start_date and gameweek.number > 1:
                 gameweek = Gameweek.objects.filter(number=gameweek.number - 1).first()
