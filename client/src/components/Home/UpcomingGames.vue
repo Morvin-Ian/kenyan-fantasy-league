@@ -250,7 +250,13 @@ const props = defineProps({
 });
 
 const activeStandings = computed(() =>
-  props.fixtures.filter(fixture => fixture.is_active && fixture.status != "postponed")
+  props.fixtures
+    .filter(fixture => fixture.is_active && fixture.status != "postponed")
+    .sort((a, b) => {
+      const dateA = new Date(a.match_date || '').getTime();
+      const dateB = new Date(b.match_date || '').getTime();
+      return dateA - dateB; 
+    })
 );
 
 const firstFiveStandings = computed(() => props.standings.slice(0, 5));

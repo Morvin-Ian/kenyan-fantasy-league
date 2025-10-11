@@ -45,7 +45,6 @@ class GameweekStatusService:
         }
 
     def _get_gameweek(self, gameweek_id: Optional[int] = None) -> Optional[Gameweek]:
-        """Get the specified gameweek or the correct active one (fall back to previous if not started yet)"""
         if gameweek_id:
             return Gameweek.objects.filter(id=gameweek_id).first()
 
@@ -53,13 +52,10 @@ class GameweekStatusService:
         if not gameweek:
             return None
 
-        now = timezone.now()
-        start_datetime = timezone.make_aware(
-            datetime.combine(gameweek.start_date, datetime.min.time())
-        )
+        now = timezone.now().date()  
+        start_date = gameweek.start_date  
 
-        # If active gameweek hasn't started yet → use previous gameweek
-        if now < start_datetime and gameweek.number > 1:
+        if now < start_date and gameweek.number > 1:
             return Gameweek.objects.filter(number=gameweek.number - 1).first()
 
         return gameweek

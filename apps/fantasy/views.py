@@ -5,8 +5,6 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.db import IntegrityError, transaction
-from django.utils import timezone
-from datetime import datetime
 
 from apps.fantasy.models import (
     FantasyPlayer,
@@ -24,6 +22,7 @@ from .serializers import (
 )
 from .services.fantasy import FantasyService
 from .services.gameweek_status import GameweekStatusService
+from .services.team_service import TeamOfTheWeekService
 
 
 class FantasyTeamViewSet(ModelViewSet):
@@ -245,160 +244,24 @@ class PlayerPerformanceViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="gameweek-team")
     def team_of_the_week(self, request):
         gameweek_number = request.query_params.get("gameweek")
-        if gameweek_number:
-            gameweek = Gameweek.objects.filter(number=gameweek_number).first()
-        else:
-            gameweek = Gameweek.objects.filter(is_active=True).first()
-            if gameweek:
-                now = timezone.now()
-                start_datetime = timezone.make_aware(
-                    datetime.combine(gameweek.start_date, datetime.min.time())
-                )
-                if now < start_datetime and gameweek.number > 1:
-                    gameweek = Gameweek.objects.filter(number=gameweek.number - 1).first()
+        gameweek = TeamOfTheWeekService.get_gameweek(gameweek_number)
 
         if not gameweek:
             return Response(
-                {"detail": "No valid gameweek found."}, status=status.HTTP_404_NOT_FOUND
+                {"detail": "No valid gameweek found."},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
-        performances = PlayerPerformance.objects.filter(
-            gameweek=gameweek
-        ).select_related("player", "player__team")
+        team_data = TeamOfTheWeekService.get_team_of_the_week(gameweek)
 
-        def get_top_players(position, min_count, max_count):
-            qs = performances.filter(player__position=position).order_by(
-                "-fantasy_points"
+        if not team_data:
+            return Response(
+                {"detail": "No performances found for this gameweek."},
+                status=status.HTTP_404_NOT_FOUND,
             )
-            return list(qs)
 
-        def select_players_with_team_limit(players, required_count, team_counts):
-            selected = []
-            temp_team_counts = team_counts.copy()
-            
-            for player in players:
-                if len(selected) >= required_count:
-                    break
-                    
-                player_team = player.player.team.name if player.player.team else "Unknown"
-                if temp_team_counts.get(player_team, 0) < 3:
-                    selected.append(player)
-                    temp_team_counts[player_team] = temp_team_counts.get(player_team, 0) + 1
-            
-            return selected, temp_team_counts
-
-        team_counts = {}
-        
-        all_gkps = get_top_players("GKP", 1, 1)
-        gkps, team_counts = select_players_with_team_limit(all_gkps, 1, team_counts)
-        
-        if not gkps and all_gkps:
-            gkps = [all_gkps[0]]
-            team_name = all_gkps[0].player.team.name if all_gkps[0].player.team else "Unknown"
-            team_counts[team_name] = team_counts.get(team_name, 0) + 1
-
-        # Select defenders (need 3-5, aim for 4 in a balanced team)
-        all_defs = get_top_players("DEF", 3, 5)
-        defs, team_counts = select_players_with_team_limit(all_defs, 4, team_counts)
-        
-        # Select midfielders (need 3-5, aim for 4 in a balanced team)
-        all_mids = get_top_players("MID", 3, 5)
-        mids, team_counts = select_players_with_team_limit(all_mids, 4, team_counts)
-        
-        # Select forwards (need 1-3, aim for 2 in a balanced team)
-        all_fwds = get_top_players("FWD", 1, 3)
-        fwds, team_counts = select_players_with_team_limit(all_fwds, 2, team_counts)
-
-        total_so_far = len(gkps) + len(defs) + len(mids) + len(fwds)
-        
-        # Fill remaining spots to reach 11 players
-        if total_so_far < 11:
-            remaining_players = []
-            selected_ids = {p.player.id for p in gkps + defs + mids + fwds}
-            
-            for perf in performances.exclude(player_id__in=selected_ids).order_by('-fantasy_points'):
-                remaining_players.append(perf)
-            
-            position_limits = {
-                'DEF': (3, 5, len(defs)),
-                'MID': (3, 5, len(mids)), 
-                'FWD': (1, 3, len(fwds))
-            }
-            
-            for position, (min_pos, max_pos, current_count) in position_limits.items():
-                if current_count < max_pos and total_so_far < 11:
-                    needed = min(max_pos - current_count, 11 - total_so_far)
-                    position_players = [p for p in remaining_players if p.player.position == position]
-                    
-                    additional_players, team_counts = select_players_with_team_limit(
-                        position_players, needed, team_counts
-                    )
-                    
-                    if position == 'DEF':
-                        defs.extend(additional_players)
-                    elif position == 'MID':
-                        mids.extend(additional_players)
-                    elif position == 'FWD':
-                        fwds.extend(additional_players)
-                    
-                    total_so_far += len(additional_players)
-                    
-                    # Remove selected players from remaining list
-                    for player in additional_players:
-                        remaining_players.remove(player)
-
-        if len(defs) < 3:
-            needed = 3 - len(defs)
-            additional_defs = [p for p in all_defs if p not in defs][:needed]
-            defs.extend(additional_defs)
-        
-        if len(mids) < 3:
-            needed = 3 - len(mids)
-            additional_mids = [p for p in all_mids if p not in mids][:needed]
-            mids.extend(additional_mids)
-            
-        if len(fwds) < 1:
-            additional_fwds = [p for p in all_fwds if p not in fwds][:1]
-            fwds.extend(additional_fwds)
-
-        def serialize(perfs):
-            return [
-                {
-                    "player_id": p.player.id,
-                    "name": p.player.name,
-                    "team": p.player.team.name if p.player.team else None,
-                    "position": p.player.position,
-                    "fantasy_points": p.fantasy_points,
-                    "goals_scored": p.goals_scored,
-                    "assists": p.assists,
-                    "clean_sheets": p.clean_sheets,
-                    "saves": p.saves,
-                    "minutes_played": p.minutes_played,
-                }
-                for p in perfs
-            ]
-
-        total_players = len(gkps) + len(defs) + len(mids) + len(fwds)
-        team_complete = total_players == 11
-
-        final_team_counts = {}
-        for position_group in [gkps, defs, mids, fwds]:
-            for player in position_group:
-                team_name = player.player.team.name if player.player.team else "Unknown"
-                final_team_counts[team_name] = final_team_counts.get(team_name, 0) + 1
-
-        return Response(
-            {
-                "gameweek": gameweek.number,
-                "complete": team_complete,
-                "team_distribution": final_team_counts,
-                "goalkeeper": serialize(gkps),
-                "defenders": serialize(defs),
-                "midfielders": serialize(mids),
-                "forwards": serialize(fwds),
-            },
-            status=status.HTTP_200_OK,
-        )
+        serialized = TeamOfTheWeekService.serialize_team(team_data, gameweek.number)
+        return Response(serialized, status=status.HTTP_200_OK)
 
 class GameweekViewSet(ModelViewSet):
     queryset = Gameweek.objects.all()
