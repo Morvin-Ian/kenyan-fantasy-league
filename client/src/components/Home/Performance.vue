@@ -46,7 +46,7 @@
           </div>
 
           <!-- Error State -->
-          <div v-else-if="error" class="text-center py-4">
+          <!-- <div v-else-if="error" class="text-center py-4">
             <p class="text-red-500 text-sm">{{ error }}</p>
             <button 
               @click="fetchTopScorers"
@@ -54,7 +54,7 @@
             >
               Try Again
             </button>
-          </div>
+          </div> -->
 
           <!-- Data State -->
           <div v-else class="space-y-2 sm:space-y-3 md:space-y-4">
