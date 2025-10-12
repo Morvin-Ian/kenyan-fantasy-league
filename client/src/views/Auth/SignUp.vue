@@ -246,7 +246,7 @@ const handleSubmit = async () => {
 
     if (!authStore.error) {
       toast.success(
-        "Activation email sent! Please check your inbox to complete registration",
+        "Succesfull registration",
         {
           timeout: 10000,
         }
