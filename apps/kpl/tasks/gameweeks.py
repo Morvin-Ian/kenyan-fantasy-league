@@ -3,7 +3,8 @@ import logging
 from datetime import datetime, timedelta
 
 from celery import shared_task
-from django.db import transaction, F
+from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 

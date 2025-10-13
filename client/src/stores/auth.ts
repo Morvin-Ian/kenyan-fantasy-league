@@ -76,7 +76,7 @@ export const useAuthStore = defineStore("auth", {
         }
         return data;
       } catch (error: any) {
-        const errorMessage = error.response?.data?.detail || "Login failed";
+        const errorMessage = error.response?.data?.detail || "No active account found with the given credentials";
         this.setError(errorMessage);
         throw new Error(errorMessage);
       } finally {
