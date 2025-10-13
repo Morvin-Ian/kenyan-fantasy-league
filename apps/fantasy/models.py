@@ -23,7 +23,7 @@ class FantasyTeam(TimeStampedUUIDModel):
         User, on_delete=models.CASCADE, related_name="fantasy_teams"
     )
     name = models.CharField(max_length=100, unique=True)
-    budget = models.DecimalField(max_digits=6, decimal_places=2, default=100.00)
+    budget = models.DecimalField(max_digits=6, decimal_places=2, default=70.00)
     formation = models.CharField(
         max_length=10, choices=FORMATION_CHOICES, default="3-4-3"
     )

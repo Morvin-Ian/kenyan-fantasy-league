@@ -34,6 +34,11 @@ export interface FantasyPlayer {
   isPlaceholder: boolean | null;
 }
 
+export interface PositionSlot {
+  slot: FantasyPlayer;
+  position: string;
+}
+
 export interface PlayerGoalsLeaderboard {
   player_id: string;
   player_name: string;

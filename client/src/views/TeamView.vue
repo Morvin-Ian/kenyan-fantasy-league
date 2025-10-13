@@ -6,9 +6,52 @@
         <p class="mt-4 text-gray-600">Loading your team...</p>
       </div>
     </div>
+    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
+      class="max-w-7xl mx-auto mb-4 animate-fade-in">
 
+      <!-- Show both buttons when there are empty slots -->
+      <div v-if="hasEmptySlots" class="flex flex-col sm:flex-row gap-2">
+        <button @click="autoFillTeam" :disabled="isAutoFilling"
+          class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2">
+          <svg v-if="isAutoFilling" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+            fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
+          </svg>
+          <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="text-sm sm:text-base">{{ isAutoFilling ? 'Auto-Selecting...' : 'Auto-Select Players' }}</span>
+        </button>
 
-    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0" class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+        <button @click="clearTeamSelections"
+          class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span class="text-sm sm:text-base">Clear Autoselection</span>
+        </button>
+      </div>
+
+      <!-- Show only clear button when team is complete -->
+      <div v-else class="flex justify-center">
+        <button @click="clearTeamSelections"
+          class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span class="text-sm sm:text-base">Clear Autoselection</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
+      class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
       <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
         <div class="relative">
           <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
@@ -28,26 +71,12 @@
 
 
 
-        <Pitch 
-          :goalkeeper="goalkeeper" 
-          :defenders="defenders" 
-          :midfielders="midfielders" 
-          :forwards="forwards"
-          :bench-players="benchPlayers" 
-          :switch-source="switchSource" 
-          :switch-active="switchActive"
-          @player-click="handlePlayerClick" 
-          @formation-change="handleFormationChange" 
-        />
+        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
+          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
+          @player-click="handlePlayerClick" @formation-change="handleFormationChange" />
 
-        <MessageAlert v-if="message.text" 
-          :type="message.type" 
-          :text="message.text" 
-          :dismissible="message.dismissible"
-          :auto-dismiss="message.autoDismiss" 
-          @dismiss="clearMessage"
-          class="absolute top-4 left-0 right-0 z-20 mx-4"
-         />
+        <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
+          :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
 
         <!-- Save Changes Button for Larger Devices (Bottom) -->
         <<div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
@@ -65,13 +94,8 @@
       </div>
     </div>
 
-    <Sidebar 
-      :total-points="totalPoints" 
-      :average-points="averagePoints" 
-      :highest-points="highestPoints"
-      :overall-rank="overallRank" 
-      :team="userTeamName"
-     />
+    <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+      :overall-rank="overallRank" :team="userTeamName" />
   </div>
 
   <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
@@ -84,22 +108,13 @@
       Your Team</button>
   </div>
 
-  <PlayerModal v-if="userTeam && userTeam.length" 
-    :show-modal="showModal" 
-    :selected-player="selectedPlayer"
-    @close-modal="closeModal" 
-    @initiate-switch="initiateSwitch" 
-    @transfer-player="initiateTransfer"
-    @make-captain="makeCaptain" 
-    @make-vice-captain="makeViceCaptain" 
-  />
 
-  <SearchPlayer 
-    :show-search-modal="showSearchModal" 
-    :selectedPlayer="selectedPlayer" 
-    @close-modal="closeSearchModal"
-    @select-player="handlePlayerTransfer"
-   />
+  <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+    @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+    @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+
+  <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+    @select-player="handlePlayerTransfer" />
 
   <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
     <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
@@ -145,10 +160,11 @@ import Pitch from "@/components/Team/Pitch.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import MessageAlert from "@/components/common/MessageAlert.vue";
 import type { StartingEleven, TeamData, Player as KplPlayer } from "@/helpers/types/team";
-import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
+import type { FantasyPlayer as Player, PositionSlot } from "@/helpers/types/fantasy";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import { useFantasyStore } from "@/stores/fantasy";
+import { useKplStore } from "@/stores/kpl";
 import defaultJersey from "@/assets/images/jerseys/default.png";
 import goalkeeperJersey from "@/assets/images/jerseys/goalkeeper.png";
 
@@ -158,6 +174,7 @@ const SearchPlayer = defineAsyncComponent(() => import('@/components/Team/Search
 const authStore = useAuthStore();
 const router = useRouter();
 const fantasyStore = useFantasyStore();
+const kplStore = useKplStore();
 
 const userTeam = computed(() => {
   return fantasyStore.userTeam || [];
@@ -254,6 +271,19 @@ const highestPoints = ref(121);
 
 type FormationKey = "3-4-3" | "3-5-2" | "4-4-2" | "4-3-3" | "5-3-2" | "5-4-1" | "5-2-3";
 type BenchComposition = { DEF: number; MID: number; FWD: number };
+const isAutoFilling = ref(false);
+
+const hasEmptySlots = computed(() => {
+  if (!userTeam.value || userTeam.value.length === 0) return false;
+
+  const hasPlaceholderGoalkeeper = startingElevenRef.value.goalkeeper?.id?.startsWith('placeholder');
+  const hasPlaceholderDefenders = startingElevenRef.value.defenders.some(p => p.id.startsWith('placeholder'));
+  const hasPlaceholderMidfielders = startingElevenRef.value.midfielders.some(p => p.id.startsWith('placeholder'));
+  const hasPlaceholderForwards = startingElevenRef.value.forwards.some(p => p.id.startsWith('placeholder'));
+  const hasPlaceholderBench = benchPlayersRef.value.some(p => p.id.startsWith('placeholder'));
+
+  return hasPlaceholderGoalkeeper || hasPlaceholderDefenders || hasPlaceholderMidfielders || hasPlaceholderForwards || hasPlaceholderBench;
+});
 
 const benchCompositions: Record<FormationKey, BenchComposition> = {
   "3-4-3": { DEF: 2, MID: 1, FWD: 0 },
@@ -1002,6 +1032,149 @@ const makeViceCaptain = () => {
   hasUnsavedChanges.value = true;
 };
 
+const autoFillTeam = async () => {
+  try {
+    isAutoFilling.value = true;
+    const maxPrice = 70.0;
+
+    const availablePlayers = await kplStore.players;
+
+    if (!availablePlayers || availablePlayers.length === 0) {
+      showMessage("No players available to auto-fill team.", "error");
+      return;
+    }
+
+    // Get current player IDs to avoid duplicates
+    const currentPlayerIds = [
+      startingElevenRef.value.goalkeeper?.id,
+      ...startingElevenRef.value.defenders.map(p => p.id),
+      ...startingElevenRef.value.midfielders.map(p => p.id),
+      ...startingElevenRef.value.forwards.map(p => p.id),
+      ...benchPlayersRef.value.map(p => p.id)
+    ].filter(id => !id?.startsWith('placeholder'));
+
+    // Filter eligible players and shuffle them
+    const eligiblePlayers = availablePlayers.filter((player: KplPlayer) => {
+      const price = parseFloat(player.current_value || '0');
+      return price <= maxPrice && !currentPlayerIds.includes(player.id);
+    });
+
+    // Shuffle function to randomize player selection
+    const shufflePlayers = <T>(players: T[]): T[] => {
+      const shuffled = [...players];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
+
+    // Track team counts for validation
+    const teamCounts: Record<string, number> = {};
+    [...startingElevenRef.value.defenders, ...startingElevenRef.value.midfielders, ...startingElevenRef.value.forwards, startingElevenRef.value.goalkeeper, ...benchPlayersRef.value]
+      .filter(p => !p.id.startsWith('placeholder'))
+      .forEach(p => {
+        const teamName = typeof p.team === 'object' ? p.team.name : p.team;
+        teamCounts[teamName] = (teamCounts[teamName] || 0) + 1;
+      });
+
+    // Get shuffled players by position with some randomness
+    const getPlayersByPosition = (position: string) => {
+      const positionPlayers = eligiblePlayers.filter((p: KplPlayer) => p.position === position);
+
+      // Add some randomness: sometimes prioritize cheaper players, sometimes better players
+      const shouldPrioritizeCheap = Math.random() > 0.5;
+
+      return shufflePlayers(positionPlayers).sort((a: KplPlayer, b: KplPlayer) => {
+        const priceA = parseFloat(a.current_value || '0');
+        const priceB = parseFloat(b.current_value || '0');
+
+        if (shouldPrioritizeCheap) {
+          return priceA - priceB; // Cheaper first
+        } else {
+          // Mix of price and some randomness for variety
+          return Math.random() > 0.7 ? priceB - priceA : priceA - priceB;
+        }
+      });
+    };
+
+    const canAddPlayer = (player: KplPlayer) => {
+      const teamName = typeof player.team === 'object' ? player.team.name : player.team;
+      return (teamCounts[teamName] || 0) < 3;
+    };
+
+    const addPlayer = (player: KplPlayer) => {
+      const teamName = typeof player.team === 'object' ? player.team.name : player.team;
+      teamCounts[teamName] = (teamCounts[teamName] || 0) + 1;
+      currentPlayerIds.push(player.id);
+    };
+
+    // Function to fill a specific position slot
+    const fillPositionSlot = async (playerSlot: Player, position: string) => {
+      if (playerSlot?.id?.startsWith('placeholder')) {
+        const availablePositionPlayers = getPlayersByPosition(position);
+        const foundPlayer = availablePositionPlayers.find((p: KplPlayer) =>
+          canAddPlayer(p) && !currentPlayerIds.includes(p.id)
+        );
+
+        if (foundPlayer) {
+          selectedPlayer.value = playerSlot;
+          await handlePlayerTransfer(foundPlayer);
+          addPlayer(foundPlayer);
+          return true;
+        }
+      }
+      return false;
+    };
+
+    const fillPositions: PositionSlot[] = [
+      // Starting lineup
+      { slot: startingElevenRef.value.goalkeeper, position: 'GKP' },
+      ...startingElevenRef.value.defenders.map((slot) => ({ slot, position: 'DEF' })),
+      ...startingElevenRef.value.midfielders.map((slot) => ({ slot, position: 'MID' })),
+      ...startingElevenRef.value.forwards.map((slot) => ({ slot, position: 'FWD' })),
+      // Bench
+      ...benchPlayersRef.value.map((slot) => ({ slot, position: slot.position }))
+    ];
+
+    // Shuffle the order in which positions are filled for more variety
+    const shuffledPositions = shufflePlayers(fillPositions);
+
+    for (const { slot, position } of shuffledPositions) {
+      await fillPositionSlot(slot, position);
+    }
+
+    hasUnsavedChanges.value = true;
+    showMessage("Team auto-filled successfully! Don't forget to save your changes.", "success", 8000);
+
+  } catch (error) {
+    console.error("Error auto-filling team:", error);
+    showMessage("Failed to auto-fill team. Please try again.", "error");
+  } finally {
+    isAutoFilling.value = false;
+  }
+};
+
+const clearTeamSelections = () => {
+  startingElevenRef.value.goalkeeper = createPlaceholderPlayer("GKP", 0);
+  startingElevenRef.value.defenders = Array.from({ length: defenders.value.length }, (_, i) =>
+    createPlaceholderPlayer("DEF", i)
+  );
+  startingElevenRef.value.midfielders = Array.from({ length: midfielders.value.length }, (_, i) =>
+    createPlaceholderPlayer("MID", i)
+  );
+  startingElevenRef.value.forwards = Array.from({ length: forwards.value.length }, (_, i) =>
+    createPlaceholderPlayer("FWD", i)
+  );
+
+  benchPlayersRef.value = benchPlayersRef.value.map((player, index) =>
+    createPlaceholderPlayer(player.position, index, false)
+  );
+
+  hasUnsavedChanges.value = true;
+  showMessage("Team cleared! You can now auto-select new players.", "success");
+};
+
 onMounted(async () => {
   try {
     authStore.initialize();
@@ -1023,7 +1196,7 @@ onMounted(async () => {
   } catch (error) {
     console.error("Error initializing team:", error);
     showMessage("Failed to load team data. Please refresh the page.", "error");
-  }finally{
+  } finally {
     isInitializing.value = false;
   }
 });

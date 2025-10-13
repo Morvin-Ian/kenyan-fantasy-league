@@ -100,7 +100,7 @@
       </div>
 
       <!-- Recent Form -->
-      <div class="mb-4 sm:mb-6">
+      <!-- <div class="mb-4 sm:mb-6">
         <h3 class="text-sm sm:text-base font-semibold text-gray-800 mb-2 sm:mb-3 flex items-center">
           Recent Form (Last 5)
         </h3>
@@ -111,7 +111,7 @@
             {{ score }}
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!-- Action Buttons -->
       <div class="space-y-2 sm:space-y-3">

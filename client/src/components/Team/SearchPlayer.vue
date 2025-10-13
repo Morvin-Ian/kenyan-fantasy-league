@@ -69,10 +69,10 @@
           </div>
         </div>
 
-        <!-- Player Table -->
-        <div v-else class="overflow-x-auto">
+        <!-- Player Table with Infinite Scroll -->
+        <div v-else ref="scrollContainer" @scroll="handleScroll" class="overflow-y-auto max-h-[50vh]">
           <table class="w-full text-xs">
-            <thead class="bg-gradient-to-r from-gray-100 to-gray-200">
+            <thead class="bg-gradient-to-r from-gray-100 to-gray-200 sticky top-0 z-10">
               <tr>
                 <th class="px-2 sm:px-4 py-2 text-left text-gray-700 font-semibold text-xs">Player</th>
                 <th class="px-2 sm:px-4 py-2 text-left text-gray-700 font-semibold text-xs">Position</th>
@@ -81,7 +81,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(player, index) in paginatedPlayers" :key="player.id" class="border-b hover:bg-gray-50 transition-all duration-300" :class="{ 'animate-fadeIn': showAnimation }" :style="{ animationDelay: `${index * 50}ms` }">
+              <tr v-for="(player, index) in displayedPlayers" :key="player.id" class="border-b hover:bg-gray-50 transition-all duration-300" :class="{ 'animate-fadeIn': showAnimation }" :style="{ animationDelay: `${index * 50}ms` }">
                 <td class="px-2 sm:px-4 py-2">
                   <div class="flex items-center">
                     <div class="flex-shrink-0 h-6 w-6 sm:h-8 sm:w-8 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center text-white font-bold mr-2 text-xs">
@@ -123,7 +123,7 @@
                   </button>
                 </td>
               </tr>
-              <tr v-if="paginatedPlayers.length === 0">
+              <tr v-if="displayedPlayers.length === 0">
                 <td colspan="4" class="text-center py-4 sm:py-8 text-gray-500 bg-gray-50/50">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 sm:h-12 sm:w-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -134,49 +134,20 @@
               </tr>
             </tbody>
           </table>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="!loading" class="flex flex-col sm:flex-row justify-between items-center p-2 sm:p-4 bg-gradient-to-b from-white to-gray-50 border-t border-gray-200">
-          <div class="flex flex-col sm:flex-row items-center mb-2 sm:mb-0 space-y-2 sm:space-y-0 sm:space-x-3">
-            <div class="text-xs text-gray-500">Showing {{ paginatedPlayersStart }} to {{ paginatedPlayersEnd }} of {{ filteredPlayers.length }}</div>
-            <div class="flex items-center">
-              <label for="playersPerPage" class="text-xs text-gray-500 mr-1 hidden sm:block">Per page:</label>
-              <select id="playersPerPage" v-model="playersPerPage" @change="currentPage = 1" class="bg-white border border-gray-300 text-gray-700 rounded-md py-1 px-1 text-xs focus:outline-none focus:ring-2 focus:ring-gray-400">
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="15">15</option>
-              </select>
+          
+          <!-- Loading More Indicator -->
+          <div v-if="loadingMore" class="flex justify-center items-center py-4">
+            <div class="relative w-8 h-8">
+              <div class="absolute top-0 left-0 w-full h-full border-2 border-gray-200 rounded-full animate-ping"></div>
+              <div class="absolute top-0 left-0 w-full h-full border-2 border-gray-500 rounded-full animate-spin border-t-transparent"></div>
             </div>
           </div>
-          <div class="flex flex-wrap justify-center gap-1">
-            <button @click="currentPage = 1" :disabled="currentPage === 1" class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700" :class="currentPage === 1 ? 'bg-gray-50' : 'bg-gray-100 hover:bg-gray-200'">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-              </svg>
-              <span class="sr-only">First Page</span>
-            </button>
-            <button @click="currentPage = currentPage - 1" :disabled="currentPage === 1" class="w-6 h-6 sm:w-7 sm:h-7 bg-gray-100 text-gray-700 rounded-md transition-all duration-300 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-xs">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div class="flex space-x-1">
-              <button v-for="page in displayedPages" :key="page" @click="currentPage = page" class="w-6 h-6 sm:w-7 sm:h-7 rounded-md flex items-center justify-center transition-all duration-300 text-xs" :class="currentPage === page ? 'bg-gray-600 text-white shadow-lg scale-110' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'">
-                {{ page }}
-              </button>
-            </div>
-            <button @click="currentPage = currentPage + 1" :disabled="currentPage === totalPages" class="w-6 h-6 sm:w-7 sm:h-7 bg-gray-100 text-gray-700 rounded-md transition-all duration-300 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center text-xs">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <button @click="currentPage = totalPages" :disabled="currentPage === totalPages" class="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700" :class="currentPage === totalPages ? 'bg-gray-50' : 'bg-gray-100 hover:bg-gray-200'">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
-              </svg>
-              <span class="sr-only">Last Page</span>
-            </button>
+        </div>
+
+        <!-- Stats Footer -->
+        <div v-if="!loading" class="p-2 sm:p-4 bg-gradient-to-b from-white to-gray-50 border-t border-gray-200">
+          <div class="text-center text-xs text-gray-500">
+            Showing {{ displayedPlayers.length }} of {{ filteredPlayers.length }} players
           </div>
         </div>
       </div>
@@ -246,8 +217,9 @@ const getPositionName = (position: string): string => {
 
 const showAnimation = ref(false);
 const loading = ref(true);
-const currentPage = ref(1);
-const playersPerPage = ref(5);
+const displayCount = ref(15);
+const loadingMore = ref(false);
+const scrollContainer = ref<HTMLElement | null>(null);
 
 const getPlayers = async () => {
   await kplStore.fetchPlayers();
@@ -266,42 +238,36 @@ const filteredPlayers = computed(() => {
   });
 });
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredPlayers.value.length / playersPerPage.value)));
-
-const paginatedPlayers = computed(() => {
-  const start = (currentPage.value - 1) * playersPerPage.value;
-  const end = start + playersPerPage.value;
-  return filteredPlayers.value.slice(start, end);
+const displayedPlayers = computed(() => {
+  return filteredPlayers.value.slice(0, displayCount.value);
 });
 
-const paginatedPlayersStart = computed(() => {
-  if (filteredPlayers.value.length === 0) return 0;
-  return (currentPage.value - 1) * playersPerPage.value + 1;
-});
-
-const paginatedPlayersEnd = computed(() => {
-  return Math.min(currentPage.value * playersPerPage.value, filteredPlayers.value.length);
-});
-
-const displayedPages = computed(() => {
-  const maxPagesToShow = window.innerWidth > 768 ? 5 : 3;
-  let startPage = Math.max(1, currentPage.value - Math.floor(maxPagesToShow / 2));
-  let endPage = Math.min(totalPages.value, startPage + maxPagesToShow - 1);
-  if (endPage - startPage + 1 < maxPagesToShow) {
-    startPage = Math.max(1, endPage - maxPagesToShow + 1);
+const handleScroll = () => {
+  if (!scrollContainer.value || loadingMore.value) return;
+  
+  const { scrollTop, scrollHeight, clientHeight } = scrollContainer.value;
+  const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+  
+  // Load more when scrolled 80% down
+  if (scrollPercentage > 0.8 && displayCount.value < filteredPlayers.value.length) {
+    loadMore();
   }
-  const pages = [];
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(i);
-  }
-  return pages;
-});
+};
+
+const loadMore = () => {
+  loadingMore.value = true;
+  
+  setTimeout(() => {
+    displayCount.value = Math.min(displayCount.value + 10, filteredPlayers.value.length);
+    loadingMore.value = false;
+  }, 500);
+};
 
 const clearFilters = () => {
   filters.name = "";
   filters.position = props.selectedPlayer?.position || "";
   filters.team = "";
-  currentPage.value = 1;
+  displayCount.value = 15;
   triggerAnimation();
 };
 
@@ -319,22 +285,11 @@ const triggerAnimation = () => {
 watch(
   () => [filters.name, filters.position, filters.team],
   () => {
-    currentPage.value = 1;
+    displayCount.value = 15;
     triggerAnimation();
   },
   { deep: true }
 );
-
-watch(filteredPlayers, () => {
-  if (currentPage.value > totalPages.value && totalPages.value > 0) {
-    currentPage.value = totalPages.value;
-  }
-});
-
-watch(playersPerPage, () => {
-  currentPage.value = 1;
-  triggerAnimation();
-});
 
 onMounted(async () => {
   loading.value = true;
@@ -344,10 +299,6 @@ onMounted(async () => {
 
   loading.value = false;
   triggerAnimation();
-
-  window.addEventListener('resize', () => {
-    currentPage.value = currentPage.value;
-  });
 });
 </script>
 

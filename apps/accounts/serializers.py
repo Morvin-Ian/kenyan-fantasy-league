@@ -3,6 +3,7 @@ from django_countries.serializer_fields import CountryField
 from djoser.serializers import UserCreateSerializer
 from phonenumber_field.serializerfields import PhoneNumberField
 from rest_framework import serializers
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
 User = get_user_model()
 
@@ -40,7 +41,13 @@ class UserSerializer(serializers.ModelSerializer):
         return obj.last_name.title()
 
 
-class CreateUserSerializer(UserCreateSerializer):
-    class Meta(UserCreateSerializer.Meta):
+class UserCreateSerializer(BaseUserCreateSerializer):
+    class Meta(BaseUserCreateSerializer.Meta):
         model = User
         fields = ("username", "email", "first_name", "last_name", "password")
+    
+    def create(self, validated_data):
+        user = super().create(validated_data)
+        user.is_active = True
+        user.save()
+        return user
