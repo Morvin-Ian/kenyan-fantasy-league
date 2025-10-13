@@ -12,6 +12,7 @@ from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from selenium.webdriver.common.by import By
 
 from apps.fantasy.tasks.player_performance import update_complete_player_performance
+from apps.kpl.tasks.gameweeks import setup_team_finalization_task
 from apps.kpl.models import Fixture, Gameweek
 from config.settings import base
 from util.selenium import SeleniumManager
@@ -88,9 +89,7 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
         return data
 
     except Exception as e:
-        logger.error(
-            f"Could not extract scores from fixture table: {e}", exc_info=True
-        )
+        logger.error(f"Could not extract scores from fixture table: {e}", exc_info=True)
         if selenium_manager.driver:
             logger.debug(
                 f"Exception page source (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
@@ -139,7 +138,9 @@ def get_goal_scorers(selenium_manager, match_link, max_retries=2):
     for attempt in range(max_retries):
         try:
             if not selenium_manager.safe_get(match_link):
-                logger.warning(f"Failed to load match link (attempt {attempt + 1}/{max_retries})")
+                logger.warning(
+                    f"Failed to load match link (attempt {attempt + 1}/{max_retries})"
+                )
                 if attempt < max_retries - 1:
                     time.sleep(2)
                     continue
@@ -308,7 +309,7 @@ def update_fixture_task(selenium_manager, live_data):
                     except Exception as e:
                         logger.error(
                             f"Failed to update goal scorers for fixture {fixture.id}: {e}",
-                            exc_info=True
+                            exc_info=True,
                         )
 
             elif data["time"].lower() == "postponed":
@@ -346,7 +347,7 @@ def monitor_fixture_score(fixture_id=None):
     selenium_manager = None
     successful_updates = 0
     failed_updates = 0
-    
+
     try:
         from .fixtures import find_team
 
@@ -461,7 +462,7 @@ def monitor_fixture_score(fixture_id=None):
                             failed_updates += 1
                             logger.error(
                                 f"Failed to update goal scorers for fixture {fixture.id}: {e}",
-                                exc_info=True
+                                exc_info=True,
                             )
 
                     if fixture_updated:
@@ -483,7 +484,7 @@ def monitor_fixture_score(fixture_id=None):
             f"{goals_updated} goal data updates, "
             f"{successful_updates} successful, {failed_updates} failed"
         )
-        
+
         # Return True only if we had some success or no fixtures to process
         return failed_updates == 0 or successful_updates > 0
 
@@ -552,10 +553,20 @@ def setup_gameweek_monitoring():
                 tasks_created += 1
                 logger.info(f"Created monitoring task for fixture {fixture.id}")
 
+        finalization_result = setup_team_finalization_task(active_gameweek)
+
         logger.info(
-            f"Created {tasks_created} new tasks, updated {tasks_updated} tasks for gameweek {active_gameweek.number}"
+            f"Created {tasks_created} new fixture tasks, "
+            f"updated {tasks_updated} fixture tasks for gameweek {active_gameweek.number}. "
+            f"Finalization task: {finalization_result}"
         )
-        return f"Set up {tasks_created + tasks_updated} monitoring tasks for gameweek {active_gameweek.number}"
+
+        return {
+            "fixture_tasks_created": tasks_created,
+            "fixture_tasks_updated": tasks_updated,
+            "finalization_task": finalization_result,
+            "gameweek": active_gameweek.number,
+        }
 
     except Exception as e:
         logger.error(f"Error setting up gameweek monitoring: {e}", exc_info=True)
@@ -563,7 +574,6 @@ def setup_gameweek_monitoring():
 
 
 def disable_fixture(fixture):
-    """Disable monitoring task for completed fixtures"""
     if fixture.status == "completed":
         task_name = f"monitor_fixture_{fixture.id}_{fixture.gameweek.number}"
         try:
@@ -572,8 +582,12 @@ def disable_fixture(fixture):
                 periodic_task.enabled = False
                 periodic_task.expires = timezone.now()
                 periodic_task.save(update_fields=["enabled", "expires"])
-                logger.info(f"Disabled monitoring task for completed fixture {fixture.id}")
+                logger.info(
+                    f"Disabled monitoring task for completed fixture {fixture.id}"
+                )
         except PeriodicTask.DoesNotExist:
-            logger.debug(f"Periodic task {task_name} not found (already deleted or never created)")
+            logger.debug(
+                f"Periodic task {task_name} not found (already deleted or never created)"
+            )
         except Exception as e:
             logger.error(f"Error disabling task {task_name}: {e}", exc_info=True)

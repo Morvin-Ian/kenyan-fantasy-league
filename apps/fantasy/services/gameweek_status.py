@@ -52,8 +52,8 @@ class GameweekStatusService:
         if not gameweek:
             return None
 
-        now = timezone.now().date()  
-        start_date = gameweek.start_date  
+        now = timezone.now().date()
+        start_date = gameweek.start_date
 
         if now < start_date and gameweek.number > 1:
             return Gameweek.objects.filter(number=gameweek.number - 1).first()
@@ -493,7 +493,7 @@ class GameweekStatusService:
         self, current_gameweek: Gameweek, stat_type: str
     ) -> str:
         """Compare statistics to the previous gameweek"""
-        return "up" 
+        return "up"
 
     def _get_additional_stats(self, fixtures: List[Fixture]) -> List[Dict[str, Any]]:
         """Get additional interesting statistics"""

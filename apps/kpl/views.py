@@ -10,14 +10,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from apps.kpl.models import (
-    Fixture,
-    FixtureLineup,
-    Player,
-    Standing,
-    Team,
-    Gameweek
-)
+from apps.kpl.models import Fixture, FixtureLineup, Player, Standing, Team, Gameweek
 from config.settings import base
 
 from .serializers import (
@@ -87,17 +80,21 @@ class FixtureViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) == "list":
-            active_gw_subquery = Gameweek.objects.filter(
-                is_active=True
-            ).values('number')[:1]  
-            
-            qs = qs.filter(
-                gameweek__number__lte=Subquery(active_gw_subquery),
-                gameweek__number__gte=1
-            ).select_related('gameweek').order_by('-match_date')
-        
+            active_gw_subquery = Gameweek.objects.filter(is_active=True).values(
+                "number"
+            )[:1]
+
+            qs = (
+                qs.filter(
+                    gameweek__number__lte=Subquery(active_gw_subquery),
+                    gameweek__number__gte=1,
+                )
+                .select_related("gameweek")
+                .order_by("-match_date")
+            )
+
         return qs
-    
+
     def get_permissions(self):
         if getattr(self.request, "method", "").upper() == "POST" and getattr(
             self, "action", None
@@ -393,9 +390,9 @@ class MatchEventsViewSet(ModelViewSet):
                 {"error": "goals list is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         is_own_goal = request.data.get("is_own_goal", False)
-        
+
         if is_own_goal:
             result = MatchEventService.update_own_goals(fixture, goals_data)
         else:
@@ -411,7 +408,7 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["post"], url_path="update-substitutions")  
+    @action(detail=False, methods=["post"], url_path="update-substitutions")
     def update_substitutions(self, request, pk=None):
         """
         Request body:
@@ -452,7 +449,7 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["post"], url_path="update-minutes") 
+    @action(detail=False, methods=["post"], url_path="update-minutes")
     def update_minutes(self, request, pk=None):
         """
         Request body:
@@ -488,7 +485,7 @@ class MatchEventsViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
-    @action(detail=False, methods=["post"], url_path="update-goalkeeper-stats") 
+    @action(detail=False, methods=["post"], url_path="update-goalkeeper-stats")
     def update_goalkeeper_stats(self, request, pk=None):
         """
         Request body:

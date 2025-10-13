@@ -55,7 +55,7 @@ class LineupService:
             raise ValueError(f"Could not read CSV: {str(e)}")
 
         players_to_add = []
-        starters_to_create_performance = [] 
+        starters_to_create_performance = []
         errors = []
 
         for i, row in enumerate(reader):
@@ -84,7 +84,7 @@ class LineupService:
                     "minutes_played": minutes_played,
                 }
             )
-            
+
             if not is_bench:
                 starters_to_create_performance.append(player)
 
@@ -130,8 +130,10 @@ class LineupService:
             FixtureLineupPlayer.objects.bulk_create(lineup_players)
 
             if fixture.gameweek and starters_to_create_performance:
-                starters_performance_created = LineupService._create_starter_performances(
-                    starters_to_create_performance, fixture
+                starters_performance_created = (
+                    LineupService._create_starter_performances(
+                        starters_to_create_performance, fixture
+                    )
                 )
 
             if auto_update_performance:
@@ -172,30 +174,30 @@ class LineupService:
     def _create_starter_performances(players: List[Player], fixture: Fixture) -> int:
         created_count = 0
         gameweek = fixture.gameweek
-        
+
         for player in players:
             existing_performance = PlayerPerformance.objects.filter(
-                player=player,
-                fixture=fixture  
+                player=player, fixture=fixture
             ).first()
-            
+
             if existing_performance:
-                existing_performance.fantasy_points += 3  
+                existing_performance.fantasy_points += 3
                 existing_performance.minutes_played = max(
-                    existing_performance.minutes_played or 0, 
-                    60  
+                    existing_performance.minutes_played or 0, 60
                 )
                 existing_performance.save()
                 created_count += 1
-                logger.info(f"Updated existing performance for {player.name} with +3 starting points")
+                logger.info(
+                    f"Updated existing performance for {player.name} with +3 starting points"
+                )
             else:
                 # Create new performance
                 PlayerPerformance.objects.create(
                     player=player,
                     gameweek=gameweek,
                     fixture=fixture,
-                    fantasy_points=3,  
-                    minutes_played=60, 
+                    fantasy_points=3,
+                    minutes_played=60,
                     yellow_cards=0,
                     red_cards=0,
                     goals_scored=0,
@@ -207,9 +209,13 @@ class LineupService:
                     penalties_missed=0,
                 )
                 created_count += 1
-                logger.info(f"Created new performance for {player.name} with 3 starting points")
-        
-        logger.info(f"Created/updated {created_count} starter performances for fixture {fixture.id}")
+                logger.info(
+                    f"Created new performance for {player.name} with 3 starting points"
+                )
+
+        logger.info(
+            f"Created/updated {created_count} starter performances for fixture {fixture.id}"
+        )
         return created_count
 
     @staticmethod
@@ -218,17 +224,19 @@ class LineupService:
             fixture = Fixture.objects.select_related("gameweek").get(id=fixture_id)
         except Fixture.DoesNotExist:
             raise ValueError("Fixture not found")
-        
+
         starters = []
         for lineup in fixture.lineups.all():
-            lineup_starters = lineup.players.filter(is_bench=False).select_related('player')
+            lineup_starters = lineup.players.filter(is_bench=False).select_related(
+                "player"
+            )
             starters.extend([lp.player for lp in lineup_starters])
-        
+
         created_count = LineupService._create_starter_performances(starters, fixture)
-        
+
         return {
             "fixture_id": fixture_id,
             "starters_count": len(starters),
             "performances_created": created_count,
-            "message": f"Created performance entries for {created_count} starters"
+            "message": f"Created performance entries for {created_count} starters",
         }

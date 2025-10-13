@@ -1,7 +1,7 @@
 import random
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -44,6 +44,10 @@ class FantasyService:
         existing_selection = TeamSelection.objects.filter(
             fantasy_team=fantasy_team, gameweek=current_gameweek
         ).first()
+
+        is_first_team = not TeamSelection.objects.filter(
+            fantasy_team=fantasy_team
+        ).exists()
 
         if current_gameweek.is_deadline_passed:
             if existing_selection:
@@ -142,48 +146,55 @@ class FantasyService:
                 player_data, is_starter=False
             )
 
-        # Identify players to remove (transfers out)
-        current_player_ids = set(str(fp.player.id) for fp in fantasy_team.players.all())
-        new_player_ids = set(str(pid) for pid in all_player_ids)
-        players_to_remove = current_player_ids - new_player_ids
-        players_to_add = new_player_ids - current_player_ids
+        num_transfers = 0
+        transfer_cost = 0
 
-        # Calculate number of transfers
-        num_transfers = len(players_to_remove)
-
-        # Check transfer limits
-        free_transfers = fantasy_team.free_transfers
-        additional_transfers = max(0, num_transfers - free_transfers)
-        transfer_cost = additional_transfers * 4  # 4 points per additional transfer
-
-        if transfer_cost > float(fantasy_team.transfer_budget):
-            raise ValidationError(
-                f"Insufficient transfer budget. Required: {transfer_cost}, Available: {fantasy_team.transfer_budget}"
+        if not is_first_team:
+            current_player_ids = set(
+                str(fp.player.id) for fp in fantasy_team.players.all()
             )
+            new_player_ids = set(str(pid) for pid in all_player_ids)
+            players_to_remove = current_player_ids - new_player_ids
+            players_to_add = new_player_ids - current_player_ids
 
-        # Handle transfers
-        for player_id_out in players_to_remove:
-            player_out = Player.objects.get(id=player_id_out)
-            player_in_id = players_to_add.pop() if players_to_add else None
-            player_in = Player.objects.get(id=player_in_id) if player_in_id else None
-            transfer_cost_per_player = 4 if num_transfers > free_transfers else 0
-            PlayerTransfer.objects.create(
-                fantasy_team=fantasy_team,
-                player_out=player_out,
-                player_in=player_in,
-                gameweek=current_gameweek,
-                transfer_cost=transfer_cost_per_player,
-            )
+            num_transfers = len(players_to_remove)
 
-        # Update transfer budget and free transfers
-        if num_transfers > free_transfers:
-            fantasy_team.transfer_budget -= transfer_cost
-            fantasy_team.free_transfers = 0
+            free_transfers = fantasy_team.free_transfers
+            additional_transfers = max(0, num_transfers - free_transfers)
+            transfer_cost = additional_transfers * 4  # 4 points per additional transfer
+
+            if transfer_cost > float(fantasy_team.transfer_budget):
+                raise ValidationError(
+                    f"Insufficient transfer budget. Required: {transfer_cost}, Available: {fantasy_team.transfer_budget}"
+                )
+
+            # Handle transfers
+            for player_id_out in players_to_remove:
+                player_out = Player.objects.get(id=player_id_out)
+                player_in_id = players_to_add.pop() if players_to_add else None
+                player_in = (
+                    Player.objects.get(id=player_in_id) if player_in_id else None
+                )
+                transfer_cost_per_player = 4 if num_transfers > free_transfers else 0
+                PlayerTransfer.objects.create(
+                    fantasy_team=fantasy_team,
+                    player_out=player_out,
+                    player_in=player_in,
+                    gameweek=current_gameweek,
+                    transfer_cost=transfer_cost_per_player,
+                )
+
+            # Update transfer budget and free transfers
+            if num_transfers > free_transfers:
+                fantasy_team.transfer_budget -= transfer_cost
+                fantasy_team.free_transfers = 0
+            else:
+                fantasy_team.free_transfers -= num_transfers
         else:
-            fantasy_team.free_transfers -= num_transfers
-        fantasy_team.save()
+            # First team - just clear any existing players (shouldn't happen, but safety)
+            fantasy_team.players.all().delete()
 
-        # Remove players not in squad
+        # Remove players not in squad (if not first team)
         fantasy_team.players.exclude(player__id__in=all_player_ids).delete()
 
         existing_players = {
@@ -234,7 +245,7 @@ class FantasyService:
 
         fantasy_team.clean()
 
-        # Create or update TeamSelection for current gameweek
+        FantasyService._update_team_value(fantasy_team)
         team_selection = FantasyService._create_team_selection(
             fantasy_team=fantasy_team,
             gameweek=target_gameweek,
@@ -253,7 +264,20 @@ class FantasyService:
             "remaining_transfer_budget": float(fantasy_team.transfer_budget),
             "team_selection_id": str(team_selection.id),
             "gameweek": current_gameweek.number,
+            "is_first_team": is_first_team,
+            "current_team_value": float(fantasy_team.budget),
         }
+
+    @staticmethod
+    def _update_team_value(fantasy_team: FantasyTeam) -> None:
+        """Update the fantasy team's budget to reflect current player values"""
+        total_value = (
+            fantasy_team.players.aggregate(total=models.Sum("current_value"))["total"]
+            or 0
+        )
+
+        fantasy_team.budget = total_value
+        fantasy_team.save(update_fields=["budget"])
 
     @staticmethod
     def _create_team_selection(
@@ -441,7 +465,7 @@ class FantasyService:
                 f"Squad must have exactly 15 players, you have {total_players}"
             )
 
-        # Validate budget
+        # Validate budget - only check initial budget (70.00), not current value
         total_value = 0
         for player_id in [
             starting_eleven.get("goalkeeper", {}).get("player")
@@ -472,7 +496,9 @@ class FantasyService:
             except Player.DoesNotExist:
                 continue
 
-        if total_value > float(fantasy_team.budget):
+        has_existing_players = fantasy_team.players.exists()
+
+        if not has_existing_players and total_value > 70.00:
             raise ValidationError(
-                f"Team value {total_value} exceeds budget {fantasy_team.budget}"
+                f"Team value {total_value} exceeds initial budget of 70.00"
             )

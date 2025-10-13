@@ -38,7 +38,7 @@
       </div>
 
       <!-- Show only clear button when team is complete -->
-      <div v-else class="flex justify-center">
+      <div v-else-if="fantasyStore.fantasyPlayers.length == 0" class="flex justify-center">
         <button @click="clearTeamSelections"
           class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

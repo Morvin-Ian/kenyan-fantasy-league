@@ -20,18 +20,18 @@ class TeamOfTheWeekService:
 
     @staticmethod
     def get_team_of_the_week(gameweek):
-        performances = (
-            PlayerPerformance.objects.filter(gameweek=gameweek)
-            .select_related("player", "player__team")
-        )
+        performances = PlayerPerformance.objects.filter(
+            gameweek=gameweek
+        ).select_related("player", "player__team")
 
         if not performances.exists():
             return None
 
         def get_top_players(position):
             return list(
-                performances.filter(player__position=position)
-                .order_by("-fantasy_points")
+                performances.filter(player__position=position).order_by(
+                    "-fantasy_points"
+                )
             )
 
         def select_with_team_limit(players, required, team_counts):
@@ -46,17 +46,27 @@ class TeamOfTheWeekService:
             return selected, team_counts
 
         team_counts = {}
-        gkps, team_counts = select_with_team_limit(get_top_players("GKP"), 1, team_counts)
-        defs, team_counts = select_with_team_limit(get_top_players("DEF"), 4, team_counts)
-        mids, team_counts = select_with_team_limit(get_top_players("MID"), 4, team_counts)
-        fwds, team_counts = select_with_team_limit(get_top_players("FWD"), 2, team_counts)
+        gkps, team_counts = select_with_team_limit(
+            get_top_players("GKP"), 1, team_counts
+        )
+        defs, team_counts = select_with_team_limit(
+            get_top_players("DEF"), 4, team_counts
+        )
+        mids, team_counts = select_with_team_limit(
+            get_top_players("MID"), 4, team_counts
+        )
+        fwds, team_counts = select_with_team_limit(
+            get_top_players("FWD"), 2, team_counts
+        )
 
         total_selected = gkps + defs + mids + fwds
 
         # Fill remaining if less than 11
         if len(total_selected) < 11:
             selected_ids = {p.player.id for p in total_selected}
-            remaining = performances.exclude(player_id__in=selected_ids).order_by("-fantasy_points")
+            remaining = performances.exclude(player_id__in=selected_ids).order_by(
+                "-fantasy_points"
+            )
 
             for p in remaining:
                 if len(total_selected) >= 11:

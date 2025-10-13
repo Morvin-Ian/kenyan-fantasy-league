@@ -263,6 +263,7 @@ class PlayerPerformanceViewSet(ModelViewSet):
         serialized = TeamOfTheWeekService.serialize_team(team_data, gameweek.number)
         return Response(serialized, status=status.HTTP_200_OK)
 
+
 class GameweekViewSet(ModelViewSet):
     queryset = Gameweek.objects.all()
 

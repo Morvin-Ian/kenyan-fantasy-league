@@ -26,22 +26,23 @@
         <h3 class="text-sm sm:text-base font-semibold text-gray-800 flex items-center">
           Team Value
         </h3>
-        <span class="text-sm sm:text-base font-bold text-gray-800">KES {{ fantasyStore.userTeam[0].budget }}m</span>
+        <span class="text-sm sm:text-base font-bold text-gray-800">KES {{ team.budget }}m</span>
       </div>
       <div class="space-y-1 sm:space-y-2">
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Balance</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">KES {{
-            fantasyStore.userTeam[0].balance }}m</span>
-        </div>
+         <span class="text-xs sm:text-sm font-semibold text-green-600">
+          KES {{ remaining.toFixed(1) }}m
+        </span>
+      </div>
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Formation</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ fantasyStore.userTeam[0].formation
+          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team.formation
           }}</span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Free Transfers</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ fantasyStore.userTeam[0].free_transfers
+          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team.free_transfers
           }}</span>
         </div>
       </div>
@@ -56,7 +57,7 @@
             <div class="min-w-0 flex-1">
               <div class="text-blue-100 text-xs uppercase tracking-wide mb-1">Total Points</div>
               <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
-                {{ fantasyStore.userTeam[0].total_points }}
+                {{ team.total_points }}
               </div>
             </div>
             <div
@@ -78,8 +79,8 @@
               <div class="text-orange-100 text-xs uppercase tracking-wide mb-1">Best Week</div>
 
               <!-- Show best week data if available -->
-              <div v-if="fantasyStore.userTeam[0].best_week" class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
-                {{ fantasyStore.userTeam[0].best_week }} pts
+              <div v-if="team.best_week" class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
+                {{ team.best_week }} pts
               </div>
 
               <!-- Show message if no best week yet -->
@@ -219,7 +220,7 @@
                 <h4 class="font-semibold text-yellow-800 text-sm sm:text-base">Transfer Information</h4>
               </div>
               <div class="text-xs sm:text-sm text-yellow-700 space-y-1">
-                <p>• You have <span class="font-semibold">{{ fantasyStore.userTeam[0].free_transfers }}</span> free
+                <p>• You have <span class="font-semibold">{{ team.free_transfers }}</span> free
                   transfer(s) this gameweek</p>
                 <p>• Additional transfers cost 4 points each</p>
                 <p>• Available budget: <span class="font-semibold">KES {{ inBank.toFixed(1) }}m</span></p>
@@ -275,4 +276,8 @@ const getFormClass = (score: number) => {
   if (score >= 40) return 'bg-orange-500 text-white shadow-lg';
   return 'bg-red-500 text-white shadow-lg';
 };
+
+const team = fantasyStore.userTeam[0]
+const budget = Number(team.budget)
+const remaining = 70.0 - budget
 </script>

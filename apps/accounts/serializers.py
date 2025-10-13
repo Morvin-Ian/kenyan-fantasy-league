@@ -45,7 +45,7 @@ class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
         model = User
         fields = ("username", "email", "first_name", "last_name", "password")
-    
+
     def create(self, validated_data):
         user = super().create(validated_data)
         user.is_active = True

@@ -314,7 +314,7 @@ CELERY_BEAT_SCHEDULE = {
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
         "schedule": crontab(day_of_week=4, hour=0, minute=0),  # Thursday at midnight
-    }
+    },
 }
 
 

@@ -26,13 +26,13 @@ class SeleniumManager:
         options.add_argument("--disable-gpu")
         options.add_argument("--window-size=1920,1080")
         options.add_argument("--disable-blink-features=AutomationControlled")
-        
+
         options.add_argument("--disable-extensions")
         options.add_argument("--disable-software-rasterizer")
         options.add_argument("--disable-dev-tools")
         options.add_argument("--disable-background-networking")
         options.add_argument("--disable-background-timer-throttling")
-        
+
         options.add_argument("--disable-features=VizDisplayCompositor")
         options.add_argument("--max_old_space_size=512")
 
@@ -43,7 +43,7 @@ class SeleniumManager:
 
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option("useAutomationExtension", False)
-        options.page_load_strategy = 'normal' 
+        options.page_load_strategy = "normal"
 
         try:
             self.driver = webdriver.Remote(
