@@ -1,0 +1,9 @@
+{
+  "reportMissingImports": false,
+  "typeCheckingMode": "basic",
+  "reportUnknownParameterType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownLambdaType": "none"
+}
