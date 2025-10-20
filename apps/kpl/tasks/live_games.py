@@ -16,16 +16,15 @@ from apps.kpl.tasks.gameweeks import setup_team_finalization_task
 from apps.kpl.models import Fixture, Gameweek
 from config.settings import base
 from util.selenium import SeleniumManager
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
-
 def extract_fixture_data_selenium(selenium_manager, match_url):
+    from .fixtures import find_team
     try:
-        from .fixtures import find_team
-
         if not selenium_manager.safe_get(match_url):
             logger.error("Failed to load match URL")
             if selenium_manager.driver:
@@ -34,62 +33,109 @@ def extract_fixture_data_selenium(selenium_manager, match_url):
                 )
             return []
 
-        table = selenium_manager.wait_for_elements(By.XPATH, "//*[@class='Box kiSsvW']")
-        if not table:
-            logger.warning("Fixture table not found on page")
+        WebDriverWait(selenium_manager.driver, 20).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
+        time.sleep(20)  
+
+        # FIX: Use driver.find_elements to get ALL matching containers
+        league_containers = selenium_manager.driver.find_elements(
+            By.CSS_SELECTOR, ".flex.flex-col.border.rounded-xl"
+        )
+        
+        if not league_containers:
+            logger.warning("No league containers found on page")
             if selenium_manager.driver:
                 logger.debug(
-                    f"Page source when table not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
+                    f"Page source when containers not found (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
                 )
             return []
 
-        fixtures = table.find_elements(By.TAG_NAME, "a")
-        logger.info(f"Found {len(fixtures)} fixture links")
-
+        logger.info(f"Found {len(league_containers)} league containers")
+        
         data = []
-        for fixture_elem in fixtures:
-            logger.info(f"Processing fixture element: {fixture_elem.text}")
-            link = fixture_elem.get_attribute("href")
-            parts = fixture_elem.text.strip().splitlines()
-            logger.info(f"Raw fixture parts: {parts}")
+        for container in league_containers:
+            try:
+                league_elem = container.find_element(By.CSS_SELECTOR, ".font-semibold.text-sm.bg-black-lighter")
+                league_name = league_elem.text.strip()
+                logger.info(f"Processing league: {league_name}")
 
-            if len(parts) >= 4:
-                if len(parts) >= 6:
-                    date, time, home, away, home_score, away_score = parts[:6]
-                    is_playing = True
-                    if time == "FT":
-                        is_playing = False
-                else:
-                    date, time, home, away = parts[:4]
-                    home_score, away_score = "0", "0"
-                    is_playing = False
+                matches = container.find_elements(By.CSS_SELECTOR, ".m-1.border-b")
+                logger.info(f"Found {len(matches)} matches in {league_name}")
 
-                home_team = find_team(home)
-                away_team = find_team(away)
+                for match in matches:
+                    fixture_data = {
+                        "date": "",  
+                        "time": "",
+                        "home": "",
+                        "away": "",
+                        "home_score": "0",
+                        "away_score": "0",
+                        "link": "",
+                        "is_playing": False,
+                    }
 
-                if not home_team or not away_team:
-                    logger.warning(f"Could not resolve teams: {home} vs {away}")
-                else:
-                    logger.info(f"Resolved teams: {home_team.name} vs {away_team.name}")
+                    try:
+                        link_elem = match.find_element(By.CSS_SELECTOR, "a")
+                        fixture_data["link"] = link_elem.get_attribute("href")
+                    except:
+                        logger.warning(f"Could not find link for a match in {league_name}")
 
-                fixture_data = {
-                    "date": date,
-                    "time": time,
-                    "home": home,
-                    "away": away,
-                    "home_score": home_score,
-                    "away_score": away_score,
-                    "link": link,
-                    "is_playing": is_playing,
-                }
-                logger.info(f"Fixture Data: {fixture_data}")
-                data.append(fixture_data)
-            else:
-                logger.warning(f"Unexpected fixture format: {parts}")
+                    teams = match.find_elements(By.CSS_SELECTOR, ".col-span-5")
+                    if len(teams) >= 2:
+                        home_team_div = teams[0].find_element(By.CSS_SELECTOR, "div:last-child")
+                        fixture_data["home"] = home_team_div.text.strip()
+                        away_team_div = teams[1].find_element(By.CSS_SELECTOR, "div:last-child")
+                        fixture_data["away"] = away_team_div.text.strip()
+                    else:
+                        logger.warning(f"Could not extract teams for a match in {league_name}")
+                        continue
+
+                    middle_col = match.find_element(By.CSS_SELECTOR, ".col-span-2")
+                    try:
+                        score_container = middle_col.find_element(By.CSS_SELECTOR, ".flex.flex-col.items-center")
+                        score_div = score_container.find_element(By.CSS_SELECTOR, ".flex")
+                        
+                        score_elements = score_div.find_elements(By.TAG_NAME, "div")
+                        if len(score_elements) >= 3:
+                            fixture_data["home_score"] = score_elements[0].text.strip()
+                            fixture_data["away_score"] = score_elements[2].text.strip()
+
+                        time_info_elem = score_container.find_element(By.CSS_SELECTOR, ".text-xs")
+                        time_info = time_info_elem.text.strip()
+                        fixture_data["time"] = time_info
+
+                        if time_info in ["FT", "AET", "PEN"]:
+                            fixture_data["is_playing"] = False
+                        elif time_info in ["HT"] or time_info.isdigit():
+                            fixture_data["is_playing"] = True
+                    except:
+                        try:
+                            time_elem = middle_col.find_element(By.TAG_NAME, "div")
+                            fixture_data["time"] = time_elem.text.strip()
+                            fixture_data["is_playing"] = False
+                        except:
+                            logger.warning(f"Could not extract time info for match in {league_name}")
+
+                    home_team = find_team(fixture_data["home"])
+                    away_team = find_team(fixture_data["away"])
+                    if not home_team or not away_team:
+                        logger.warning(f"Could not resolve teams: {fixture_data['home']} vs {fixture_data['away']}")
+                    else:
+                        logger.info(f"Resolved teams: {home_team.name} vs {away_team.name}")
+
+                    logger.info(f"Fixture Data: {fixture_data}")
+                    data.append(fixture_data)
+
+            except Exception as e:
+                logger.warning(f"Error parsing league container in {league_name}: {e}")
+                continue
+
+        logger.info(f"Extracted {len(data)} fixtures")
         return data
 
     except Exception as e:
-        logger.error(f"Could not extract scores from fixture table: {e}", exc_info=True)
+        logger.error(f"Could not extract fixture data: {e}", exc_info=True)
         if selenium_manager.driver:
             logger.debug(
                 f"Exception page source (first 2000 chars): {selenium_manager.driver.page_source[:2000]}"
