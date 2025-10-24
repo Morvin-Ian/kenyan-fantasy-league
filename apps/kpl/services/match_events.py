@@ -5,7 +5,6 @@ from django.db import transaction
 
 from apps.kpl.models import Fixture, Team
 from apps.fantasy.models import PlayerPerformance, FantasyPlayer, TeamSelection
-from apps.kpl.tasks.fixtures import find_player
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +188,8 @@ class MatchEventService:
 
     @staticmethod
     def update_assists(fixture: Fixture, assists_data: List[Dict]) -> Dict:
+        from apps.kpl.tasks.fixtures import find_player
+
         updated_players = []
         errors = []
 
@@ -288,6 +289,8 @@ class MatchEventService:
 
     @staticmethod
     def update_goals(fixture: Fixture, goals_data: List[Dict]) -> Dict:
+        from apps.kpl.tasks.fixtures import find_player
+
         updated_players = []
         errors = []
 
@@ -417,6 +420,8 @@ class MatchEventService:
 
     @staticmethod
     def update_substitutions(fixture: Fixture, substitutions: List[Dict]) -> Dict:
+        from apps.kpl.tasks.fixtures import find_player
+
         updated_players = []
         errors = []
 
@@ -584,6 +589,8 @@ class MatchEventService:
 
     @staticmethod
     def update_minutes(fixture: Fixture, minutes_data: List[Dict]) -> Dict:
+        from apps.kpl.tasks.fixtures import find_player
+
         """Update minutes played for players"""
         updated_players = []
         errors = []
@@ -724,6 +731,8 @@ class MatchEventService:
 
     @staticmethod
     def update_clean_sheets(fixture: Fixture, clean_sheet_data: List[Dict]) -> Dict:
+        from apps.kpl.tasks.fixtures import find_player
+
         updated_players = []
         errors = []
 
@@ -824,6 +833,8 @@ class MatchEventService:
 
     @staticmethod
     def _process_card(fixture, card_data, field_name, card_type):
+        from apps.kpl.tasks.fixtures import find_player
+
         """Process a card event for a player"""
         player_name = card_data.get("player_name", "").strip()
         team_id = card_data.get("team_id")
@@ -921,6 +932,8 @@ class MatchEventService:
 
     @staticmethod
     def _process_stat(fixture, stat_data, field_name):
+        from apps.kpl.tasks.fixtures import find_player
+
         """Process a goalkeeper stat for a player"""
         player_name = stat_data.get("player_name", "").strip()
         team_id = stat_data.get("team_id")

@@ -110,12 +110,9 @@ def finalize_gameweek_teams(gameweek_id):
             except Exception as e:
                 logger.error(f"Error finalizing team {team.name} (ID: {team.id}): {e}")
                 continue
-        
 
-        FantasyTeam.objects.update(
-            transfers_available=F("free_transfers") + 1
-        )
-        
+        FantasyTeam.objects.update(transfers_available=F("free_transfers") + 1)
+
         logger.info(
             f"Gameweek {gameweek.number} finalization complete. "
             f"Finalized: {finalized_count}, "
@@ -327,6 +324,7 @@ def group_fixtures_by_week(fixtures):
 
     return fixtures_by_week
 
+
 def calculate_transfer_deadline(fixtures, current_datetime):
     if not fixtures:
         return None
@@ -342,6 +340,7 @@ def calculate_transfer_deadline(fixtures, current_datetime):
         return None
 
     return transfer_deadline
+
 
 def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
     existing_gameweek = None
@@ -367,7 +366,9 @@ def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
     if matching_gameweek:
         if not matching_gameweek.transfer_deadline:
             first_match = min(fixtures, key=lambda x: x.match_date)
-            matching_gameweek.transfer_deadline = first_match.match_date - timedelta(hours=2)
+            matching_gameweek.transfer_deadline = first_match.match_date - timedelta(
+                hours=2
+            )
             matching_gameweek.save(update_fields=["transfer_deadline"])
         return matching_gameweek
 
@@ -380,7 +381,7 @@ def find_or_create_gameweek_for_week(week_start, fixtures, transfer_deadline):
             start_date=week_start,
             end_date=week_end,
             is_active=False,
-            transfer_deadline=transfer_deadline,  
+            transfer_deadline=transfer_deadline,
         )
         return new_gameweek
     except Exception as e:
@@ -442,9 +443,7 @@ def activate_existing_gameweek(gameweek, current_datetime):
         gameweek.is_active = True
         gameweek.save()
 
-        logger.info(
-            f"Set Gameweek {gameweek.number} as active. "
-        )
+        logger.info(f"Set Gameweek {gameweek.number} as active. ")
         return True
     except Exception as e:
         logger.error(f"Error activating gameweek {gameweek.number}: {e}")
