@@ -5,12 +5,17 @@
       <div class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" @click="closeModal"></div>
 
       <!-- Modal panel -->
-      <div class="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+      <div class="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-medium leading-6 text-gray-900">
-            Upload Lineup CSV
-          </h3>
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h3 class="text-lg font-medium leading-6 text-gray-900">
+              Create Lineup
+            </h3>
+            <p class="mt-1 text-sm text-gray-500">
+              Select starting 11 and bench players for {{ selectedTeamData?.name }}
+            </p>
+          </div>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -19,66 +24,155 @@
         </div>
 
         <!-- Team Selection -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Select Team</label>
-          <div class="space-y-2">
-            <label class="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50" :class="{'bg-blue-50 border-blue-300': selectedTeam === 'home'}">
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-3">Select Team</label>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label class="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all" 
+                   :class="selectedTeam === 'home' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'">
               <input type="radio" v-model="selectedTeam" value="home" class="text-blue-600 focus:ring-blue-500">
-              <img :src="fixture.home_team.logo_url" :alt="fixture.home_team.name" class="w-8 h-8 rounded-full">
-              <span class="font-medium text-gray-900">{{ fixture.home_team.name }}</span>
+              <img :src="fixture.home_team.logo_url" :alt="fixture.home_team.name" class="w-10 h-10 rounded-full">
+              <div>
+                <span class="font-medium text-gray-900">{{ fixture.home_team.name }}</span>
+                <p class="text-sm text-gray-500">{{ homeTeamPlayers.length }} players available</p>
+              </div>
             </label>
-            <label class="flex items-center space-x-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50" :class="{'bg-blue-50 border-blue-300': selectedTeam === 'away'}">
+            <label class="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer transition-all"
+                   :class="selectedTeam === 'away' ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'">
               <input type="radio" v-model="selectedTeam" value="away" class="text-blue-600 focus:ring-blue-500">
-              <img :src="fixture.away_team.logo_url" :alt="fixture.away_team.name" class="w-8 h-8 rounded-full">
-              <span class="font-medium text-gray-900">{{ fixture.away_team.name }}</span>
+              <img :src="fixture.away_team.logo_url" :alt="fixture.away_team.name" class="w-10 h-10 rounded-full">
+              <div>
+                <span class="font-medium text-gray-900">{{ fixture.away_team.name }}</span>
+                <p class="text-sm text-gray-500">{{ awayTeamPlayers.length }} players available</p>
+              </div>
             </label>
           </div>
         </div>
 
-        <!-- File Upload -->
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">CSV File</label>
-          <div class="flex items-center justify-center w-full">
-            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 border-gray-300 hover:border-gray-400 transition-colors" :class="{'border-blue-300 bg-blue-50': isDragging}">
-              <div class="flex flex-col items-center justify-center pt-5 pb-6">
-                <svg class="w-8 h-8 mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p class="mb-2 text-sm text-gray-500">
-                  <span class="font-semibold">Click to upload</span> or drag and drop
-                </p>
-                <p class="text-xs text-gray-500">CSV only (MAX. 10MB)</p>
+        <!-- Formation Selection -->
+        <div class="mb-6" v-if="selectedTeam">
+          <label class="block text-sm font-medium text-gray-700 mb-3">Formation</label>
+          <select v-model="selectedFormation" class="w-full max-w-xs border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option v-for="formation in formations" :key="formation" :value="formation">
+              {{ formation }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Lineup Builder -->
+        <div v-if="selectedTeam && availablePlayers.length > 0" class="mb-6">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Starting 11 -->
+            <div class="space-y-4">
+              <h4 class="font-medium text-gray-900">Starting 11</h4>
+              
+              <!-- Goalkeeper -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-700">Goalkeeper (1)</label>
+                <select v-model="startingLineup.goalkeeper" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="">Select Goalkeeper</option>
+                  <option v-for="player in availablePlayers.filter(p => p.position === 'GKP')" 
+                         :key="player.id" 
+                         :value="player.id"
+                         :disabled="isPlayerSelected(player.id)">
+                    {{ player.name }} (#{{ player.jersey_number }})
+                  </option>
+                </select>
               </div>
-              <input 
-                type="file" 
-                ref="fileInput"
-                accept=".csv" 
-                class="hidden" 
-                @change="handleFileSelect"
-                @dragenter="isDragging = true"
-                @dragleave="isDragging = false"
-                @drop="handleDrop"
-              >
-            </label>
-          </div>
-          
-          <!-- Selected file info -->
-          <div v-if="selectedFile" class="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center space-x-2">
-                <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="text-sm font-medium text-green-800">{{ selectedFile.name }}</span>
+
+              <!-- Defenders -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-700">
+                  Defenders ({{ formationCounts.defenders }})
+                </label>
+                <select v-model="startingLineup.defenders" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32">
+                  <option v-for="player in availablePlayers.filter(p => p.position === 'DEF')" 
+                         :key="player.id" 
+                         :value="player.id"
+                         :disabled="isPlayerSelected(player.id) && !startingLineup.defenders.includes(player.id)">
+                    {{ player.name }} (#{{ player.jersey_number }})
+                  </option>
+                </select>
+                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple defenders</p>
               </div>
-              <button @click="removeFile" class="text-green-600 hover:text-green-800">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+
+              <!-- Midfielders -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-700">
+                  Midfielders ({{ formationCounts.midfielders }})
+                </label>
+                <select v-model="startingLineup.midfielders" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32">
+                  <option v-for="player in availablePlayers.filter(p => p.position === 'MID')" 
+                         :key="player.id" 
+                         :value="player.id"
+                         :disabled="isPlayerSelected(player.id) && !startingLineup.midfielders.includes(player.id)">
+                    {{ player.name }} (#{{ player.jersey_number }})
+                  </option>
+                </select>
+                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple midfielders</p>
+              </div>
+
+              <!-- Forwards -->
+              <div class="space-y-2">
+                <label class="text-sm font-medium text-gray-700">
+                  Forwards ({{ formationCounts.forwards }})
+                </label>
+                <select v-model="startingLineup.forwards" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32">
+                  <option v-for="player in availablePlayers.filter(p => p.position === 'FWD')" 
+                         :key="player.id" 
+                         :value="player.id"
+                         :disabled="isPlayerSelected(player.id) && !startingLineup.forwards.includes(player.id)">
+                    {{ player.name }} (#{{ player.jersey_number }})
+                  </option>
+                </select>
+                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple forwards</p>
+              </div>
             </div>
-            <p class="text-xs text-green-600 mt-1">Size: {{ (selectedFile.size / 1024).toFixed(2) }} KB</p>
+
+            <!-- Bench Players -->
+            <div class="space-y-4">
+              <h4 class="font-medium text-gray-900">Bench Players</h4>
+              <div class="space-y-2">
+                <select v-model="benchPlayers" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-96">
+                  <option v-for="player in availablePlayers" 
+                         :key="player.id" 
+                         :value="player.id"
+                         :disabled="isPlayerSelected(player.id) && !benchPlayers.includes(player.id)">
+                    {{ player.name }} (#{{ player.jersey_number }}) - {{ player.position }}
+                  </option>
+                </select>
+                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple bench players</p>
+              </div>
+
+              <!-- Selected Players Summary -->
+              <div class="mt-4 p-4 bg-gray-50 rounded-lg">
+                <h5 class="font-medium text-gray-900 mb-2">Selected Players Summary</h5>
+                <div class="space-y-1 text-sm">
+                  <p>Starting 11: {{ totalStarters }}/11</p>
+                  <p>Bench: {{ benchPlayers.length }} players</p>
+                  <p>Total Selected: {{ totalSelectedPlayers }} players</p>
+                  <p v-if="!isLineupValid" class="text-red-600 font-medium">
+                    Please select exactly 11 starters
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+
+        <!-- Loading State -->
+        <div v-else-if="selectedTeam && isLoadingPlayers" class="flex justify-center items-center py-8">
+          <div class="text-center">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p class="mt-2 text-sm text-gray-600">Loading players...</p>
+          </div>
+        </div>
+
+        <!-- No Players Available -->
+        <div v-else-if="selectedTeam && availablePlayers.length === 0" class="text-center py-8">
+          <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <p class="mt-2 text-sm text-gray-600">No players available for this team</p>
         </div>
 
         <!-- Error Message -->
@@ -92,7 +186,7 @@
         </div>
 
         <!-- Actions -->
-        <div class="flex space-x-3">
+        <div class="flex space-x-3 pt-6 border-t border-gray-200">
           <button 
             @click="closeModal" 
             class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
@@ -100,22 +194,22 @@
             Cancel
           </button>
           <button 
-            @click="uploadLineup" 
-            :disabled="!selectedFile || !selectedTeam || isUploading"
+            @click="submitLineup" 
+            :disabled="!isLineupValid || isSubmitting"
             :class="{
-              'opacity-50 cursor-not-allowed': !selectedFile || !selectedTeam || isUploading,
-              'hover:bg-blue-600 focus:ring-blue-500': selectedFile && selectedTeam && !isUploading
+              'opacity-50 cursor-not-allowed': !isLineupValid || isSubmitting,
+              'hover:bg-blue-600 focus:ring-blue-500': isLineupValid && !isSubmitting
             }"
             class="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-500 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors"
           >
-            <span v-if="isUploading" class="flex items-center justify-center">
+            <span v-if="isSubmitting" class="flex items-center justify-center">
               <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Uploading...
+              Submitting...
             </span>
-            <span v-else>Upload Lineup</span>
+            <span v-else>Submit Lineup</span>
           </button>
         </div>
       </div>
@@ -124,7 +218,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useKplStore } from '@/stores/kpl'
 
 interface Props {
@@ -137,16 +231,93 @@ interface Emits {
   (e: 'upload-success'): void
 }
 
+interface LineupData {
+  goalkeeper: string
+  defenders: string[]
+  midfielders: string[]
+  forwards: string[]
+}
+
 const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 const kplStore = useKplStore()
 
 const selectedTeam = ref<'home' | 'away' | null>(null)
-const selectedFile = ref<File | null>(null)
-const isUploading = ref(false)
+const selectedFormation = ref('4-4-2')
+const startingLineup = ref<LineupData>({
+  goalkeeper: '',
+  defenders: [],
+  midfielders: [],
+  forwards: []
+})
+const benchPlayers = ref<string[]>([])
+const isSubmitting = ref(false)
 const error = ref('')
-const isDragging = ref(false)
-const fileInput = ref<HTMLInputElement>()
+const isLoadingPlayers = ref(false)
+
+const formations = ['4-4-2', '4-3-3', '4-2-3-1', '3-5-2', '3-4-3', '5-3-2', '4-5-1']
+
+const formationCounts = computed(() => {
+  const counts = {
+    defenders: 4,
+    midfielders: 4,
+    forwards: 2
+  }
+
+  const [def, mid, fwd] = selectedFormation.value.split('-').map(Number)
+  counts.defenders = def
+  counts.midfielders = mid
+  counts.forwards = fwd
+
+  return counts
+})
+
+const selectedTeamData = computed(() => {
+  if (!selectedTeam.value) return null
+  return selectedTeam.value === 'home' ? props.fixture.home_team : props.fixture.away_team
+})
+
+const homeTeamPlayers = computed(() => {
+  return kplStore.players.filter(player => player.team.id === props.fixture.home_team.id)
+})
+
+const awayTeamPlayers = computed(() => {
+  return kplStore.players.filter(player => player.team.id === props.fixture.away_team.id)
+})
+
+const availablePlayers = computed(() => {
+  if (!selectedTeam.value) return []
+  return selectedTeam.value === 'home' ? homeTeamPlayers.value : awayTeamPlayers.value
+})
+
+const totalStarters = computed(() => {
+  const gk = startingLineup.value.goalkeeper ? 1 : 0
+  const def = startingLineup.value.defenders.length
+  const mid = startingLineup.value.midfielders.length
+  const fwd = startingLineup.value.forwards.length
+  return gk + def + mid + fwd
+})
+
+const totalSelectedPlayers = computed(() => {
+  return totalStarters.value + benchPlayers.value.length
+})
+
+const isLineupValid = computed(() => {
+  const hasGoalkeeper = !!startingLineup.value.goalkeeper
+  const correctDefenders = startingLineup.value.defenders.length === formationCounts.value.defenders
+  const correctMidfielders = startingLineup.value.midfielders.length === formationCounts.value.midfielders
+  const correctForwards = startingLineup.value.forwards.length === formationCounts.value.forwards
+  
+  return hasGoalkeeper && correctDefenders && correctMidfielders && correctForwards
+})
+
+const isPlayerSelected = (playerId: string) => {
+  return startingLineup.value.goalkeeper === playerId ||
+         startingLineup.value.defenders.includes(playerId) ||
+         startingLineup.value.midfielders.includes(playerId) ||
+         startingLineup.value.forwards.includes(playerId) ||
+         benchPlayers.value.includes(playerId)
+}
 
 const closeModal = () => {
   resetModal()
@@ -155,81 +326,69 @@ const closeModal = () => {
 
 const resetModal = () => {
   selectedTeam.value = null
-  selectedFile.value = null
+  selectedFormation.value = '4-4-2'
+  startingLineup.value = {
+    goalkeeper: '',
+    defenders: [],
+    midfielders: [],
+    forwards: []
+  }
+  benchPlayers.value = []
+  isSubmitting.value = false
   error.value = ''
-  isUploading.value = false
-  isDragging.value = false
+  isLoadingPlayers.value = false
 }
 
-const handleFileSelect = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  if (input.files && input.files[0]) {
-    const file = input.files[0]
-    validateAndSetFile(file)
-  }
-}
+const submitLineup = async () => {
+  if (!isLineupValid.value || !selectedTeam.value) return
 
-const handleDrop = (event: DragEvent) => {
-  event.preventDefault()
-  isDragging.value = false
-  
-  if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-    const file = event.dataTransfer.files[0]
-    validateAndSetFile(file)
-  }
-}
-
-const validateAndSetFile = (file: File) => {
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    error.value = 'Please select a CSV file'
-    return
-  }
-  
-  if (file.size > 10 * 1024 * 1024) { // 10MB limit
-    error.value = 'File size must be less than 10MB'
-    return
-  }
-  
-  selectedFile.value = file
+  isSubmitting.value = true
   error.value = ''
-}
 
-const removeFile = () => {
-  selectedFile.value = null
-  if (fileInput.value) {
-    fileInput.value.value = ''
-  }
-}
-
-const uploadLineup = async () => {
-  if (!selectedFile.value || !selectedTeam.value) return
-  
-  isUploading.value = true
-  error.value = ''
-  
   try {
     const teamId = selectedTeam.value === 'home' 
       ? props.fixture.home_team.id 
       : props.fixture.away_team.id
-    
-    const formData = new FormData()
-    formData.append('file', selectedFile.value)
-    formData.append('fixture_id', props.fixture.id)
-    formData.append('team_id', teamId)
-    formData.append('side', selectedTeam.value)
-    
-    await kplStore.uploadLineupCsv(formData)
-    
+
+    const lineupData = {
+      fixture_id: props.fixture.id,
+      team_id: teamId,
+      side: selectedTeam.value,
+      formation: selectedFormation.value,
+      starting_xi: [
+        startingLineup.value.goalkeeper,
+        ...startingLineup.value.defenders,
+        ...startingLineup.value.midfielders,
+        ...startingLineup.value.forwards
+      ],
+      bench_players: benchPlayers.value
+    }
+
+    await kplStore.submitLineup(lineupData)
     emit('upload-success')
     closeModal()
     
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to upload lineup. Please try again.'
-    console.error('Upload error:', err)
+    error.value = err.response?.data?.error || 'Failed to submit lineup. Please try again.'
+    console.error('Lineup submission error:', err)
   } finally {
-    isUploading.value = false
+    isSubmitting.value = false
   }
 }
+
+watch(selectedTeam, async (newTeam) => {
+  if (newTeam && kplStore.players.length === 0) {
+    isLoadingPlayers.value = true
+    try {
+      await kplStore.fetchPlayers()
+    } catch (err) {
+      error.value = 'Failed to load players'
+      console.error('Error loading players:', err)
+    } finally {
+      isLoadingPlayers.value = false
+    }
+  }
+})
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {

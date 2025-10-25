@@ -304,3 +304,28 @@ class PlayerBulkUploadSerializer(serializers.Serializer):
                 jersey_numbers[team_id][jersey_number] = i
 
         return value
+
+class LineupSubmissionSerializer(serializers.Serializer):
+    fixture_id = serializers.CharField(required=True)
+    team_id = serializers.CharField(required=True)
+    side = serializers.ChoiceField(choices=['home', 'away'], required=False)
+    formation = serializers.CharField(required=True)
+    starting_xi = serializers.ListField(
+        child=serializers.CharField(),
+        required=True
+    )
+    bench_players = serializers.ListField(
+        child=serializers.CharField(),
+        default=list
+    )
+
+    def validate_starting_xi(self, value):
+        if len(value) != 11:
+            raise serializers.ValidationError("Starting XI must have exactly 11 players")
+        return value
+
+    def validate_formation(self, value):
+        valid_formations = ['4-4-2', '4-3-3', '4-2-3-1', '3-5-2', '3-4-3', '5-3-2', '4-5-1']
+        if value not in valid_formations:
+            raise serializers.ValidationError(f"Formation must be one of {valid_formations}")
+        return value

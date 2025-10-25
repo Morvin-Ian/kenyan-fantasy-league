@@ -94,18 +94,22 @@ export const useKplStore = defineStore('kpl', {
       }
     },
 
-    async uploadLineupCsv(formData: FormData) {
-      try {
-        const response = await apiClient.post(`/kpl/fixtures/upload-lineup-csv/`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        return response.data
-      } catch (error) {
-        throw error
-      }
-    },
+
+  async submitLineup(lineupData: {
+    fixture_id: string;
+    team_id: string;
+    side: 'home' | 'away';
+    formation: string;
+    starting_xi: string[];
+    bench_players: string[];
+  }) {
+    try {
+      const response = await apiClient.post(`/kpl/fixtures/submit-lineup/`, lineupData)
+      return response.data
+    } catch (error) {
+      throw error
+    }
+  },
 
     async fetchAllData() {
       await Promise.all([

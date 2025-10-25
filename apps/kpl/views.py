@@ -20,6 +20,7 @@ from .serializers import (
     PlayerSerializer,
     StandingSerializer,
     TeamSerializer,
+    LineupSubmissionSerializer
 )
 
 from .services.lineup import LineupService
@@ -115,65 +116,72 @@ class FixtureViewSet(ReadOnlyModelViewSet):
         serializer = FixtureLineupDetailSerializer(qs, many=True)
         return Response(serializer.data)
 
-    @action(detail=False, methods=["post"], url_path="upload-lineup-csv")
-    def upload_lineup_csv(self, request):
-        """Upload lineup from CSV file"""
-        csv_file = request.FILES.get("file")
-        fixture_id = request.data.get("fixture_id")
-        team_id = request.data.get("team_id")
-        side = request.data.get("side", None)
+    @action(detail=False, methods=['post'], url_path='submit-lineup')
+    def submit_lineup(self, request):        
+        serializer = LineupSubmissionSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(
+                {"error": "Invalid data", "details": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         auto_update_performance = (
             request.data.get("auto_update_performance", "true").lower() == "true"
         )
 
-        if not csv_file or not fixture_id or not team_id:
-            return Response(
-                {"error": "file, fixture_id, and team_id are required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        if not csv_file.name.endswith(".csv"):
-            return Response(
-                {"error": "Invalid file type. Please upload a CSV file."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
         try:
-            result = LineupService.upload_lineup_from_csv(
-                csv_file=csv_file,
-                fixture_id=fixture_id,
-                team_id=team_id,
-                side=side,
-                auto_update_performance=auto_update_performance,
+            result = LineupService.submit_manual_lineup(
+                serializer.validated_data, 
+                auto_update_performance
             )
-
-            serializer = FixtureLineupDetailSerializer(result["lineup"])
-
-            return Response(
-                {
-                    "lineup": serializer.data,
-                    "created_count": result["created_count"],
-                    "performance_updated": result["performance_updated"],
-                    "performance_count": result["performance_count"],
-                    "errors": result["errors"],
-                    "message": (
-                        f"Lineup uploaded successfully. "
-                        f"{'Player performances updated.' if result['performance_count'] > 0 else 'Waiting for both lineups to update performances.'}"
-                    ),
-                },
-                status=status.HTTP_201_CREATED,
-            )
-
+            
+            lineup = FixtureLineup.objects.get(id=result["lineup_id"])
+            lineup_serializer = FixtureLineupDetailSerializer(lineup)
+            
+            response_data = {
+                "lineup": lineup_serializer.data,
+                "created_count": result["starting_xi_count"] + result["bench_count"],
+                "performance_updated": result["performance_updated"],
+                "performance_count": result["performance_count"],
+                "starters_performance_created": result["starters_performance_created"],
+                "message": result["message"]
+            }
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
+            
         except ValueError as e:
             return Response(
                 {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST,
+                status=status.HTTP_400_BAD_REQUEST
             )
         except Exception as e:
-            logger.error(f"Error uploading lineup: {str(e)}")
+            logger.error(f"Error submitting lineup: {str(e)}")
             return Response(
                 {"error": f"An unexpected error occurred: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get'], url_path='team-players')
+    def get_team_players(self, request):       
+        team_id = request.query_params.get('team_id')
+        fixture_id = request.query_params.get('fixture_id')
+
+        if not team_id or not fixture_id:
+            return Response(
+                {"error": "Both team_id and fixture_id are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            players = LineupService.get_team_players_for_fixture(team_id, fixture_id)
+            serializer = PlayerSerializer(players, many=True)
+            return Response(serializer.data)
+            
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to get team players: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
 
@@ -285,6 +293,7 @@ class PlayerViewSet(ModelViewSet):
                 {"error": f"An unexpected error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
 
 
 class MatchEventsViewSet(ModelViewSet):
