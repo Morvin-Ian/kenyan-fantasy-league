@@ -48,16 +48,6 @@
           </div>
         </div>
 
-        <!-- Formation Selection -->
-        <div class="mb-6" v-if="selectedTeam">
-          <label class="block text-sm font-medium text-gray-700 mb-3">Formation</label>
-          <select v-model="selectedFormation" class="w-full max-w-xs border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-            <option v-for="formation in formations" :key="formation" :value="formation">
-              {{ formation }}
-            </option>
-          </select>
-        </div>
-
         <!-- Lineup Builder -->
         <div v-if="selectedTeam && availablePlayers.length > 0" class="mb-6">
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -67,7 +57,7 @@
               
               <!-- Goalkeeper -->
               <div class="space-y-2">
-                <label class="text-sm font-medium text-gray-700">Goalkeeper (1)</label>
+                <label class="text-sm font-medium text-gray-700">Goalkeeper</label>
                 <select v-model="startingLineup.goalkeeper" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                   <option value="">Select Goalkeeper</option>
                   <option v-for="player in availablePlayers.filter(p => p.position === 'GKP')" 
@@ -81,9 +71,7 @@
 
               <!-- Defenders -->
               <div class="space-y-2">
-                <label class="text-sm font-medium text-gray-700">
-                  Defenders ({{ formationCounts.defenders }})
-                </label>
+                <label class="text-sm font-medium text-gray-700">Defenders</label>
                 <select v-model="startingLineup.defenders" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32">
                   <option v-for="player in availablePlayers.filter(p => p.position === 'DEF')" 
                          :key="player.id" 
@@ -92,14 +80,11 @@
                     {{ player.name }} (#{{ player.jersey_number }})
                   </option>
                 </select>
-                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple defenders</p>
               </div>
 
               <!-- Midfielders -->
               <div class="space-y-2">
-                <label class="text-sm font-medium text-gray-700">
-                  Midfielders ({{ formationCounts.midfielders }})
-                </label>
+                <label class="text-sm font-medium text-gray-700">Midfielders</label>
                 <select v-model="startingLineup.midfielders" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32">
                   <option v-for="player in availablePlayers.filter(p => p.position === 'MID')" 
                          :key="player.id" 
@@ -108,14 +93,11 @@
                     {{ player.name }} (#{{ player.jersey_number }})
                   </option>
                 </select>
-                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple midfielders</p>
               </div>
 
               <!-- Forwards -->
               <div class="space-y-2">
-                <label class="text-sm font-medium text-gray-700">
-                  Forwards ({{ formationCounts.forwards }})
-                </label>
+                <label class="text-sm font-medium text-gray-700">Forwards</label>
                 <select v-model="startingLineup.forwards" multiple class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 h-32">
                   <option v-for="player in availablePlayers.filter(p => p.position === 'FWD')" 
                          :key="player.id" 
@@ -124,7 +106,6 @@
                     {{ player.name }} (#{{ player.jersey_number }})
                   </option>
                 </select>
-                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple forwards</p>
               </div>
             </div>
 
@@ -140,7 +121,6 @@
                     {{ player.name }} (#{{ player.jersey_number }}) - {{ player.position }}
                   </option>
                 </select>
-                <p class="text-xs text-gray-500">Hold Ctrl/Cmd to select multiple bench players</p>
               </div>
 
               <!-- Selected Players Summary -->
@@ -159,15 +139,13 @@
           </div>
         </div>
 
-        <!-- Loading State -->
+        <!-- Loading / Empty / Error -->
         <div v-else-if="selectedTeam && isLoadingPlayers" class="flex justify-center items-center py-8">
           <div class="text-center">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p class="mt-2 text-sm text-gray-600">Loading players...</p>
           </div>
         </div>
-
-        <!-- No Players Available -->
         <div v-else-if="selectedTeam && availablePlayers.length === 0" class="text-center py-8">
           <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -175,7 +153,6 @@
           <p class="mt-2 text-sm text-gray-600">No players available for this team</p>
         </div>
 
-        <!-- Error Message -->
         <div v-if="error" class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
           <div class="flex items-center space-x-2">
             <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -187,10 +164,7 @@
 
         <!-- Actions -->
         <div class="flex space-x-3 pt-6 border-t border-gray-200">
-          <button 
-            @click="closeModal" 
-            class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-          >
+          <button @click="closeModal" class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
             Cancel
           </button>
           <button 
@@ -243,7 +217,6 @@ const emit = defineEmits<Emits>()
 const kplStore = useKplStore()
 
 const selectedTeam = ref<'home' | 'away' | null>(null)
-const selectedFormation = ref('4-4-2')
 const startingLineup = ref<LineupData>({
   goalkeeper: '',
   defenders: [],
@@ -255,68 +228,28 @@ const isSubmitting = ref(false)
 const error = ref('')
 const isLoadingPlayers = ref(false)
 
-const formations = ['4-4-2', '4-3-3', '4-2-3-1', '3-5-2', '3-4-3', '5-3-2', '4-5-1']
-
-const formationCounts = computed(() => {
-  const counts = {
-    defenders: 4,
-    midfielders: 4,
-    forwards: 2
-  }
-
-  const [def, mid, fwd] = selectedFormation.value.split('-').map(Number)
-  counts.defenders = def
-  counts.midfielders = mid
-  counts.forwards = fwd
-
-  return counts
-})
-
 const selectedTeamData = computed(() => {
   if (!selectedTeam.value) return null
   return selectedTeam.value === 'home' ? props.fixture.home_team : props.fixture.away_team
 })
 
-const homeTeamPlayers = computed(() => {
-  return kplStore.players.filter(player => player.team.id === props.fixture.home_team.id)
-})
-
-const awayTeamPlayers = computed(() => {
-  return kplStore.players.filter(player => player.team.id === props.fixture.away_team.id)
-})
-
-const availablePlayers = computed(() => {
-  if (!selectedTeam.value) return []
-  return selectedTeam.value === 'home' ? homeTeamPlayers.value : awayTeamPlayers.value
-})
+const homeTeamPlayers = computed(() => kplStore.players.filter(p => p.team.id === props.fixture.home_team.id))
+const awayTeamPlayers = computed(() => kplStore.players.filter(p => p.team.id === props.fixture.away_team.id))
+const availablePlayers = computed(() => selectedTeam.value === 'home' ? homeTeamPlayers.value : awayTeamPlayers.value)
 
 const totalStarters = computed(() => {
   const gk = startingLineup.value.goalkeeper ? 1 : 0
-  const def = startingLineup.value.defenders.length
-  const mid = startingLineup.value.midfielders.length
-  const fwd = startingLineup.value.forwards.length
-  return gk + def + mid + fwd
+  return gk + startingLineup.value.defenders.length + startingLineup.value.midfielders.length + startingLineup.value.forwards.length
 })
+const totalSelectedPlayers = computed(() => totalStarters.value + benchPlayers.value.length)
+const isLineupValid = computed(() => totalStarters.value === 11)
 
-const totalSelectedPlayers = computed(() => {
-  return totalStarters.value + benchPlayers.value.length
-})
-
-const isLineupValid = computed(() => {
-  const hasGoalkeeper = !!startingLineup.value.goalkeeper
-  const correctDefenders = startingLineup.value.defenders.length === formationCounts.value.defenders
-  const correctMidfielders = startingLineup.value.midfielders.length === formationCounts.value.midfielders
-  const correctForwards = startingLineup.value.forwards.length === formationCounts.value.forwards
-  
-  return hasGoalkeeper && correctDefenders && correctMidfielders && correctForwards
-})
-
-const isPlayerSelected = (playerId: string) => {
-  return startingLineup.value.goalkeeper === playerId ||
-         startingLineup.value.defenders.includes(playerId) ||
-         startingLineup.value.midfielders.includes(playerId) ||
-         startingLineup.value.forwards.includes(playerId) ||
-         benchPlayers.value.includes(playerId)
+const isPlayerSelected = (id: string) => {
+  return startingLineup.value.goalkeeper === id ||
+         startingLineup.value.defenders.includes(id) ||
+         startingLineup.value.midfielders.includes(id) ||
+         startingLineup.value.forwards.includes(id) ||
+         benchPlayers.value.includes(id)
 }
 
 const closeModal = () => {
@@ -326,13 +259,7 @@ const closeModal = () => {
 
 const resetModal = () => {
   selectedTeam.value = null
-  selectedFormation.value = '4-4-2'
-  startingLineup.value = {
-    goalkeeper: '',
-    defenders: [],
-    midfielders: [],
-    forwards: []
-  }
+  startingLineup.value = { goalkeeper: '', defenders: [], midfielders: [], forwards: [] }
   benchPlayers.value = []
   isSubmitting.value = false
   error.value = ''
@@ -341,20 +268,17 @@ const resetModal = () => {
 
 const submitLineup = async () => {
   if (!isLineupValid.value || !selectedTeam.value) return
-
   isSubmitting.value = true
   error.value = ''
 
   try {
-    const teamId = selectedTeam.value === 'home' 
-      ? props.fixture.home_team.id 
-      : props.fixture.away_team.id
+    const teamId = selectedTeam.value === 'home' ? props.fixture.home_team.id : props.fixture.away_team.id
 
     const lineupData = {
       fixture_id: props.fixture.id,
       team_id: teamId,
       side: selectedTeam.value,
-      formation: selectedFormation.value,
+      formation: '4-4-2', 
       starting_xi: [
         startingLineup.value.goalkeeper,
         ...startingLineup.value.defenders,
@@ -367,9 +291,8 @@ const submitLineup = async () => {
     await kplStore.submitLineup(lineupData)
     emit('upload-success')
     closeModal()
-    
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to submit lineup. Please try again.'
+    error.value = err.response?.data?.error || 'Failed to submit lineup.'
     console.error('Lineup submission error:', err)
   } finally {
     isSubmitting.value = false
@@ -383,16 +306,13 @@ watch(selectedTeam, async (newTeam) => {
       await kplStore.fetchPlayers()
     } catch (err) {
       error.value = 'Failed to load players'
-      console.error('Error loading players:', err)
     } finally {
       isLoadingPlayers.value = false
     }
   }
 })
 
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) {
-    resetModal()
-  }
+watch(() => props.isOpen, (val) => {
+  if (val) resetModal()
 })
 </script>
