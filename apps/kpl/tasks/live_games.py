@@ -376,6 +376,8 @@ def parse_event_with_team(event_element, event_text):
         minute_match = re.search(r"(\d+)'", event_text)
         if minute_match:
             event["minute"] = int(minute_match.group(1))
+        else:
+            event["minute"] = 0 
 
         parent_html = event_element.get_attribute("outerHTML")
 
