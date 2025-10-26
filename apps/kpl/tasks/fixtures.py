@@ -87,37 +87,39 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
     base_queryset = Player.objects.all()
     
     if team_id:
-        base_queryset = base_queryset.filter(teams__id=team_id)
+        base_queryset = base_queryset.filter(team__id=team_id)  
         logger.debug(f"   Filtered by team ID: {team_id}")
     elif team_name:
-        base_queryset = base_queryset.filter(teams__name__icontains=team_name)
+        base_queryset = base_queryset.filter(team__name__icontains=team_name) 
         logger.debug(f"   Filtered by team name: {team_name}")
     
+ 
     exact_match = base_queryset.filter(name__iexact=player_name).first()
     if exact_match:
-        logger.debug(f"Found exact match for '{player_name}': {exact_match.name}")
+        logger.debug(f"✅ Found exact match for '{player_name}': {exact_match.name}")
         return exact_match
     
     if team_id or team_name:
         logger.debug(f"   No match with team filter, trying without team filter...")
         fallback_match = Player.objects.filter(name__iexact=player_name).first()
         if fallback_match:
-            logger.debug(f"Found exact match without team filter for '{player_name}': {fallback_match.name}")
+            logger.debug(f"✅ Found exact match without team filter for '{player_name}': {fallback_match.name}")
             return fallback_match
     
+    # 3. Try close matches with team context
     all_player_names = list(base_queryset.values_list("name", flat=True))
     if all_player_names:
         match = get_close_matches(
             player_name.lower(), 
             [p.lower() for p in all_player_names], 
             n=1, 
-            cutoff=0.8  
+            cutoff=0.8
         )
         
         if match:
             found_player = base_queryset.filter(name__iexact=match[0]).first()
             if found_player:
-                logger.debug(f"Found close match for '{player_name}': {found_player.name}")
+                logger.debug(f"✅ Found close match for '{player_name}': {found_player.name}")
                 return found_player
     
     name_variants = generate_name_variants(player_name)
@@ -125,13 +127,13 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
     for variant in name_variants:
         variant_match = base_queryset.filter(name__iexact=variant).first()
         if variant_match:
-            logger.debug(f"Found variant match for '{player_name}': {variant_match.name} (variant: {variant})")
+            logger.debug(f"✅ Found variant match for '{player_name}': {variant_match.name} (variant: {variant})")
             return variant_match
         
         if team_id or team_name:
             variant_match_fallback = Player.objects.filter(name__iexact=variant).first()
             if variant_match_fallback:
-                logger.debug(f"Found variant match without team filter for '{player_name}': {variant_match_fallback.name} (variant: {variant})")
+                logger.debug(f"✅ Found variant match without team filter for '{player_name}': {variant_match_fallback.name} (variant: {variant})")
                 return variant_match_fallback
     
     name_parts = [part.strip() for part in player_name.split() if len(part.strip()) > 1]
@@ -144,7 +146,7 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
             
             if part_matches.count() == 1:
                 found_player = part_matches.first()
-                logger.debug(f"Found unique partial match for '{player_name}': {found_player.name} (using part: '{part}')")
+                logger.debug(f"✅ Found unique partial match for '{player_name}': {found_player.name} (using part: '{part}')")
                 return found_player
             elif part_matches.count() > 1:
                 for other_part in name_parts:
@@ -152,7 +154,7 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
                         disambiguated = part_matches.filter(name__icontains=other_part)
                         if disambiguated.count() == 1:
                             found_player = disambiguated.first()
-                            logger.debug(f"Found disambiguated match for '{player_name}': {found_player.name} (using parts: '{part}' + '{other_part}')")
+                            logger.debug(f"✅ Found disambiguated match for '{player_name}': {found_player.name} (using parts: '{part}' + '{other_part}')")
                             return found_player
         
         if (team_id or team_name) and len(name_parts) > 1:
@@ -160,7 +162,7 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
                 part_matches = Player.objects.filter(name__icontains=part)
                 if part_matches.count() == 1:
                     found_player = part_matches.first()
-                    logger.debug(f"Found unique partial match without team filter for '{player_name}': {found_player.name} (using part: '{part}')")
+                    logger.debug(f"✅ Found unique partial match without team filter for '{player_name}': {found_player.name} (using part: '{part}')")
                     return found_player
     
     if team_id or team_name:
@@ -170,7 +172,7 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
             player_name.lower(), 
             [p.lower() for p in all_players_broad], 
             n=1, 
-            cutoff=0.7  
+            cutoff=0.7
         )
         
         if match:
