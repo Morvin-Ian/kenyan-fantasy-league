@@ -2,7 +2,7 @@ import logging
 import logging.config
 
 from django.core.cache import cache
-from django.db.models import Subquery
+from django.db.models import Prefetch
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.parsers import JSONParser, MultiPartParser
@@ -10,7 +10,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from apps.kpl.models import Fixture, FixtureLineup, Player, Standing, Team, Gameweek
+from apps.kpl.models import Fixture, FixtureLineup, Player, Standing, Team, Gameweek, FixtureLineupPlayer
 from config.settings import base
 
 from .serializers import (
@@ -50,9 +50,9 @@ class StandingViewSet(ReadOnlyModelViewSet):
         page_number = request.query_params.get("page", 1)
         cache_key = f"standings_list_page_{page_number}"
 
-        cached_data = cache.get(cache_key)
-        if cached_data:
-            return Response(cached_data)
+        # cached_data = cache.get(cache_key)
+        # if cached_data:
+        #     return Response(cached_data)
 
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
@@ -81,40 +81,67 @@ class FixtureViewSet(ReadOnlyModelViewSet):
     def get_queryset(self):
         qs = super().get_queryset()
         if getattr(self, "action", None) == "list":
-            active_gw_subquery = Gameweek.objects.filter(is_active=True).values(
-                "number"
-            )[:1]
+            # Cache the active gameweek number
+            cache_key = "active_gameweek_number"
+            active_gw_number = cache.get(cache_key)
+            
+            if active_gw_number is None:
+                try:
+                    active_gw = Gameweek.objects.filter(is_active=True).values("number").first()
+                    active_gw_number = active_gw["number"] if active_gw else 1
+                    cache.set(cache_key, active_gw_number, timeout=3600)  # 1 hour cache
+                except:
+                    active_gw_number = 1
 
+            # Only fetch current and recent gameweeks for better performance
             qs = (
                 qs.filter(
-                    gameweek__number__lte=Subquery(active_gw_subquery),
-                    gameweek__number__gte=1,
+                    gameweek__number__gte=max(1, active_gw_number - 2),  # Current + last 2 GWs
+                    gameweek__number__lte=active_gw_number,
                 )
-                .select_related("gameweek")
+                .select_related("gameweek", "home_team", "away_team")
+                .only(
+                    "id", "match_date", "status", "home_team_score", "away_team_score",
+                    "home_team__name", "away_team__name", "gameweek__number"
+                )
                 .order_by("-match_date")
             )
 
         return qs
 
-    def get_permissions(self):
-        if getattr(self.request, "method", "").upper() == "POST" and getattr(
-            self, "action", None
-        ) in ["lineups", "upload_lineup_csv"]:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
-
     @action(detail=True, methods=["get"], url_path="lineups")
     def lineups(self, request, id=None):
-        """Get lineups for a fixture"""
         fixture = self.get_object()
+        
+        cache_key = f"fixture_lineups_{fixture.id}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data)
 
         qs = (
             FixtureLineup.objects.filter(fixture=fixture)
             .select_related("team")
-            .prefetch_related("players__player")
+            .prefetch_related(
+                Prefetch(
+                    'players',
+                    queryset=FixtureLineupPlayer.objects.select_related('player__team')
+                    .only(
+                        'id', 'position', 'order_index', 'is_bench',
+                        'player__id', 'player__name', 'player__position',
+                        'player__team__name'
+                    )
+                )
+            )
+            .only('id', 'formation', 'side', 'team__name')
         )
+        
         serializer = FixtureLineupDetailSerializer(qs, many=True)
-        return Response(serializer.data)
+        response_data = serializer.data
+        
+        # Cache for 30 minutes
+        cache.set(cache_key, response_data, timeout=1800)
+        return Response(response_data)
 
     @action(detail=False, methods=['post'], url_path='submit-lineup')
     def submit_lineup(self, request):        
@@ -186,13 +213,11 @@ class FixtureViewSet(ReadOnlyModelViewSet):
 
 
 class PlayerViewSet(ModelViewSet):
-    """ViewSet for managing players with caching"""
-
     serializer_class = PlayerSerializer
     queryset = Player.objects.filter(team__is_relegated=False)
     permission_classes = [IsAuthenticated]
     parser_classes = [JSONParser, MultiPartParser]
-
+    
     def get_permissions(self):
         if self.action in [
             "create",
@@ -211,33 +236,43 @@ class PlayerViewSet(ModelViewSet):
             return PlayerBulkUploadSerializer
         return super().get_serializer_class()
 
-    def list(self, request, *args, **kwargs):
-        """List players with caching support"""
-        page_number = request.query_params.get("page", 1)
-        team_id = request.query_params.get("team_id", "")
-        cache_key = f"players_active_list_page_{page_number}_team_{team_id}"
+    def get_queryset(self):
+        return Player.objects.filter(team__is_relegated=False)\
+            .select_related('team')\
+            .only(
+                'id', 'name', 'position', 'jersey_number', 
+                'age', 'current_value', 'team__name'
+            )\
+            .order_by('team__name', 'name')
 
-        # cached_data = cache.get(cache_key)
-        # if cached_data:
-        #     print(cached_data)
-        #     return Response(cached_data)
+    def list(self, request, *args, **kwargs):
+        team_id = request.query_params.get("team_id", "")
+        page_number = request.query_params.get("page", 1)
+        
+        cache_key = f"players_list_team_{team_id}_page_{page_number}"
+        
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
 
         queryset = self.get_queryset()
-
+        
         if team_id:
             queryset = queryset.filter(team_id=team_id)
 
+        self.pagination_class.page_size = 30
         page = self.paginate_queryset(queryset)
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            paginated_response = self.get_paginated_response(serializer.data)
-            cache.set(cache_key, paginated_response.data, timeout=172800)
-            return Response(paginated_response.data)
+            response = self.get_paginated_response(serializer.data)
+            
+            cache.set(cache_key, response.data, timeout=14400)
+            return response
 
         serializer = self.get_serializer(queryset, many=True)
         data = serializer.data
-        cache.set(cache_key, data, timeout=172800)
+        cache.set(cache_key, data, timeout=14400)
         return Response(data)
 
     @action(detail=False, methods=["post"], url_path="bulk-upload")
