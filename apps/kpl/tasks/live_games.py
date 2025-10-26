@@ -25,7 +25,69 @@ logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
 
-def extract_fixture_data(selenium_manager, match_url):
+def select_date_on_page(selenium_manager, target_date_text):
+    """
+    Click on a specific date in the date selector
+    
+    Args:
+        selenium_manager: SeleniumManager instance
+        target_date_text: The text of the date to click (e.g., "25 OCT")
+    
+    Returns:
+        bool: True if date was selected successfully, False otherwise
+    """
+    try:
+        logger.info(f"🗓️ Looking for date selector with text '{target_date_text}'...")
+        
+        WebDriverWait(selenium_manager.driver, 10).until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".cursor-pointer")
+            )
+        )
+        
+        date_containers = selenium_manager.driver.find_elements(
+            By.CSS_SELECTOR, 
+            ".cursor-pointer"
+        )
+        
+        logger.info(f"Found {len(date_containers)} date containers")
+        
+        for container in date_containers:
+            try:
+                date_text_div = container.find_element(By.CSS_SELECTOR, ".py-1")
+                date_text = date_text_div.text.strip()
+                
+                if date_text.upper() == target_date_text.upper():
+                    logger.info(f" Found date: '{date_text}'")
+                    
+                    selenium_manager.driver.execute_script(
+                        "arguments[0].scrollIntoView({block: 'center'});", 
+                        container
+                    )
+                    time.sleep(0.5)
+                    
+                    selenium_manager.driver.execute_script("arguments[0].click();", container)
+                    logger.info(f" Clicked on date '{target_date_text}'")
+                    
+                    time.sleep(3)
+                    return True
+                        
+            except Exception as e:
+                continue
+        
+        logger.warning(f"Date '{target_date_text}' not found, proceeding with default date")
+        return False
+        
+    except TimeoutException:
+        logger.warning(f"Date selector not found")
+        return False
+    except Exception as e:
+        logger.error(f"Error selecting date: {e}")
+        return False
+
+
+
+def extract_fixture_data(selenium_manager, match_url, target_date=None):
     try:
         if not selenium_manager.safe_get(match_url):
             logger.error("Failed to load match URL")
@@ -36,6 +98,10 @@ def extract_fixture_data(selenium_manager, match_url):
         )
         logger.info("Page loaded, waiting for dynamic content...")
         time.sleep(20)
+
+        if target_date:
+            logger.info(f"Attempting to select date: {target_date}")
+            select_date_on_page(selenium_manager, target_date)
 
         league_containers = selenium_manager.driver.find_elements(
             By.CSS_SELECTOR, ".flex.flex-col.border.rounded-xl"
@@ -55,11 +121,15 @@ def extract_fixture_data(selenium_manager, match_url):
                     By.CSS_SELECTOR, ".font-semibold.text-sm.bg-black-lighter"
                 )
                 league_name = league_elem.text.strip()
+                
+                if "SportPesa League" not in league_name:
+                    logger.info(f"Skipping league: {league_name}")
+                    continue
+                
                 logger.info(f"Processing league: {league_name}")
 
                 matches = container.find_elements(By.CSS_SELECTOR, ".m-1.border-b")
                 logger.info(f"Found {len(matches)} matches in {league_name}")
-
                 for match in matches:
                     fixture_data = {
                         "league": league_name,
@@ -235,7 +305,6 @@ def extract_fixture_data(selenium_manager, match_url):
         logger.error(f"Could not extract fixture data: {e}", exc_info=True)
         return []
 
-
 def extract_match_events_from_detail_page(selenium_manager, fixture, match_link):
     try:
         logger.info(f"Navigating to match detail page: {match_link}")
@@ -295,17 +364,27 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
 
         logger.info(f"Found {len(all_event_divs)} potential event elements")
 
+        events_processed = 0
+        events_skipped = 0
+
         for event_div in all_event_divs:
-            if "bg-gray-300" in event_div.get_attribute("class"):
+            class_attr = event_div.get_attribute("class") or ""
+            if "bg-gray-300" in class_attr:
                 continue
 
             try:
-                event_content = event_div.find_element(
-                    By.CSS_SELECTOR, "div.p-2.font-semibold"
-                )
+                try:
+                    event_content = event_div.find_element(
+                        By.CSS_SELECTOR, "div.p-2.font-semibold"
+                    )
+                except:
+                    events_skipped += 1
+                    continue
+                
                 event_text = event_content.text.strip()
 
                 if not event_text:
+                    events_skipped += 1
                     continue
 
                 event = parse_event_with_team(event_content, event_text)
@@ -319,24 +398,30 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                             "player_name": event.get("player", "Unknown"),
                             "team_id": match_events[f"{team}_team"]["team_id"],
                             "count": 1,
+                            "minute": event.get("minute", 0), 
                         }
                         match_events[f"{team}_team"]["goals"].append(event_data)
+                        events_processed += 1
 
                     elif event_type == "yellow_card":
                         event_data = {
                             "player_name": event.get("player", "Unknown"),
                             "team_id": match_events[f"{team}_team"]["team_id"],
                             "count": 1,
+                            "minute": event.get("minute", 0),  
                         }
                         match_events[f"{team}_team"]["yellow_cards"].append(event_data)
+                        events_processed += 1
 
                     elif event_type == "red_card":
                         event_data = {
                             "player_name": event.get("player", "Unknown"),
                             "team_id": match_events[f"{team}_team"]["team_id"],
                             "count": 1,
+                            "minute": event.get("minute", 0), 
                         }
                         match_events[f"{team}_team"]["red_cards"].append(event_data)
+                        events_processed += 1
 
                     elif event_type == "substitution":
                         event_data = {
@@ -346,13 +431,18 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                             "minute": event.get("minute", 0),
                         }
                         match_events[f"{team}_team"]["substitutions"].append(event_data)
+                        events_processed += 1
+                else:
+                    events_skipped += 1
 
             except Exception as e:
-                logger.warning(f"Error parsing event div: {e}")
+                logger.debug(f"Skipping event div due to parsing error: {e}")
+                events_skipped += 1
                 continue
 
         logger.info(
-            f"Extracted events - Home: {len(match_events['home_team']['goals'])}⚽ "
+            f"Event extraction complete - Processed: {events_processed}, Skipped: {events_skipped} | "
+            f"Home: {len(match_events['home_team']['goals'])}⚽ "
             f"{len(match_events['home_team']['yellow_cards'])}🟨 "
             f"{len(match_events['home_team']['red_cards'])}🟥 "
             f"{len(match_events['home_team']['substitutions'])}🔄 | "
@@ -367,7 +457,6 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
     except Exception as e:
         logger.error(f"Error extracting match events: {e}", exc_info=True)
         return None
-
 
 def parse_event_with_team(event_element, event_text):
     event = {}
@@ -443,17 +532,15 @@ def update_match_events_in_db(fixture, match_events):
             logger.info(f"Updating {len(all_goals)} goals for fixture {fixture.id}")
             result = MatchEventService.update_goals(fixture, all_goals)
             logger.info(
-                f"Goals update result: {result['updated_count']} updated, "
+                f"Goals update result: {len(result['updated_players'])} updated, "
                 f"{len(result['errors'])} errors"
             )
 
-        # Update yellow cards
         all_yellow_cards = (
             match_events["home_team"]["yellow_cards"]
             + match_events["away_team"]["yellow_cards"]
         )
 
-        # Update red cards
         all_red_cards = (
             match_events["home_team"]["red_cards"]
             + match_events["away_team"]["red_cards"]
@@ -468,11 +555,10 @@ def update_match_events_in_db(fixture, match_events):
                 fixture, all_yellow_cards, all_red_cards
             )
             logger.info(
-                f"Cards update result: {result['updated_count']} updated, "
+                f"Cards update result: {len(result['updated_players'])} updated, "
                 f"{len(result['errors'])} errors"
             )
 
-        # Update substitutions
         all_substitutions = (
             match_events["home_team"]["substitutions"]
             + match_events["away_team"]["substitutions"]
@@ -483,7 +569,7 @@ def update_match_events_in_db(fixture, match_events):
             )
             result = MatchEventService.update_substitutions(fixture, all_substitutions)
             logger.info(
-                f"Substitutions update result: {result['updated_count']} updated, "
+                f"Substitutions update result: {len(result['updated_players'])} updated, "
                 f"{len(result['errors'])} errors"
             )
 
@@ -636,13 +722,16 @@ def update_fixture_task(selenium_manager, live_data):
 
 
 @shared_task
-def monitor_fixture_score(fixture_id=None):
+def monitor_fixture_score(fixture_id=None, target_date=None):  
     selenium_manager = None
     successful_updates = 0
     failed_updates = 0
 
     try:
         from .fixtures import find_team
+
+        if target_date:
+            logger.info(f"🗓️ Monitoring fixtures for date: {target_date}")
 
         if fixture_id:
             try:
@@ -670,7 +759,7 @@ def monitor_fixture_score(fixture_id=None):
                 logger.error("Failed to initialize Selenium driver")
                 return False
 
-            live_data = extract_fixture_data(selenium_manager, match_url)
+            live_data = extract_fixture_data(selenium_manager, match_url, target_date)
 
             if not live_data:
                 logger.warning("No live data extracted from main page")

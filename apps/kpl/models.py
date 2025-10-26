@@ -245,13 +245,18 @@ class PlayerAlias(TimeStampedUUIDModel):
 class ProcessedMatchEvent(TimeStampedUUIDModel):
     fixture = models.ForeignKey(Fixture, on_delete=models.CASCADE)
     event_type = models.CharField(max_length=50)  
-    player = models.ForeignKey('kpl.Player', on_delete=models.CASCADE)
+    player = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
+    player_in = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='substitutions_in')
+    player_out = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='substitutions_out')
     event_key = models.CharField(max_length=255)  
     minute = models.IntegerField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         unique_together = ['fixture', 'event_key']
+        indexes = [
+            models.Index(fields=['fixture', 'event_type']),
+            models.Index(fields=['event_key']),
+        ]
         
     def __str__(self):
-        return f"{self.fixture.home_team} vs {self.fixture.away_team} - GM {self.fixture.gameweek.number}"
+        return f"{self.event_type} - {self.fixture} - Minute {self.minute}"
