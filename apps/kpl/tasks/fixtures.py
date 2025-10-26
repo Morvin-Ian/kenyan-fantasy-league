@@ -71,23 +71,148 @@ def clean_team_name(name: str) -> str:
     return cleaned
 
 
-def find_player(player_name: str) -> Player | None:
+from difflib import get_close_matches
+import logging
+from typing import Optional
+
+logger = logging.getLogger(__name__)
+
+def find_player(player_name: str, team_id: Optional[str] = None, team_name: Optional[str] = None) -> Player | None:
+    if not player_name or not player_name.strip():
+        logger.warning(f"Empty player name provided")
+        return None
+        
     player_name = player_name.strip()
-
-    exact_match = Player.objects.filter(name__iexact=player_name).first()
+    
+    base_queryset = Player.objects.all()
+    
+    if team_id:
+        base_queryset = base_queryset.filter(teams__id=team_id)
+        logger.debug(f"   Filtered by team ID: {team_id}")
+    elif team_name:
+        base_queryset = base_queryset.filter(teams__name__icontains=team_name)
+        logger.debug(f"   Filtered by team name: {team_name}")
+    
+    exact_match = base_queryset.filter(name__iexact=player_name).first()
     if exact_match:
+        logger.debug(f"Found exact match for '{player_name}': {exact_match.name}")
         return exact_match
-
-    all_players = list(Player.objects.values_list("name", flat=True))
-    match = get_close_matches(
-        player_name.lower(), [p.lower() for p in all_players], n=1, cutoff=0.9
-    )
-
-    if match:
-        return Player.objects.filter(name__iexact=match[0]).first()
-
+    
+    if team_id or team_name:
+        logger.debug(f"   No match with team filter, trying without team filter...")
+        fallback_match = Player.objects.filter(name__iexact=player_name).first()
+        if fallback_match:
+            logger.debug(f"Found exact match without team filter for '{player_name}': {fallback_match.name}")
+            return fallback_match
+    
+    all_player_names = list(base_queryset.values_list("name", flat=True))
+    if all_player_names:
+        match = get_close_matches(
+            player_name.lower(), 
+            [p.lower() for p in all_player_names], 
+            n=1, 
+            cutoff=0.8  
+        )
+        
+        if match:
+            found_player = base_queryset.filter(name__iexact=match[0]).first()
+            if found_player:
+                logger.debug(f"Found close match for '{player_name}': {found_player.name}")
+                return found_player
+    
+    name_variants = generate_name_variants(player_name)
+    
+    for variant in name_variants:
+        variant_match = base_queryset.filter(name__iexact=variant).first()
+        if variant_match:
+            logger.debug(f"Found variant match for '{player_name}': {variant_match.name} (variant: {variant})")
+            return variant_match
+        
+        if team_id or team_name:
+            variant_match_fallback = Player.objects.filter(name__iexact=variant).first()
+            if variant_match_fallback:
+                logger.debug(f"Found variant match without team filter for '{player_name}': {variant_match_fallback.name} (variant: {variant})")
+                return variant_match_fallback
+    
+    name_parts = [part.strip() for part in player_name.split() if len(part.strip()) > 1]
+    
+    if len(name_parts) > 1:
+        logger.debug(f"   Trying partial name matching for parts: {name_parts}")
+        
+        for i, part in enumerate(name_parts):
+            part_matches = base_queryset.filter(name__icontains=part)
+            
+            if part_matches.count() == 1:
+                found_player = part_matches.first()
+                logger.debug(f"Found unique partial match for '{player_name}': {found_player.name} (using part: '{part}')")
+                return found_player
+            elif part_matches.count() > 1:
+                for other_part in name_parts:
+                    if other_part != part:
+                        disambiguated = part_matches.filter(name__icontains=other_part)
+                        if disambiguated.count() == 1:
+                            found_player = disambiguated.first()
+                            logger.debug(f"Found disambiguated match for '{player_name}': {found_player.name} (using parts: '{part}' + '{other_part}')")
+                            return found_player
+        
+        if (team_id or team_name) and len(name_parts) > 1:
+            for part in name_parts:
+                part_matches = Player.objects.filter(name__icontains=part)
+                if part_matches.count() == 1:
+                    found_player = part_matches.first()
+                    logger.debug(f"Found unique partial match without team filter for '{player_name}': {found_player.name} (using part: '{part}')")
+                    return found_player
+    
+    if team_id or team_name:
+        logger.debug(f"   No match with team context, trying broad search...")
+        all_players_broad = list(Player.objects.values_list("name", flat=True))
+        match = get_close_matches(
+            player_name.lower(), 
+            [p.lower() for p in all_players_broad], 
+            n=1, 
+            cutoff=0.7  
+        )
+        
+        if match:
+            found_player = Player.objects.filter(name__iexact=match[0]).first()
+            if found_player:
+                logger.debug(f"✅ Found broad match for '{player_name}': {found_player.name}")
+                return found_player
+    
+    logger.warning(f"❌ Player not found: '{player_name}'")
+    
+    similar_players = Player.objects.filter(name__icontains=player_name[:4])[:5]
+    if similar_players:
+        logger.debug(f"   Similar players: {[p.name for p in similar_players]}")
+    
     return None
 
+
+def generate_name_variants(full_name: str) -> list:
+    name_parts = [part.strip() for part in full_name.split() if part.strip()]
+    variants = []
+    
+    if len(name_parts) >= 2:
+        variants.extend([
+            f"{name_parts[0]} {name_parts[-1]}", 
+            f"{name_parts[-1]} {name_parts[0]}",  
+        ])
+        
+        if len(name_parts) == 3:
+            variants.extend([
+                f"{name_parts[0]} {name_parts[1]}",  
+                f"{name_parts[0]} {name_parts[2]}", 
+                f"{name_parts[1]} {name_parts[2]}",
+            ])
+    
+    clean_name = ''.join(c for c in full_name if c.isalnum() or c.isspace())
+    if clean_name != full_name:
+        variants.append(clean_name)
+    
+    variants = [v for v in set(variants) if v != full_name]
+    
+    logger.debug(f"   Generated name variants for '{full_name}': {variants}")
+    return variants
 
 def extract_fixtures_data(headers) -> bool:
     url = os.getenv("TEAM_FIXTURES_URL")

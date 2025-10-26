@@ -518,7 +518,6 @@ def parse_event_with_team(event_element, event_text):
 
     return event
 
-
 def update_match_events_in_db(fixture, match_events):
     if not match_events:
         logger.warning(f"No match events to update for fixture {fixture.id}")
@@ -531,16 +530,20 @@ def update_match_events_in_db(fixture, match_events):
         if all_goals:
             logger.info(f"Updating {len(all_goals)} goals for fixture {fixture.id}")
             result = MatchEventService.update_goals(fixture, all_goals)
-            logger.info(
-                f"Goals update result: {len(result['updated_players'])} updated, "
-                f"{len(result['errors'])} errors"
-            )
+            
+            if result['errors']:
+                logger.error(f"🔴 GOAL UPDATE FAILURES for {fixture.id}:")
+                for error in result['errors']:
+                    logger.error(f"   - {error.get('player_name', 'Unknown')}: {error.get('error', 'Unknown error')}")
+            if result['updated_players']:
+                logger.info(f"🟢 GOAL UPDATE SUCCESSES for {fixture.id}:")
+                for player in result['updated_players']:
+                    logger.info(f"   + {player['player_name']}: {player['old_goals']} → {player['new_goals']} goals")
 
         all_yellow_cards = (
             match_events["home_team"]["yellow_cards"]
             + match_events["away_team"]["yellow_cards"]
         )
-
         all_red_cards = (
             match_events["home_team"]["red_cards"]
             + match_events["away_team"]["red_cards"]
@@ -554,10 +557,17 @@ def update_match_events_in_db(fixture, match_events):
             result = MatchEventService.update_cards(
                 fixture, all_yellow_cards, all_red_cards
             )
-            logger.info(
-                f"Cards update result: {len(result['updated_players'])} updated, "
-                f"{len(result['errors'])} errors"
-            )
+            
+            # Enhanced logging for cards
+            if result['errors']:
+                logger.error(f"🔴 CARD UPDATE FAILURES for {fixture.id}:")
+                for error in result['errors']:
+                    logger.error(f"   - {error.get('player_name', 'Unknown')}: {error.get('error', 'Unknown error')}")
+            if result['updated_players']:
+                logger.info(f"🟢 CARD UPDATE SUCCESSES for {fixture.id}:")
+                for player in result['updated_players']:
+                    card_type = player.get('card_type', 'card')
+                    logger.info(f"   + {player['player_name']}: {card_type} card added")
 
         all_substitutions = (
             match_events["home_team"]["substitutions"]
@@ -568,16 +578,22 @@ def update_match_events_in_db(fixture, match_events):
                 f"Updating {len(all_substitutions)} substitutions for fixture {fixture.id}"
             )
             result = MatchEventService.update_substitutions(fixture, all_substitutions)
-            logger.info(
-                f"Substitutions update result: {len(result['updated_players'])} updated, "
-                f"{len(result['errors'])} errors"
-            )
+            
+            # Enhanced logging for substitutions
+            if result['errors']:
+                logger.error(f"🔴 SUBSTITUTION UPDATE FAILURES for {fixture.id}:")
+                for error in result['errors']:
+                    logger.error(f"   - {error.get('error', 'Unknown error')}")
+            if result['updated_players']:
+                logger.info(f"🟢 SUBSTITUTION UPDATE SUCCESSES for {fixture.id}:")
+                for player in result['updated_players']:
+                    status = player.get('status', 'substituted')
+                    logger.info(f"   + {player['player_name']}: {status} at {player.get('new_minutes', '?')} min")
 
         logger.info(f"Successfully updated all match events for fixture {fixture.id}")
 
     except Exception as e:
         logger.error(f"Error updating match events in database: {e}", exc_info=True)
-
 
 def update_fixture_task(selenium_manager, live_data):
     from .fixtures import find_team

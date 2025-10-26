@@ -81,7 +81,7 @@ class PlayerService:
                         )
                         continue
 
-                    existing_player = find_player(name)
+                    existing_player = find_player(name, team_name=team.name)
 
                     if existing_player:
                         updated_fields = []

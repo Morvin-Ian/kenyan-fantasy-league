@@ -176,7 +176,7 @@ class ProcessedMatchEventAdmin(admin.ModelAdmin):
     )
     
     def fixture_display(self, obj):
-        return f"{obj.fixture.home_team} vs {obj.fixture.away_team}"
+        return f"{obj.fixture.home_team} vs {obj.fixture.away_team} - GW{obj.fixture.gameweek}"
     fixture_display.short_description = "Fixture"
     fixture_display.admin_order_field = "fixture"
     

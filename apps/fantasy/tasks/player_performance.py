@@ -39,7 +39,7 @@ def update_complete_player_performance(
         if not name:
             return None
 
-        player_obj = find_player(name)
+        player_obj = find_player(name, team_id=team.id)
 
         if not player_obj:
             player_obj = Player.objects.create(
