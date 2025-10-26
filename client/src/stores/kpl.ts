@@ -79,7 +79,7 @@ export const useKplStore = defineStore('kpl', {
     async fetchPlayers() {
       try {
         let nextUrl: string | null = "/kpl/players/";
-        const isProduction = false;
+        const isProduction = true;
         while (nextUrl) {
           if (isProduction && nextUrl.startsWith('http://')) {
             nextUrl = nextUrl.replace(/^http:\/\//, 'https://');
