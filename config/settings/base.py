@@ -246,54 +246,114 @@ LOG_DIR = BASE_DIR / "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 filename = LOG_DIR / "fantasy_league.log"
 
-logging.config.dictConfig(
-    {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "console": {
-                "format": "%(asctime)s %(name)-12s %(levelname)-8s %(message)s",
-            },
-            "file": {"format": "%(asctime)s %(name)-12s %(levelname)-8s %(message)s"},
-            "django.server": DEFAULT_LOGGING["formatters"]["django.server"],
+DEFAULT_LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-                "formatter": "console",
-            },
-            "file": {
-                "level": "INFO",
-                "class": "logging.handlers.RotatingFileHandler",
-                "formatter": "file",
-                "filename": filename,
-                "maxBytes": 10485760,
-                "backupCount": 5,
-            },
-            "django.server": DEFAULT_LOGGING["handlers"]["django.server"],
+        "file": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s.%(funcName)s:%(lineno)d - %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        "loggers": {
-            "": {"level": "INFO", "handlers": ["console", "file"], "propagate": False},
-            "apps": {"level": "INFO", "handlers": ["console"], "propagate": False},
-            "django.server": DEFAULT_LOGGING["loggers"]["django.server"],
-            "celery": {
-                "handlers": ["console", "file"],
-                "level": "INFO",
-                "propagate": False,
-            },
-            "flower": {
-                "handlers": [],
-                "level": "WARNING",
-                "propagate": False,
-            },
-            "kombu": {
-                "handlers": [],
-                "level": "WARNING",
-                "propagate": False,
-            },
+        "celery": {
+            "format": "%(asctime)s [%(levelname)s] [%(task_name)s(%(task_id)s)] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-    }
-)
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "console",
+            "level": "INFO",
+        },
+        "file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "file",
+            "filename": LOG_DIR / "fantasy_league.log",
+            "maxBytes": 30485760,  
+            "backupCount": 5,
+        },
+        "celery_file": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "celery",
+            "filename": LOG_DIR / "celery.log",
+            "maxBytes": 30485760, 
+            "backupCount": 5,
+        },
+        "celery_console": {
+            "class": "logging.StreamHandler",
+            "formatter": "celery",
+            "level": "INFO",
+        },
+    },
+    "loggers": {
+        # Root logger - catches everything
+        "": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": False,
+        },
+        # Your app loggers
+        "apps": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": False,
+        },
+        "apps.kpl": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": False,
+        },
+        "apps.fantasy": {
+            "level": "INFO",
+            "handlers": ["console", "file"],
+            "propagate": False,
+        },
+        # Celery loggers - THIS IS CRITICAL
+        "celery": {
+            "handlers": ["celery_console", "celery_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery.worker": {
+            "handlers": ["celery_console", "celery_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery.task": {
+            "handlers": ["celery_console", "celery_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "celery.beat": {
+            "handlers": ["celery_console", "celery_file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        # Reduce noise from these
+        "flower": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "kombu": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "amqp": {
+            "handlers": [],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
+
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
