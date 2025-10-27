@@ -87,8 +87,6 @@ def select_date_on_page(selenium_manager, target_date_text):
         logger.error(f"Error selecting date: {e}")
         return False
 
-
-
 def extract_fixture_data(selenium_manager, match_url, target_date=None):
     try:
         if not selenium_manager.safe_get(match_url):
@@ -207,14 +205,7 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
             f"Collected {len(all_matches_data)} fixtures, now extracting links..."
         )
 
-        match_cards = selenium_manager.driver.find_elements(
-            By.CSS_SELECTOR,
-            ".m-1.border-b.border-gray-300.rounded-md.py-3.hover\\:bg-gray-300.cursor-pointer.text-primary",
-        )
-
-        logger.info(f"Found {len(match_cards)} clickable match cards")
-
-        for i in range(min(len(all_matches_data), len(match_cards))):
+        for i in range(len(all_matches_data)):
             try:
                 if i > 0:
                     logger.info(f"Navigating back from previous fixture...")
@@ -234,38 +225,87 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                     logger.info(f"Waiting for page to re-render...")
                     time.sleep(5)
 
-                    # Wait for match cards to be present again
-                    WebDriverWait(selenium_manager.driver, 10).until(
-                        EC.presence_of_all_elements_located(
-                            (
-                                By.CSS_SELECTOR,
-                                ".m-1.border-b.border-gray-300.rounded-md.py-3.hover\\:bg-gray-300.cursor-pointer.text-primary",
-                            )
+                # Re-find ALL match containers after navigation
+                league_containers = selenium_manager.driver.find_elements(
+                    By.CSS_SELECTOR, ".flex.flex-col.border.rounded-xl"
+                )
+                
+                # Find the SportPesa League container
+                sportpesa_container = None
+                for container in league_containers:
+                    try:
+                        league_elem = container.find_element(
+                            By.CSS_SELECTOR, ".font-semibold.text-sm.bg-black-lighter"
                         )
-                    )
+                        if "SportPesa League" in league_elem.text:
+                            sportpesa_container = container
+                            break
+                    except:
+                        continue
+                
+                if not sportpesa_container:
+                    logger.warning(f"Could not find SportPesa League container after navigation")
+                    continue
 
-                    match_cards = selenium_manager.driver.find_elements(
-                        By.CSS_SELECTOR,
-                        ".m-1.border-b.border-gray-300.rounded-md.py-3.hover\\:bg-gray-300.cursor-pointer.text-primary",
-                    )
+                # Get all match cards within the SportPesa League container
+                match_cards = sportpesa_container.find_elements(
+                    By.CSS_SELECTOR,
+                    ".m-1.border-b.border-gray-300.rounded-md.py-3.hover\\:bg-gray-300.cursor-pointer.text-primary",
+                )
+                
+                logger.info(f"Found {len(match_cards)} match cards in SportPesa League")
 
-                if i >= len(match_cards):
-                    logger.warning(
-                        f"No clickable element found for fixture index {i} (found {len(match_cards)} cards)"
+                # Find the correct card by matching team names
+                fixture_to_match = all_matches_data[i]
+                target_card = None
+                card_index = None
+                
+                for card_idx, card in enumerate(match_cards):
+                    try:
+                        # Extract team names from this card
+                        teams = card.find_elements(By.CSS_SELECTOR, ".col-span-5")
+                        if len(teams) >= 2:
+                            home_team_div = teams[0].find_element(
+                                By.CSS_SELECTOR, "div:last-child"
+                            )
+                            away_team_div = teams[1].find_element(
+                                By.CSS_SELECTOR, "div:last-child"
+                            )
+                            card_home = home_team_div.text.strip()
+                            card_away = away_team_div.text.strip()
+                            
+                            # Check if this card matches our fixture
+                            if (card_home == fixture_to_match["home"] and 
+                                card_away == fixture_to_match["away"]):
+                                target_card = card
+                                card_index = card_idx
+                                logger.info(
+                                    f"✓ Matched card {card_idx} to fixture: "
+                                    f"{fixture_to_match['home']} vs {fixture_to_match['away']}"
+                                )
+                                break
+                    except Exception as e:
+                        logger.debug(f"Error reading card {card_idx}: {e}")
+                        continue
+                
+                if not target_card:
+                    logger.error(
+                        f"Could not find matching card for fixture: "
+                        f"{fixture_to_match['home']} vs {fixture_to_match['away']}"
                     )
                     continue
 
-                card = match_cards[i]
-
+                # Scroll and click the matched card
                 selenium_manager.driver.execute_script(
-                    "arguments[0].scrollIntoView({block: 'center'});", card
+                    "arguments[0].scrollIntoView({block: 'center'});", target_card
                 )
                 time.sleep(1)
 
                 logger.info(
-                    f"Clicking fixture card {i+1}/{len(all_matches_data)}: {all_matches_data[i]['home']} vs {all_matches_data[i]['away']}"
+                    f"Clicking matched fixture card for: "
+                    f"{fixture_to_match['home']} vs {fixture_to_match['away']}"
                 )
-                selenium_manager.driver.execute_script("arguments[0].click();", card)
+                selenium_manager.driver.execute_script("arguments[0].click();", target_card)
 
                 # Wait for detail page to load
                 try:
@@ -280,7 +320,8 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                     all_matches_data[i]["link"] = current_url
 
                     logger.info(
-                        f"✅ [{i+1}/{len(all_matches_data)}] Captured link: {current_url}"
+                        f"[{i+1}/{len(all_matches_data)}] Captured link for "
+                        f"{fixture_to_match['home']} vs {fixture_to_match['away']}: {current_url}"
                     )
 
                 except TimeoutException:
