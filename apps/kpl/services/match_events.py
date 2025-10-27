@@ -9,6 +9,60 @@ from apps.fantasy.models import PlayerPerformance, FantasyPlayer, TeamSelection
 logger = logging.getLogger(__name__)
 
 
+class FixtureValidator:
+    """Validates that events belong to the correct fixture"""
+    
+    @staticmethod
+    def validate_player_team_in_fixture(player, fixture: Fixture) -> bool:
+        if not player or not fixture:
+            return False
+            
+        is_home_team = player.team.id == fixture.home_team.id
+        is_away_team = player.team.id == fixture.away_team.id
+        
+        if not (is_home_team or is_away_team):
+            logger.error(
+                f"FIXTURE MISMATCH: Player {player.name} (Team: {player.team.name}) "
+                f"is NOT in fixture {fixture.id} ({fixture.home_team.name} vs {fixture.away_team.name})"
+            )
+            return False
+        
+        side = "home" if is_home_team else "away"
+        logger.debug(
+            f"FIXTURE VALID: Player {player.name} (Team: {player.team.name}) "
+            f"is in fixture as {side} team"
+        )
+        return True
+    
+    @staticmethod
+    def validate_team_in_fixture(team_id: str, fixture: Fixture) -> bool:
+        """
+        Ensure team is actually playing in this fixture
+        """
+        if not team_id or not fixture:
+            return False
+            
+        is_home_team = str(fixture.home_team.id) == str(team_id)
+        is_away_team = str(fixture.away_team.id) == str(team_id)
+        
+        if not (is_home_team or is_away_team):
+            logger.error(
+                f"FIXTURE MISMATCH: Team ID {team_id} "
+                f"is NOT in fixture {fixture.id} ({fixture.home_team.name} vs {fixture.away_team.name})"
+            )
+            return False
+        
+        return True
+    
+    @staticmethod
+    def get_fixture_summary(fixture: Fixture) -> str:
+        """Get a human-readable fixture summary"""
+        return (
+            f"Fixture {fixture.id}: {fixture.home_team.name} vs {fixture.away_team.name} "
+            f"(GW{fixture.gameweek.number if fixture.gameweek else 'N/A'})"
+        )
+
+
 class FantasyPointsCalculator:
     @staticmethod
     def calculate_full(performance, is_captain=False):
@@ -163,9 +217,18 @@ class MatchEventService:
         except Exception as e:
             logger.error(f"Error checking captain status for {player.name}: {e}")
             return False
-
+        
     @staticmethod
-    def _update_fantasy_team_points(player, fixture):
+    def _update_fantasy_team_points(player, fixture, incremental_points=None):
+        """
+        Update fantasy team points with proper captain/vice-captain handling.
+        If captain didn't play, vice-captain gets double points.
+        
+        Args:
+            player: The player whose performance changed
+            fixture: The fixture
+            incremental_points: If provided, use this instead of recalculating from performance
+        """
         try:
             fantasy_players = FantasyPlayer.objects.filter(player=player)
 
@@ -179,19 +242,76 @@ class MatchEventService:
 
                     is_starter = fantasy_player in team_selection.starters.all()
 
-                    if is_starter:
-                        performance = PlayerPerformance.objects.get(
-                            player=player, fixture=fixture, gameweek=fixture.gameweek
-                        )
+                    if not is_starter:
+                        continue
 
-                        points_to_add = performance.fantasy_points
+                    performance = PlayerPerformance.objects.get(
+                        player=player, fixture=fixture, gameweek=fixture.gameweek
+                    )
 
-                        fantasy_player.total_points += points_to_add
-                        fantasy_player.save()
+                    if incremental_points is not None:
+                        base_points = incremental_points
+                    else:
+                        base_points = performance.fantasy_points
 
-                        fantasy_team = fantasy_player.fantasy_team
-                        fantasy_team.total_points += points_to_add
-                        fantasy_team.save()
+                    points_to_add = base_points
+                    role = "starter"
+
+                    if team_selection.captain.player == player:
+                        captain_performance = performance
+                        
+                        if captain_performance.minutes_played > 0:
+                            role = "captain"
+                        else:
+                            role = "captain_no_play"
+                            logger.info(f"Captain {player.name} didn't play in {fantasy_player.fantasy_team.name}")
+
+                    elif team_selection.vice_captain.player == player:
+                        # This player is the vice-captain
+                        # Check if captain played
+                        try:
+                            captain_performance = PlayerPerformance.objects.get(
+                                player=team_selection.captain.player,
+                                fixture=fixture,
+                                gameweek=fixture.gameweek
+                            )
+                            
+                            if captain_performance.minutes_played == 0:
+                                if incremental_points is not None:
+                                    points_to_add = base_points * 2
+                                else:
+                                    points_to_add = base_points * 2
+                                
+                                role = "vice_captain_active"
+                                logger.info(
+                                    f"Vice-captain {player.name} gets double points "
+                                    f"(captain didn't play) for {fantasy_player.fantasy_team.name}"
+                                )
+                            else:
+                                role = "vice_captain"
+                                
+                        except PlayerPerformance.DoesNotExist:
+                            if incremental_points is not None:
+                                points_to_add = base_points * 2
+                            else:
+                                points_to_add = base_points * 2
+                            role = "vice_captain_active"
+                            logger.info(
+                                f"Vice-captain {player.name} gets double points "
+                                f"(captain no performance) for {fantasy_player.fantasy_team.name}"
+                            )
+
+                    fantasy_player.total_points += points_to_add
+                    fantasy_player.save()
+
+                    fantasy_team = fantasy_player.fantasy_team
+                    fantasy_team.total_points += points_to_add
+                    fantasy_team.save()
+
+                    logger.debug(
+                        f"Updated {fantasy_player.fantasy_team.name}: "
+                        f"+{points_to_add} points for {player.name} ({role})"
+                    )
 
                 except TeamSelection.DoesNotExist:
                     continue
@@ -223,6 +343,8 @@ class MatchEventService:
 
         updated_players = []
         errors = []
+        
+        logger.info(f"Processing {len(goals_data)} goals for {FixtureValidator.get_fixture_summary(fixture)}")
 
         with transaction.atomic():
             for goal_data in goals_data:
@@ -239,6 +361,14 @@ class MatchEventService:
                     continue
 
                 try:
+                    if not FixtureValidator.validate_team_in_fixture(team_id, fixture):
+                        errors.append({
+                            "player_name": player_name,
+                            "error": f"Team {team_id} is not in this fixture",
+                            "fixture": FixtureValidator.get_fixture_summary(fixture),
+                        })
+                        continue
+                    
                     team = Team.objects.get(id=team_id)
                     player = find_player(player_name, team_id=team_id)
 
@@ -246,6 +376,14 @@ class MatchEventService:
                         errors.append({
                             "player_name": player_name,
                             "error": f"Player not found in team {team.name}",
+                        })
+                        continue
+                    
+                    if not FixtureValidator.validate_player_team_in_fixture(player, fixture):
+                        errors.append({
+                            "player_name": player_name,
+                            "error": f"Player {player.name} team {player.team.name} is not in this fixture",
+                            "fixture": FixtureValidator.get_fixture_summary(fixture),
                         })
                         continue
 
@@ -333,6 +471,8 @@ class MatchEventService:
 
         updated_players = []
         errors = []
+        
+        logger.info(f"Processing {len(assists_data)} assists for {FixtureValidator.get_fixture_summary(fixture)}")
 
         with transaction.atomic():
             for assist_data in assists_data:
@@ -349,6 +489,14 @@ class MatchEventService:
                     continue
 
                 try:
+                    if not FixtureValidator.validate_team_in_fixture(team_id, fixture):
+                        errors.append({
+                            "player_name": player_name,
+                            "error": f"Team {team_id} is not in this fixture",
+                            "fixture": FixtureValidator.get_fixture_summary(fixture),
+                        })
+                        continue
+                    
                     team = Team.objects.get(id=team_id)
                     player = find_player(player_name, team_id=team_id)
 
@@ -358,8 +506,15 @@ class MatchEventService:
                             "error": f"Player not found in team {team.name}",
                         })
                         continue
+                    
+                    if not FixtureValidator.validate_player_team_in_fixture(player, fixture):
+                        errors.append({
+                            "player_name": player_name,
+                            "error": f"Player {player.name} team {player.team.name} is not in this fixture",
+                            "fixture": FixtureValidator.get_fixture_summary(fixture),
+                        })
+                        continue
 
-                    # Generate unique event key and check if already processed
                     event_key = MatchEventService._generate_event_key(
                         "assist", fixture.id, player.id, minute
                     )
@@ -405,7 +560,6 @@ class MatchEventService:
 
                     performance.save()
                     
-                    # Mark assist as processed
                     MatchEventService._mark_event_processed(
                         fixture, "assist", event_key, player=player, minute=minute
                     )
@@ -441,6 +595,8 @@ class MatchEventService:
     def update_cards(fixture: Fixture, yellow_cards: List[Dict], red_cards: List[Dict]) -> Dict:
         updated_players = []
         errors = []
+        
+        logger.info(f"Processing cards for {FixtureValidator.get_fixture_summary(fixture)}")
 
         with transaction.atomic():
             # Process yellow cards
@@ -485,6 +641,16 @@ class MatchEventService:
             }
 
         try:
+            if not FixtureValidator.validate_team_in_fixture(team_id, fixture):
+                return {
+                    "success": False,
+                    "error": {
+                        "player_name": player_name,
+                        "error": f"Team {team_id} is not in this fixture",
+                        "fixture": FixtureValidator.get_fixture_summary(fixture),
+                    },
+                }
+            
             team = Team.objects.get(id=team_id)
             player = find_player(player_name, team_id=team_id)
 
@@ -496,8 +662,17 @@ class MatchEventService:
                         "error": f"Player not found in team {team.name}",
                     },
                 }
+            
+            if not FixtureValidator.validate_player_team_in_fixture(player, fixture):
+                return {
+                    "success": False,
+                    "error": {
+                        "player_name": player_name,
+                        "error": f"Player {player.name} team {player.team.name} is not in this fixture",
+                        "fixture": FixtureValidator.get_fixture_summary(fixture),
+                    },
+                }
 
-            # Generate unique event key and check if already processed
             event_key = MatchEventService._generate_event_key(
                 f"{card_type}_card", fixture.id, player.id, minute
             )
@@ -551,7 +726,6 @@ class MatchEventService:
 
             performance.save()
             
-            # Mark card as processed
             MatchEventService._mark_event_processed(
                 fixture, f"{card_type}_card", event_key, player=player, minute=minute
             )

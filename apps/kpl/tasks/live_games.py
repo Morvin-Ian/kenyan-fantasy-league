@@ -17,8 +17,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from apps.kpl.services.match_events import MatchEventService
 from apps.kpl.tasks.gameweeks import setup_team_finalization_task
 from apps.kpl.models import Fixture, Gameweek
+from apps.fantasy.tasks.fixture_completion import process_clean_sheets_on_completion
 from config.settings import base
 from util.selenium import SeleniumManager
+
 
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -666,6 +668,13 @@ def update_fixture_task(selenium_manager, live_data):
                     fixture.status = "completed"
                     fixture.save(update_fields=["status"])
                     logger.info(f"Updated fixture {fixture.id} status to completed")
+                    
+                    try:
+                        logger.info(f"Triggering clean sheet processing for fixture {fixture.id}")
+                        process_clean_sheets_on_completion.delay(str(fixture.id))
+                    except Exception as e:
+                        logger.error(f"Failed to trigger clean sheet processing for fixture {fixture.id}: {e}")
+
 
                 if pt:
                     pt.enabled = False
