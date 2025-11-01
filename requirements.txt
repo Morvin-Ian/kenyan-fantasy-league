@@ -22,7 +22,7 @@ django-celery-email==3.0.0
 django-celery-results==2.5.1
 django-countries==7.6.1
 django-filter==24.3
-django-phonenumber-field==8.0.0
+django-phonenumber-field==8.3.0
 django-templated-mail==1.1.1
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
