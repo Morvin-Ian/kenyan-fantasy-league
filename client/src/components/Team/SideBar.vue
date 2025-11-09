@@ -256,7 +256,7 @@ const props = defineProps<{
   team: string | null;
   teamValue?: number;
   inBank?: number;
-  currentGameweek: number | null;
+  currentGameweek?: number;
   recentForm?: number[];
 }>();
 
