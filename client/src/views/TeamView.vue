@@ -274,6 +274,7 @@ const handleGameweekChange = async () => {
     showMessage(`Loading Gameweek ${selectedGameweek.value}...`, 'info');
     
     await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
+    await fantasyStore.fetchUserFantasyTeam(selectedGameweek.value)
     initializeTeamState();
     
     showMessage(`Gameweek ${selectedGameweek.value} loaded successfully!`, 'success', 3000);
@@ -310,6 +311,7 @@ onMounted(async () => {
       // Fetch players for the selected gameweek
       if (selectedGameweek.value) {
         await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
+        await fantasyStore.fetchUserFantasyTeam(selectedGameweek.value)
         initializeTeamState();
       }
     }

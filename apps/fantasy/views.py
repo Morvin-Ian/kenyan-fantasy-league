@@ -58,7 +58,27 @@ class FantasyTeamViewSet(ModelViewSet):
     def get_user_team(self, request):
         try:
             teams = FantasyTeam.objects.filter(user=request.user)
-            serializer = self.get_serializer(teams, many=True)
+            
+            # Get requested gameweek if provided
+            gameweek_number = request.query_params.get("gameweek")
+            requested_gameweek = None
+            
+            if gameweek_number:
+                try:
+                    requested_gameweek = Gameweek.objects.get(number=gameweek_number)
+                except Gameweek.DoesNotExist:
+                    return Response(
+                        {"detail": f"Gameweek {gameweek_number} not found."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            
+            # Pass gameweek context to serializer
+            serializer = self.get_serializer(
+                teams, 
+                many=True,
+                context={'requested_gameweek': requested_gameweek}
+            )
+            
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
@@ -120,7 +140,11 @@ class FantasyPlayerViewSet(ModelViewSet):
                     team_selection.bench.all()
                 )
 
-                serializer = FantasyPlayerSerializer(players, many=True)
+                serializer = FantasyPlayerSerializer(
+                    players, 
+                    many=True,
+                    context={'requested_gameweek': gameweek}
+                )
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
             except TeamSelection.DoesNotExist:
@@ -151,9 +175,9 @@ class FantasyPlayerViewSet(ModelViewSet):
         try:
             fantasy_team = FantasyTeam.objects.get(user=request.user)
             
-            # Get gameweeks where this team has selections - FIXED FIELD NAME
+            # Get gameweeks where this team has selections
             gameweeks_with_selections = Gameweek.objects.filter(
-                team_selections__fantasy_team=fantasy_team  # Changed from 'teamselection' to 'team_selections'
+                team_selections__fantasy_team=fantasy_team
             ).distinct().order_by('-number')
             
             # Also include current/active gameweek

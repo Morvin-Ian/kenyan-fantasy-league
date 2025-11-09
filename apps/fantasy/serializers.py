@@ -48,12 +48,45 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
         return float(Decimal(str(obj.budget)) - total_players_value)
 
-    def get_gameweek_points(self, obj):
-        active_gameweek = Gameweek.objects.filter(is_active=True).first()
-        if not active_gameweek:
-            return 0
 
-        return self._get_points_for_gameweek(obj, active_gameweek)
+    def get_gameweek_points(self, obj):
+        try:
+            requested_gameweek = self.context.get('requested_gameweek')
+            
+            if requested_gameweek:
+                gameweek = requested_gameweek
+            else:
+                gameweek = Gameweek.objects.filter(is_active=True).first()
+            
+            if not gameweek:
+                return None
+
+            team_selection = TeamSelection.objects.filter(
+                fantasy_team=obj.fantasy_team, 
+                gameweek=gameweek, 
+                starters=obj
+            ).first()
+
+            if not team_selection:
+                return None
+
+            performance = obj.player.performances.filter(
+                gameweek=gameweek
+            ).first()
+
+            if not performance:
+                return None
+
+            points = performance.fantasy_points
+            
+            if team_selection.captain == obj:
+                points = points * 2
+            
+            return points
+
+        except Exception as e:
+            print(f"Error calculating gameweek points: {e}")
+            return None
 
     def get_requested_gameweek_points(self, obj):
         requested_gameweek = self.context.get('requested_gameweek')

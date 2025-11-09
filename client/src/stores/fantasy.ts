@@ -47,7 +47,7 @@ export const useFantasyStore = defineStore("fantasy", {
       }
     },
 
-    async fetchUserFantasyTeam(gameweek = null) {
+    async fetchUserFantasyTeam(gameweek: number | null = null) {
       try {
         this.isLoading = true;
         this.error = null;
@@ -60,8 +60,17 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.get(`/fantasy/teams/user-team`, { params });
         this.userTeam = response.data;
 
-        if (response.data.length > 0 && response.data[0].requested_gameweek) {
-          this.currentGameweek = response.data[0].requested_gameweek;
+        if (response.data.length > 0) {
+          const teamData = response.data[0];
+          this.currentGameweek = teamData.requested_gameweek;
+          this.gameweekData = {
+            gameweek_name: teamData.requested_gameweek_name,
+            gameweek_points: teamData.requested_gameweek_points,
+            formation: teamData.requested_gameweek_formation,
+            is_active: teamData.requested_gameweek ?
+              this.availableGameweeks.find(gw => gw.number === teamData.requested_gameweek)?.is_active : false,
+            has_selection: teamData.has_selection_for_requested_gameweek
+          };
         }
 
         return response.data;
