@@ -145,6 +145,51 @@ class FantasyPlayerViewSet(ModelViewSet):
                 {"detail": "An unexpected error occurred.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+            
+    @action(detail=False, methods=["get"], url_path="available-gameweeks")
+    def get_available_gameweeks(self, request):
+        try:
+            fantasy_team = FantasyTeam.objects.get(user=request.user)
+            
+            # Get gameweeks where this team has selections - FIXED FIELD NAME
+            gameweeks_with_selections = Gameweek.objects.filter(
+                team_selections__fantasy_team=fantasy_team  # Changed from 'teamselection' to 'team_selections'
+            ).distinct().order_by('-number')
+            
+            # Also include current/active gameweek
+            active_gameweek = Gameweek.objects.filter(is_active=True).first()
+            
+            gameweeks_data = []
+            for gw in gameweeks_with_selections:
+                gameweeks_data.append({
+                    'number': gw.number,
+                    'name': f'Gameweek {gw.number}',
+                    'is_active': gw.is_active,
+                    'has_selection': True
+                })
+            
+            # Add active gameweek if not already included
+            if active_gameweek and active_gameweek not in gameweeks_with_selections:
+                gameweeks_data.append({
+                    'number': active_gameweek.number,
+                    'name': f'Gameweek {active_gameweek.number} (Current)',
+                    'is_active': True,
+                    'has_selection': False
+                })
+            
+            return Response(gameweeks_data, status=status.HTTP_200_OK)
+            
+        except FantasyTeam.DoesNotExist:
+            return Response(
+                {"detail": "Fantasy team not found."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "An unexpected error occurred.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+            
 
     @action(detail=False, methods=["post"], url_path="save-team-players")
     def save_team_players(self, request):

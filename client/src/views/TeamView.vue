@@ -1,28 +1,93 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
-    <div v-if="isInitializing" class="flex justify-center items-center min-h-screen">
+    <!-- Gameweek Header Section -->
+    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0" 
+         class="max-w-7xl mx-auto mb-6 animate-fade-in">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <!-- Left: Team Info -->
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
+            {{ fantasyStore.userTeam[0]?.name || 'My Team' }}
+          </h1>
+          <p class="text-gray-600 mt-1 text-sm sm:text-base">
+            Manage your fantasy squad across different gameweeks
+          </p>
+        </div>
+
+        <!-- Right: Gameweek Selector -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+          <!-- Gameweek Dropdown -->
+          <div class="relative group">
+            <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-300 px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200">
+              <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <select 
+                v-model="selectedGameweek" 
+                @change="handleGameweekChange"
+                class="bg-transparent border-none focus:ring-0 text-sm font-semibold text-gray-700 cursor-pointer appearance-none pr-6"
+              >
+                <option value="" disabled>Select Gameweek</option>
+                <option 
+                  v-for="gw in fantasyStore.availableGameweeks" 
+                  :key="gw.number" 
+                  :value="gw.number"
+                  class="text-sm"
+                >
+                  {{ gw.name }} {{ gw.is_active ? '• Current' : '' }}
+                </option>
+              </select>
+              <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" 
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Current Gameweek Badge -->
+          <div v-if="fantasyStore.currentGameweek && currentGameweekInfo" 
+               class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+            <div class="flex items-center gap-2">
+              <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" 
+                   :class="{ 'bg-green-500': currentGameweekInfo.is_active }"></div>
+              <span class="text-sm font-semibold text-blue-800">
+                GW {{ fantasyStore.currentGameweek }}
+              </span>
+              <span v-if="currentGameweekInfo.is_active" 
+                    class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                Active
+              </span>
+              <span v-else class="text-xs text-gray-500">
+                Past
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div v-if="isInitializing || fantasyStore.isLoading" class="flex justify-center items-center min-h-64">
       <div class="text-center">
-        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
-        <p class="mt-4 text-gray-600">Loading your team...</p>
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-4 text-gray-600">
+          {{ isInitializing ? 'Loading your team...' : 'Switching gameweek...' }}
+        </p>
       </div>
     </div>
-    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
+
+    <div v-else-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
       class="max-w-7xl mx-auto mb-4 animate-fade-in">
 
-      <!-- Show both buttons when there are empty slots -->
-      <div v-if="hasEmptySlots" class="flex flex-col sm:flex-row gap-2">
+      <div v-if="hasEmptySlots" class="flex flex-col sm:flex-row gap-3 mb-6">
         <button @click="autoFillTeam" :disabled="isAutoFilling"
           class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2">
-          <svg v-if="isAutoFilling" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24">
+          <svg v-if="isAutoFilling" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-            </path>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
           <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
           <span class="text-sm sm:text-base">{{ isAutoFilling ? 'Auto-Selecting...' : 'Auto-Select Players' }}</span>
         </button>
@@ -30,126 +95,96 @@
         <button @click="clearTeamSelections"
           class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
           <span class="text-sm sm:text-base">Clear Autoselection</span>
         </button>
       </div>
 
-      <!-- Show only clear button when team is complete -->
-      <div v-else-if="fantasyStore.fantasyPlayers.length == 0" class="flex justify-center">
+      <div v-else-if="fantasyStore.fantasyPlayers.length == 0" class="flex justify-center mb-6">
         <button @click="clearTeamSelections"
           class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
           <span class="text-sm sm:text-base">Clear Autoselection</span>
         </button>
       </div>
-    </div>
 
-    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
-      class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-      <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
-        <div class="relative">
-          <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
+      <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
+        <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
+          <div class="relative">
+            <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
+              <button @click="saveTeamChanges" :disabled="isSaving"
+                class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="mr-1">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
+              </button>
+            </div>
+          </div>
+
+          <Pitch 
+            :goalkeeper="goalkeeper" 
+            :defenders="defenders" 
+            :midfielders="midfielders" 
+            :forwards="forwards"
+            :bench-players="benchPlayers" 
+            :switch-source="switchSource" 
+            :switch-active="switchActive"
+            @player-click="handlePlayerClick" 
+            @formation-change="handleFormationChange" 
+          />
+
+          <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
+            :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
+
+          <div v-if="hasUnsavedChanges && canEditCurrentGameweek" class="hidden lg:block absolute bottom-4 right-4 z-10">
             <button @click="saveTeamChanges" :disabled="isSaving"
-              class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-              <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-dark" xmlns="http://www.w3.org/2000/svg"
-                fill="none" viewBox="0 0 24 24">
+              class="animate-slide-up bg-white hover:bg-white text-dark font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+              <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                </path>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              <span class="mr-1">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
+              <span class="mr-2">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
             </button>
           </div>
         </div>
 
-
-
-        <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
-          :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
-          @player-click="handlePlayerClick" @formation-change="handleFormationChange" />
-
-        <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
-          :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
-
-        <!-- Save Changes Button for Larger Devices (Bottom) -->
-        <<div v-if="hasUnsavedChanges" class="hidden lg:block absolute bottom-4 right-4 z-10">
-          <button @click="saveTeamChanges" :disabled="isSaving"
-            class="animate-slide-up bg-white hover:bg-white text-dark font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-            <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-dark" xmlns="http://www.w3.org/2000/svg"
-              fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-              </path>
-            </svg>
-            <span class="mr-2">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
-          </button>
+        <Sidebar 
+          :total-points="totalPoints" 
+          :average-points="averagePoints" 
+          :highest-points="highestPoints"
+          :overall-rank="overallRank" 
+          :team="userTeamName"
+          :in-bank="remainingBudget"
+          :currentGameweek="fantasyStore.currentGameweek"
+        />
       </div>
     </div>
 
-    <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
-      :overall-rank="overallRank" :team="userTeamName" />
-  </div>
-
-  <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
-    class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
-    <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
-    <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
-      creating your team now.</p>
-    <button @click="toggleModal"
-      class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
-      Your Team</button>
-  </div>
-
-
-  <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
-    @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
-    @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
-
-  <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
-    @select-player="handlePlayerTransfer" />
-
-  <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
-      <MessageAlert v-if="modalMessage.text" :type="modalMessage.type" :text="modalMessage.text"
-        :dismissible="modalMessage.dismissible" @dismiss="clearModalMessage" class="mb-4" />
-      <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
-      <form @submit.prevent="createTeam">
-        <div class="mb-4">
-          <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
-          <input v-model="teamName" id="teamName" type="text"
-            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-            placeholder="Enter your team name" required />
-        </div>
-        <div class="mb-4">
-          <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
-          <select v-model="selectedFormation" id="formation"
-            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-            required>
-            <option value="" disabled>Select a formation</option>
-            <option value="3-4-3">3-4-3</option>
-            <option value="4-4-2">4-4-2</option>
-            <option value="4-3-3">4-3-3</option>
-          </select>
-        </div>
-
-        <div class="flex justify-end gap-4">
-          <button type="button" @click="showCreateTeamModal = false"
-            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
-          <button type="submit"
-            class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
-            Team</button>
-        </div>
-      </form>
+    <!-- No Team State -->
+    <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
+      class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
+      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by creating your team now.</p>
+      <button @click="toggleModal"
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create Your Team</button>
     </div>
-  </div>
+
+    <!-- Your existing modals -->
+    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+
+    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" />
+
+    <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <!-- Your existing create team modal -->
+    </div>
   </div>
 </template>
 
@@ -168,6 +203,61 @@ import { useKplStore } from "@/stores/kpl";
 import defaultJersey from "@/assets/images/jerseys/default.png";
 import goalkeeperJersey from "@/assets/images/jerseys/goalkeeper.png";
 
+const selectedGameweek = ref<number | null>(null);
+const isSwitchingGameweek = ref(false);
+
+const userTeam = computed(() => fantasyStore.userTeam || []);
+const currentGameweekInfo = computed(() => {
+  if (!fantasyStore.currentGameweek) return null;
+  return fantasyStore.availableGameweeks.find(gw => gw.number === fantasyStore.currentGameweek);
+});
+
+const canEditCurrentGameweek = computed(() => {
+  return currentGameweekInfo.value?.is_active || false;
+});
+
+const remainingBudget = computed(() => {
+  const teamValue = calculateTeamValue();
+  return 70.0 - teamValue;
+});
+
+const calculateTeamValue = () => {
+  if (!fantasyStore.fantasyPlayers.length) return 0;
+  return fantasyStore.fantasyPlayers
+    .filter(player => !player.id.startsWith('placeholder'))
+    .reduce((total, player) => total + parseFloat(player.current_value || '0'), 0);
+};
+
+const handleGameweekChange = async () => {
+  try {
+    isSwitchingGameweek.value = true;
+    showMessage(`Loading Gameweek ${selectedGameweek.value}...`, 'info');
+    
+    await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
+    initializeTeamState();
+    
+    showMessage(`Gameweek ${selectedGameweek.value} loaded successfully!`, 'success', 3000);
+  } catch (error) {
+    console.error('Error switching gameweek:', error);
+    showMessage('Failed to load gameweek data. Please try again.', 'error');
+  } finally {
+    isSwitchingGameweek.value = false;
+  }
+};
+
+const hasEmptySlots = computed(() => {
+  if (!userTeam.value || userTeam.value.length === 0) return false;
+  if (!canEditCurrentGameweek.value) return false; 
+
+  const hasPlaceholderGoalkeeper = startingElevenRef.value.goalkeeper?.id?.startsWith('placeholder');
+  const hasPlaceholderDefenders = startingElevenRef.value.defenders.some(p => p.id.startsWith('placeholder'));
+  const hasPlaceholderMidfielders = startingElevenRef.value.midfielders.some(p => p.id.startsWith('placeholder'));
+  const hasPlaceholderForwards = startingElevenRef.value.forwards.some(p => p.id.startsWith('placeholder'));
+  const hasPlaceholderBench = benchPlayersRef.value.some(p => p.id.startsWith('placeholder'));
+
+  return hasPlaceholderGoalkeeper || hasPlaceholderDefenders || hasPlaceholderMidfielders || hasPlaceholderForwards || hasPlaceholderBench;
+});
+
 const PlayerModal = defineAsyncComponent(() => import('@/components/Team/PlayerModal.vue'));
 const SearchPlayer = defineAsyncComponent(() => import('@/components/Team/SearchPlayer.vue'));
 
@@ -176,9 +266,6 @@ const router = useRouter();
 const fantasyStore = useFantasyStore();
 const kplStore = useKplStore();
 
-const userTeam = computed(() => {
-  return fantasyStore.userTeam || [];
-});
 
 const showModal = ref(false);
 const showSearchModal = ref(false);
@@ -272,18 +359,6 @@ const highestPoints = ref(121);
 type FormationKey = "3-4-3" | "3-5-2" | "4-4-2" | "4-3-3" | "5-3-2" | "5-4-1" | "5-2-3";
 type BenchComposition = { DEF: number; MID: number; FWD: number };
 const isAutoFilling = ref(false);
-
-const hasEmptySlots = computed(() => {
-  if (!userTeam.value || userTeam.value.length === 0) return false;
-
-  const hasPlaceholderGoalkeeper = startingElevenRef.value.goalkeeper?.id?.startsWith('placeholder');
-  const hasPlaceholderDefenders = startingElevenRef.value.defenders.some(p => p.id.startsWith('placeholder'));
-  const hasPlaceholderMidfielders = startingElevenRef.value.midfielders.some(p => p.id.startsWith('placeholder'));
-  const hasPlaceholderForwards = startingElevenRef.value.forwards.some(p => p.id.startsWith('placeholder'));
-  const hasPlaceholderBench = benchPlayersRef.value.some(p => p.id.startsWith('placeholder'));
-
-  return hasPlaceholderGoalkeeper || hasPlaceholderDefenders || hasPlaceholderMidfielders || hasPlaceholderForwards || hasPlaceholderBench;
-});
 
 const benchCompositions: Record<FormationKey, BenchComposition> = {
   "3-4-3": { DEF: 2, MID: 1, FWD: 0 },
@@ -1175,6 +1250,7 @@ const clearTeamSelections = () => {
   showMessage("Team cleared! You can now auto-select new players.", "success");
 };
 
+
 onMounted(async () => {
   try {
     authStore.initialize();
@@ -1188,10 +1264,16 @@ onMounted(async () => {
     }
 
     if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
-      if (!fantasyStore.fantasyPlayers || !fantasyStore.fantasyPlayers.length) {
-        await fantasyStore.fetchFantasyTeamPlayers();
+      await fantasyStore.fetchAvailableGameweeks();
+      
+      const currentGw = fantasyStore.availableGameweeks.find(gw => gw.is_active);
+      selectedGameweek.value = currentGw?.number || 
+                              (fantasyStore.availableGameweeks[0]?.number || null);
+      
+      if (selectedGameweek.value) {
+        await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
+        initializeTeamState();
       }
-      initializeTeamState();
     }
   } catch (error) {
     console.error("Error initializing team:", error);

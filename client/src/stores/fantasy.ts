@@ -18,6 +18,9 @@ export const useFantasyStore = defineStore("fantasy", {
     userTeam: [] as FantasyTeam[],
     goalsLeaderboard: [] as PlayerGoalsLeaderboard[],
     gameweekStatus: null as GameweekStatusResponse | null,
+    availableGameweeks: [] as any[],
+    currentGameweek: null as number | null,
+    gameweekData: null as any,
     isLoading: false,
     error: null as string | null,
   }),
@@ -25,6 +28,10 @@ export const useFantasyStore = defineStore("fantasy", {
   getters: {
     topScorers: (state) => state.goalsLeaderboard,
     topScorer: (state) => state.goalsLeaderboard[0] || null,
+    currentGameweekInfo: (state) => {
+      if (!state.currentGameweek) return null;
+      return state.availableGameweeks.find(gw => gw.number === state.currentGameweek);
+    },
   },
 
   actions: {
@@ -84,23 +91,48 @@ export const useFantasyStore = defineStore("fantasy", {
       }
     },
 
-    async fetchFantasyTeamPlayers() {
+    async fetchFantasyTeamPlayers(gameweek: number | null = null) {
       try {
         this.isLoading = true;
-        const response = await apiClient.get(`/fantasy/players/gameweek-players/`);
+        const params: any = {};
+        if (gameweek) {
+          params.gameweek = gameweek;
+        }
+        
+        const response = await apiClient.get(`/fantasy/players/gameweek-players/`, { params });
 
-        if (Array.isArray(response.data)) {
-          this.fantasyPlayers = response.data;
+        if (response.data && Array.isArray(response.data.players)) {
+          this.fantasyPlayers = response.data.players;
+          this.currentGameweek = response.data.gameweek;
+          this.gameweekData = response.data;
         } else if (response.data && typeof response.data === 'object') {
-          console.warn('Received object instead of array:', response.data);
-          this.fantasyPlayers = [];
+          this.fantasyPlayers = response.data.players || [];
+          this.currentGameweek = response.data.gameweek;
+          this.gameweekData = response.data;
         } else {
           this.fantasyPlayers = [];
+          this.currentGameweek = null;
+          this.gameweekData = null;
         }
       } catch (error) {
         console.error('Error fetching fantasy players:', error);
         this.error = error instanceof Error ? error.message : String(error);
         this.fantasyPlayers = [];
+        this.currentGameweek = null;
+        this.gameweekData = null;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchAvailableGameweeks() {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.get('/fantasy/players/available-gameweeks/');
+        this.availableGameweeks = response.data;
+      } catch (error) {
+        console.error('Error fetching available gameweeks:', error);
+        this.availableGameweeks = [];
       } finally {
         this.isLoading = false;
       }
@@ -160,7 +192,7 @@ export const useFantasyStore = defineStore("fantasy", {
         const response = await apiClient.post(`/fantasy/players/save-team-players/`, team);
 
         if (response.status === 200) {
-          await this.fetchFantasyTeamPlayers();
+          await this.fetchFantasyTeamPlayers(this.currentGameweek);
           return response;
         } else {
           this.error = `Unexpected response status: ${response.status}`;
@@ -192,6 +224,16 @@ export const useFantasyStore = defineStore("fantasy", {
       } finally {
         this.isLoading = false;
       }
+    },
+
+    setCurrentGameweek(gameweek: number | null) {
+      this.currentGameweek = gameweek;
+    },
+
+    clearGameweekData() {
+      this.fantasyPlayers = [];
+      this.currentGameweek = null;
+      this.gameweekData = null;
     }
   },
 });
