@@ -6,14 +6,14 @@
       <div class="flex items-center justify-between mb-2 sm:mb-4">
         <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
           <div class="min-w-0 flex-1">
-            <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 truncate">{{ fantasyStore.userTeam[0].name
+            <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 truncate">{{ team.name
             }}</h2>
             <p class="text-xs sm:text-sm text-gray-500">Manager Dashboard</p>
           </div>
         </div>
         <div class="text-right flex-shrink-0">
           <div class="text-xs text-gray-400 uppercase tracking-wide">Gameweek</div>
-          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ fantasyStore.userTeam[0].gameweek }}
+          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ team.requested_gameweek }}
           </div>
         </div>
       </div>
@@ -37,7 +37,7 @@
       </div>
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Formation</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team.formation
+          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team.requested_gameweek_formation
           }}</span>
         </div>
         <div class="flex items-center justify-between">
@@ -256,7 +256,7 @@ const props = defineProps<{
   team: string | null;
   teamValue?: number;
   inBank?: number;
-  currentGameweek?: number;
+  currentGameweek: number | null;
   recentForm?: number[];
 }>();
 

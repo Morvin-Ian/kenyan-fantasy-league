@@ -1,15 +1,8 @@
 from rest_framework import serializers
-
-from apps.fantasy.models import (
-    FantasyPlayer,
-    FantasyTeam,
-    PlayerPerformance,
-    TeamSelection,
-)
+from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance, TeamSelection
 from apps.kpl.models import Gameweek
 from django.db.models import Sum
 from decimal import Decimal
-
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
@@ -18,6 +11,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
     total_points = serializers.SerializerMethodField(read_only=True)
     gameweek_points = serializers.SerializerMethodField(read_only=True)
     best_week = serializers.SerializerMethodField(read_only=True)
+    requested_gameweek_points = serializers.SerializerMethodField(read_only=True)
+    requested_gameweek_formation = serializers.SerializerMethodField(read_only=True)
+    has_selection_for_requested_gameweek = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = FantasyTeam
@@ -33,6 +29,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             "balance",
             "gameweek_points",
             "best_week",
+            "requested_gameweek_points",
+            "requested_gameweek_formation",
+            "has_selection_for_requested_gameweek",
         )
 
     def get_gameweek(self, obj):
@@ -54,8 +53,38 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         if not active_gameweek:
             return 0
 
+        return self._get_points_for_gameweek(obj, active_gameweek)
+
+    def get_requested_gameweek_points(self, obj):
+        requested_gameweek = self.context.get('requested_gameweek')
+        if not requested_gameweek:
+            return None
+        
+        return self._get_points_for_gameweek(obj, requested_gameweek)
+
+    def get_requested_gameweek_formation(self, obj):
+        requested_gameweek = self.context.get('requested_gameweek')
+        if not requested_gameweek:
+            return None
+        
         team_selection = TeamSelection.objects.filter(
-            fantasy_team=obj, gameweek=active_gameweek
+            fantasy_team=obj, gameweek=requested_gameweek
+        ).first()
+        
+        return team_selection.formation if team_selection else None
+
+    def get_has_selection_for_requested_gameweek(self, obj):
+        requested_gameweek = self.context.get('requested_gameweek')
+        if not requested_gameweek:
+            return None
+        
+        return TeamSelection.objects.filter(
+            fantasy_team=obj, gameweek=requested_gameweek
+        ).exists()
+
+    def _get_points_for_gameweek(self, obj, gameweek):
+        team_selection = TeamSelection.objects.filter(
+            fantasy_team=obj, gameweek=gameweek
         ).first()
 
         if not team_selection:
@@ -65,7 +94,7 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
         total_points = (
             PlayerPerformance.objects.filter(
-                player_id__in=starter_ids, gameweek=active_gameweek
+                player_id__in=starter_ids, gameweek=gameweek
             ).aggregate(total=Sum("fantasy_points"))["total"]
             or 0
         )
@@ -74,48 +103,42 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
     def get_total_points(self, obj):
         total = 0
-
-        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related(
-            "gameweek", "captain", "vice_captain"
-        )
+        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related("gameweek")
 
         for selection in team_selections:
-            starter_ids = selection.starters.values_list("player_id", flat=True)
-
-            gameweek_points = (
-                PlayerPerformance.objects.filter(
-                    player_id__in=starter_ids, gameweek=selection.gameweek
-                ).aggregate(total=Sum("fantasy_points"))["total"]
-                or 0
-            )
-
-            total += gameweek_points
+            total += self._get_points_for_gameweek(obj, selection.gameweek)
 
         return total
 
     def get_best_week(self, obj):
-        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related(
-            "gameweek"
-        )
+        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related("gameweek")
 
         best_gameweek = None
         max_points = 0
 
         for selection in team_selections:
-            starter_ids = selection.starters.values_list("player_id", flat=True)
-
-            gameweek_points = (
-                PlayerPerformance.objects.filter(
-                    player_id__in=starter_ids, gameweek=selection.gameweek
-                ).aggregate(total=Sum("fantasy_points"))["total"]
-                or 0
-            )
-
+            gameweek_points = self._get_points_for_gameweek(obj, selection.gameweek)
             if gameweek_points > max_points:
                 max_points = gameweek_points
                 best_gameweek = selection.gameweek.number
 
         return max_points if best_gameweek else None
+
+    def to_representation(self, instance):
+        """Add gameweek context to the response"""
+        data = super().to_representation(instance)
+        
+        requested_gameweek = self.context.get('requested_gameweek')
+        if requested_gameweek:
+            data['requested_gameweek'] = requested_gameweek.number
+            data['requested_gameweek_name'] = f"Gameweek {requested_gameweek.number}"
+        else:
+            active_gameweek = Gameweek.objects.filter(is_active=True).first()
+            if active_gameweek:
+                data['requested_gameweek'] = active_gameweek.number
+                data['requested_gameweek_name'] = f"Gameweek {active_gameweek.number} (Current)"
+        
+        return data
 
 
 class FantasyPlayerSerializer(serializers.ModelSerializer):

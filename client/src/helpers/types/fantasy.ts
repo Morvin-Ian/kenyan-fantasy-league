@@ -11,6 +11,11 @@ export interface FantasyTeam {
   overall_rank: number | null;
   best_week: number | null;
   transfer_budget: string;
+  requested_gameweek_points?: number | null;
+  requested_gameweek_formation?: string | null;
+  has_selection_for_requested_gameweek?: boolean | null;
+  requested_gameweek?: number;
+  requested_gameweek_name?: string;
 }
 
 export interface FantasyPlayer {
