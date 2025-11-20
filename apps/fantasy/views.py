@@ -123,6 +123,7 @@ class FantasyPlayerViewSet(ModelViewSet):
             else:
                 last_selection = (
                     TeamSelection.objects.filter(fantasy_team=fantasy_team)
+                    .select_related("gameweek")
                     .order_by("-gameweek__number")
                     .first()
                 )
@@ -132,12 +133,19 @@ class FantasyPlayerViewSet(ModelViewSet):
                     gameweek = Gameweek.objects.filter(is_active=True).first()
 
             try:
-                team_selection = TeamSelection.objects.get(
+                # Optimize: prefetch related data to avoid N+1 queries
+                team_selection = TeamSelection.objects.prefetch_related(
+                    'starters__player__team',
+                    'starters__player__performances',
+                    'bench__player__team',
+                    'bench__player__performances'
+                ).select_related('captain', 'vice_captain').get(
                     fantasy_team=fantasy_team, gameweek=gameweek
                 )
 
-                players = list(team_selection.starters.all()) + list(
-                    team_selection.bench.all()
+                # Combine and select_related to avoid N+1 queries when serializing
+                players = list(team_selection.starters.select_related('player__team').all()) + list(
+                    team_selection.bench.select_related('player__team').all()
                 )
 
                 serializer = FantasyPlayerSerializer(

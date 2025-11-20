@@ -83,7 +83,8 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
             points = performance.fantasy_points
             
-            if team_selection.captain == obj:
+            # Use captain_id for efficient comparison
+            if team_selection.captain_id == obj.id:
                 points = points * 2
             
             return points
@@ -265,13 +266,11 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
     def get_gameweek_points(self, obj):
         try:
-            # Check if there's a requested gameweek in the context first
             requested_gameweek = self.context.get('requested_gameweek')
             
             if requested_gameweek:
                 gameweek = requested_gameweek
             else:
-                # Fall back to active gameweek
                 if '_active_gameweek_cached' not in self.context:
                     self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
                 gameweek = self.context.get('_active_gameweek_cached')
@@ -279,22 +278,22 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             if not gameweek:
                 return None
 
-            # Check if player was in the team selection for this gameweek
             team_selection = TeamSelection.objects.filter(
                 fantasy_team=obj.fantasy_team, gameweek=gameweek
-            ).first()
+            ).prefetch_related('starters', 'bench').first()
 
             if not team_selection:
                 return None
 
-            # Check if this player is in the team selection (starter or bench)
-            is_starter = team_selection.starters.filter(id=obj.id).exists()
-            is_bench = team_selection.bench.filter(id=obj.id).exists()
+            starter_ids = [s.id for s in team_selection.starters.all()]
+            bench_ids = [b.id for b in team_selection.bench.all()]
+            
+            is_starter = obj.id in starter_ids
+            is_bench = obj.id in bench_ids
             
             if not (is_starter or is_bench):
                 return None
 
-            # Get performance for this gameweek
             performance = obj.player.performances.filter(
                 gameweek=gameweek
             ).first()
@@ -304,8 +303,7 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
             points = performance.fantasy_points
             
-            # Apply captain multiplier if applicable
-            if is_starter and team_selection.captain == obj:
+            if is_starter and team_selection.captain_id == obj.id:
                 points = points * 2
 
             return points
@@ -325,13 +323,11 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
         player = data.get("player")
         instance = self.instance
 
-        # Check max players in fantasy team
         if fantasy_team and fantasy_team.players.count() >= 15 and not instance:
             raise serializers.ValidationError(
                 "You can't have more than 15 players in a fantasy team."
             )
 
-        # Check max players from the same real team
         if player and fantasy_team:
             same_team_players = fantasy_team.players.filter(
                 player__team=player.team
