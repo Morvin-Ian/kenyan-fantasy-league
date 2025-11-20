@@ -55,9 +55,9 @@
           class="group bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
           <div class="flex items-center justify-between">
             <div class="min-w-0 flex-1">
-              <div class="text-blue-100 text-xs uppercase tracking-wide mb-1">Total Points</div>
+              <div class="text-blue-100 text-xs uppercase tracking-wide mb-1">Gameweek Points</div>
               <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
-                {{ team.total_points }}
+                {{ team.requested_gameweek_points }}
               </div>
             </div>
             <div
