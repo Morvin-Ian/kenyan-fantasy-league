@@ -63,6 +63,12 @@ class FantasyPlayer(TimeStampedUUIDModel):
         verbose_name = "Fantasy Player"
         verbose_name_plural = "Fantasy Players"
         unique_together = ["fantasy_team", "player"]
+        indexes = [
+            models.Index(fields=['fantasy_team', 'is_starter']),
+            models.Index(fields=['player', 'fantasy_team']),
+            models.Index(fields=['is_captain']),
+            models.Index(fields=['is_vice_captain']),
+        ]
 
     def __str__(self):
         return f"{self.player.name} - {self.fantasy_team.name}"
@@ -163,6 +169,12 @@ class PlayerPerformance(TimeStampedUUIDModel):
         verbose_name = "Player Performance"
         verbose_name_plural = "Player Performances"
         unique_together = ["player", "fixture"]
+        indexes = [
+            models.Index(fields=['gameweek', '-fantasy_points']),
+            models.Index(fields=['player', 'gameweek']),
+            models.Index(fields=['-goals_scored']),
+            models.Index(fields=['fixture']),
+        ]
 
     def __str__(self):
         if self.player and self.fixture:
@@ -192,6 +204,10 @@ class TeamSelection(TimeStampedUUIDModel):
         verbose_name = "Team Selection"
         verbose_name_plural = "Team Selections"
         unique_together = ["fantasy_team", "gameweek"]
+        indexes = [
+            models.Index(fields=['fantasy_team', 'gameweek', 'is_finalized']),
+            models.Index(fields=['gameweek', 'is_finalized']),
+        ]
 
     def __str__(self):
         return f"{self.fantasy_team.name} - GW{self.gameweek.number} ({self.formation})"

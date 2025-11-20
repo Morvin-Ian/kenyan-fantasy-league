@@ -267,7 +267,15 @@ class PlayerPerformanceViewSet(ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="goals-leaderboard")
     def goals_leaderboard(self, request):
+        from django.core.cache import cache
+        
         limit = int(request.query_params.get("limit", 5))
+        cache_key = f"goals_leaderboard_limit_{limit}"
+        
+        # Try to get from cache first
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
 
         players_goals = (
             Player.objects.annotate(

@@ -35,7 +35,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         )
 
     def get_gameweek(self, obj):
-        active_gameweek = Gameweek.objects.filter(is_active=True).first()
+        if '_active_gameweek_cached' not in self.context:
+            self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
+        active_gameweek = self.context.get('_active_gameweek_cached')
         return active_gameweek.number if active_gameweek else None
 
     def get_balance(self, obj):
@@ -56,7 +58,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             if requested_gameweek:
                 gameweek = requested_gameweek
             else:
-                gameweek = Gameweek.objects.filter(is_active=True).first()
+                if '_active_gameweek_cached' not in self.context:
+                    self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
+                gameweek = self.context.get('_active_gameweek_cached')
             
             if not gameweek:
                 return None
@@ -166,7 +170,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             data['requested_gameweek'] = requested_gameweek.number
             data['requested_gameweek_name'] = f"Gameweek {requested_gameweek.number}"
         else:
-            active_gameweek = Gameweek.objects.filter(is_active=True).first()
+            if '_active_gameweek_cached' not in self.context:
+                self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
+            active_gameweek = self.context.get('_active_gameweek_cached')
             if active_gameweek:
                 data['requested_gameweek'] = active_gameweek.number
                 data['requested_gameweek_name'] = f"Gameweek {active_gameweek.number} (Current)"
@@ -259,7 +265,9 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
     def get_gameweek_points(self, obj):
         try:
-            active_gameweek = Gameweek.objects.filter(is_active=True).first()
+            if '_active_gameweek_cached' not in self.context:
+                self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
+            active_gameweek = self.context.get('_active_gameweek_cached')
             if not active_gameweek:
                 return None
 
