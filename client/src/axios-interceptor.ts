@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useAuthStore } from "./stores/auth";
-import router from "@/router"; 
+import router from "@/router";
 import type {
   AxiosError,
   InternalAxiosRequestConfig,
@@ -50,27 +50,39 @@ apiClient.interceptors.response.use(
     const authStore = useAuthStore();
     const originalRequest = error.config;
 
+    const isRefreshRequest = originalRequest.url?.includes("/jwt/refresh");
+
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // If the refresh token request itself failed, logout immediately
+      if (isRefreshRequest) {
+        isRefreshing = false;
+        subscribers = []; // Clear any pending requests
+        authStore.logout();
+        router.push("/sign-in");
+        return Promise.reject(error);
+      }
+
       originalRequest._retry = true;
 
       if (!isRefreshing) {
         isRefreshing = true;
 
         try {
-          await authStore.refreshToken(); 
+          await authStore.refreshToken();
           isRefreshing = false;
           const newToken = authStore.token!;
           onTokenRefreshed(newToken);
-          return apiClient(originalRequest); 
+          return apiClient(originalRequest);
         } catch (e) {
           isRefreshing = false;
+          subscribers = []; 
           authStore.logout();
           router.push("/sign-in");
           return Promise.reject(e);
         }
       }
 
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         addSubscriber((token: string) => {
           originalRequest.headers.Authorization = `Bearer ${token}`;
           resolve(apiClient(originalRequest));
