@@ -34,7 +34,7 @@
                   :value="gw.number"
                   class="text-sm"
                 >
-                  {{ gw.name }} {{ gw.is_active ? '• Current' : '' }}
+                  {{ gw.name }}
                 </option>
               </select>
               <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" 
@@ -65,35 +65,6 @@
         </div>
       </div>
 
-      <!-- Gameweek Stats Bar -->
-      <div v-if="fantasyStore.gameweekData" 
-           class="bg-white rounded-xl border border-gray-200 p-4 mb-6 shadow-sm">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-          <div>
-            <div class="text-sm text-gray-500 font-medium">Gameweek</div>
-            <div class="text-lg font-bold text-gray-900">{{ fantasyStore.gameweekData.gameweek_name }}</div>
-          </div>
-          <div>
-            <div class="text-sm text-gray-500 font-medium">Players Selected</div>
-            <div class="text-lg font-bold text-gray-900">
-              {{ fantasyStore.fantasyPlayers.filter(p => !p.id.startsWith('placeholder')).length }}/15
-            </div>
-          </div>
-          <div>
-            <div class="text-sm text-gray-500 font-medium">Status</div>
-            <div class="text-lg font-bold" 
-                 :class="fantasyStore.gameweekData.is_active ? 'text-green-600' : 'text-gray-600'">
-              {{ fantasyStore.gameweekData.is_active ? 'Active' : 'Completed' }}
-            </div>
-          </div>
-          <div>
-            <div class="text-sm text-gray-500 font-medium">Team Value</div>
-            <div class="text-lg font-bold text-gray-900">
-              KES {{ calculateTeamValue().toFixed(1) }}m
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
     <!-- Loading State -->
