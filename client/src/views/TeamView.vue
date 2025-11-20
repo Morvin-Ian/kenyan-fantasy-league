@@ -453,7 +453,8 @@ function initializeTeamState() {
   let players: Player[] = [];
 
   if (Array.isArray(fantasyStore.fantasyPlayers)) {
-    players = fantasyStore.fantasyPlayers;
+    // Create a deep copy to avoid mutating the store data
+    players = fantasyStore.fantasyPlayers.map(p => ({ ...p }));
   } else if (fantasyStore.fantasyPlayers && typeof fantasyStore.fantasyPlayers === 'object') {
     console.error('fantasyPlayers is not an array:', fantasyStore.fantasyPlayers);
     players = [];
@@ -478,15 +479,18 @@ function initializeTeamState() {
 
   benchPlayersRef.value = [];
 
-  //  populate with actual players
+  //  populate with actual players - preserve all properties including gameweek_points
   players.forEach((player: Player) => {
+    // Make sure to spread all player properties
+    const fullPlayer = { ...player };
+    
     if (player.is_starter) {
-      if (player.position === "GKP") startingElevenRef.value.goalkeeper = player;
-      else if (player.position === "DEF") startingElevenRef.value.defenders.push(player);
-      else if (player.position === "MID") startingElevenRef.value.midfielders.push(player);
-      else if (player.position === "FWD") startingElevenRef.value.forwards.push(player);
+      if (player.position === "GKP") startingElevenRef.value.goalkeeper = fullPlayer;
+      else if (player.position === "DEF") startingElevenRef.value.defenders.push(fullPlayer);
+      else if (player.position === "MID") startingElevenRef.value.midfielders.push(fullPlayer);
+      else if (player.position === "FWD") startingElevenRef.value.forwards.push(fullPlayer);
     } else {
-      benchPlayersRef.value.push(player);
+      benchPlayersRef.value.push(fullPlayer);
     }
   });
 

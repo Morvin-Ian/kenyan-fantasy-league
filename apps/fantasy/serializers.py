@@ -265,31 +265,53 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
     def get_gameweek_points(self, obj):
         try:
-            if '_active_gameweek_cached' not in self.context:
-                self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
-            active_gameweek = self.context.get('_active_gameweek_cached')
-            if not active_gameweek:
+            # Check if there's a requested gameweek in the context first
+            requested_gameweek = self.context.get('requested_gameweek')
+            
+            if requested_gameweek:
+                gameweek = requested_gameweek
+            else:
+                # Fall back to active gameweek
+                if '_active_gameweek_cached' not in self.context:
+                    self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
+                gameweek = self.context.get('_active_gameweek_cached')
+            
+            if not gameweek:
                 return None
 
+            # Check if player was in the team selection for this gameweek
             team_selection = TeamSelection.objects.filter(
-                fantasy_team=obj.fantasy_team, gameweek=active_gameweek, starters=obj
+                fantasy_team=obj.fantasy_team, gameweek=gameweek
             ).first()
 
             if not team_selection:
                 return None
 
+            # Check if this player is in the team selection (starter or bench)
+            is_starter = team_selection.starters.filter(id=obj.id).exists()
+            is_bench = team_selection.bench.filter(id=obj.id).exists()
+            
+            if not (is_starter or is_bench):
+                return None
+
+            # Get performance for this gameweek
             performance = obj.player.performances.filter(
-                gameweek=active_gameweek
+                gameweek=gameweek
             ).first()
 
             if not performance:
                 return None
 
             points = performance.fantasy_points
+            
+            # Apply captain multiplier if applicable
+            if is_starter and team_selection.captain == obj:
+                points = points * 2
 
             return points
 
-        except Exception:
+        except Exception as e:
+            print(f"Error calculating gameweek points: {e}")
             return None
 
     def get_jersey_image(self, obj):
