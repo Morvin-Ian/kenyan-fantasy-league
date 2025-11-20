@@ -50,9 +50,7 @@
             <div class="flex items-center gap-2">
               <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" 
                    :class="{ 'bg-green-500': currentGameweekInfo.is_active }"></div>
-              <span class="text-sm font-semibold text-blue-800">
-                GW {{ fantasyStore.currentGameweek }}
-              </span>
+         
               <span v-if="currentGameweekInfo.is_active" 
                     class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                 Active
