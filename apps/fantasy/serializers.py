@@ -96,28 +96,7 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             if not gameweek:
                 return None
 
-            team_selection = TeamSelection.objects.filter(
-                fantasy_team=obj.fantasy_team, 
-                gameweek=gameweek, 
-                starters=obj
-            ).first()
-
-            if not team_selection:
-                return None
-
-            performance = obj.player.performances.filter(
-                gameweek=gameweek
-            ).first()
-
-            if not performance:
-                return None
-
-            points = performance.fantasy_points
-            
-            if team_selection.captain_id == obj.id:
-                points = points * 2
-            
-            return points
+            return self._get_points_for_gameweek(obj, gameweek)
 
         except Exception as e:
             logger.error(f"Error calculating gameweek points for {obj}: {e}", exc_info=True)
