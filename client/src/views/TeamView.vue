@@ -131,26 +131,13 @@
             </div>
           </div>
 
-          <Pitch 
-            :goalkeeper="goalkeeper" 
-            :defenders="defenders" 
-            :midfielders="midfielders" 
-            :forwards="forwards"
-            :bench-players="benchPlayers" 
-            :switch-source="switchSource" 
-            :switch-active="switchActive"
-            @player-click="handlePlayerClick" 
-            @formation-change="handleFormationChange" 
-          />
+          <Pitch :goalkeeper="goalkeeper" :defenders="defenders" :midfielders="midfielders" :forwards="forwards"
+            :bench-players="benchPlayers" :switch-source="switchSource" :switch-active="switchActive"
+            @player-click="handlePlayerClick" @formation-change="handleFormationChange" />
 
-          <MessageAlert v-if="message.text" 
-            :type="message.type" 
-            :text="message.text" 
-            :dismissible="message.dismissible"
-            :auto-dismiss="message.autoDismiss" 
-            @dismiss="clearMessage"
-            class="absolute top-4 left-0 right-0 z-20 mx-4" 
-          />
+          <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
+            :auto-dismiss="message.autoDismiss" @dismiss="clearMessage"
+            class="absolute top-4 left-0 right-0 z-20 mx-4" />
 
           <div v-if="hasUnsavedChanges && canEditCurrentGameweek"
             class="hidden lg:block absolute bottom-4 right-4 z-10">
@@ -168,15 +155,9 @@
           </div>
         </div>
 
-        <Sidebar 
-          :total-points="totalPoints" 
-          :average-points="averagePoints" 
-          :highest-points="highestPoints"
-          :overall-rank="overallRank" 
-          :team="userTeamName" 
-          :in-bank="remainingBudget"
-          :currentGameweek="fantasyStore.currentGameweek" 
-        />
+        <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
+          :overall-rank="overallRank" :team="userTeamName" :in-bank="remainingBudget"
+          :currentGameweek="fantasyStore.currentGameweek" />
       </div>
     </div>
 
@@ -191,72 +172,53 @@
         Your Team</button>
     </div>
 
-    <PlayerModal v-if="userTeam && userTeam.length" 
-      :show-modal="showModal" 
-      :selected-player="selectedPlayer"
-      @close-modal="closeModal" 
-      @initiate-switch="initiateSwitch" 
-      @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain" 
-      @make-vice-captain="makeViceCaptain" 
-    />
+    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
+      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
 
-    <SearchPlayer 
-      :show-search-modal="showSearchModal" 
-      :selectedPlayer="selectedPlayer" 
-      @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer" 
-    />
+    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" />
 
     <div v-if="showCreateTeamModal"
       class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
       <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
-      
-      <MessageAlert v-if="modalMessage.text" 
-        :type="modalMessage.type" 
-        :text="modalMessage.text"
-        :dismissible="modalMessage.dismissible" 
-        @dismiss="clearModalMessage" 
-        class="mb-4" 
-      />
 
-      <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
-      <form @submit.prevent="createTeam">
-        <div class="mb-4">
-          <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
-          <input v-model="teamName" id="teamName" type="text"
-            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-            placeholder="Enter your team name" required />
-        </div>
-        <div class="mb-4">
-          <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
-          <select v-model="selectedFormation" id="formation"
-            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
-            required>
-            <option value="" disabled>Select a formation</option>
-            <option value="3-4-3">3-4-3</option>
-            <option value="4-4-2">4-4-2</option>
-            <option value="4-3-3">4-3-3</option>
-          </select>
-        </div>
+        <MessageAlert v-if="modalMessage.text" :type="modalMessage.type" :text="modalMessage.text"
+          :dismissible="modalMessage.dismissible" @dismiss="clearModalMessage" class="mb-4" />
 
-        <div class="flex justify-end gap-4">
-          <button type="button" @click="showCreateTeamModal = false"
-            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
-          <button type="submit"
-            class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
-            Team</button>
-        </div>
-      </form>
+        <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
+        <form @submit.prevent="createTeam">
+          <div class="mb-4">
+            <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
+            <input v-model="teamName" id="teamName" type="text"
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+              placeholder="Enter your team name" required />
+          </div>
+          <div class="mb-4">
+            <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
+            <select v-model="selectedFormation" id="formation"
+              class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+              required>
+              <option value="" disabled>Select a formation</option>
+              <option value="3-4-3">3-4-3</option>
+              <option value="4-4-2">4-4-2</option>
+              <option value="4-3-3">4-3-3</option>
+            </select>
+          </div>
+
+          <div class="flex justify-end gap-4">
+            <button type="button" @click="showCreateTeamModal = false"
+              class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
+            <button type="submit"
+              class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
+              Team</button>
+          </div>
+        </form>
       </div>
     </div>
 
-    <ChipSelector 
-      :show="showChipSelector" 
-      :chips="fantasyStore.chips" 
-      @close="showChipSelector = false"
-      @select="handleChipSelection" 
-    />
+    <ChipSelector :show="showChipSelector" :chips="fantasyStore.chips" @close="showChipSelector = false"
+      @select="handleChipSelection" />
   </div>
 </template>
 
@@ -294,7 +256,6 @@ const remainingBudget = computed(() => {
   return 70.0 - teamValue;
 });
 
-// Calculate total team value
 const calculateTeamValue = () => {
   if (!fantasyStore.fantasyPlayers.length) return 0;
   return fantasyStore.fantasyPlayers
@@ -302,7 +263,6 @@ const calculateTeamValue = () => {
     .reduce((total, player) => total + parseFloat(player.current_value || '0'), 0);
 };
 
-// Handle gameweek change
 const handleGameweekChange = async () => {
   try {
     isSwitchingGameweek.value = true;
@@ -321,7 +281,6 @@ const handleGameweekChange = async () => {
   }
 };
 
-// Update your onMounted function
 onMounted(async () => {
   try {
     authStore.initialize();
@@ -335,15 +294,12 @@ onMounted(async () => {
     }
 
     if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
-      // Fetch available gameweeks first
       await fantasyStore.fetchAvailableGameweeks();
 
-      // Set initial gameweek to current active one or first available
       const currentGw = fantasyStore.availableGameweeks.find(gw => gw.is_active);
       selectedGameweek.value = currentGw?.number ||
         (fantasyStore.availableGameweeks[0]?.number || null);
 
-      // Fetch players for the selected gameweek
       if (selectedGameweek.value) {
         await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
         await fantasyStore.fetchUserFantasyTeam(selectedGameweek.value)
@@ -358,7 +314,6 @@ onMounted(async () => {
   }
 });
 
-// Update your existing computed properties to consider gameweek state
 const hasEmptySlots = computed(() => {
   if (!userTeam.value || userTeam.value.length === 0) return false;
   if (!canEditCurrentGameweek.value) return false; // Can't edit past gameweeks
@@ -399,7 +354,6 @@ const initialTeamState = ref<{
   benchPlayers: Player[];
 } | null>(null);
 
-// Message states
 const message = ref({
   text: '',
   type: 'info',
@@ -520,7 +474,6 @@ function initializeTeamState() {
   let players: Player[] = [];
 
   if (Array.isArray(fantasyStore.fantasyPlayers)) {
-    // Create a deep copy to avoid mutating the store data
     players = fantasyStore.fantasyPlayers.map(p => ({ ...p }));
   } else if (fantasyStore.fantasyPlayers && typeof fantasyStore.fantasyPlayers === 'object') {
     console.error('fantasyPlayers is not an array:', fantasyStore.fantasyPlayers);
@@ -546,9 +499,7 @@ function initializeTeamState() {
 
   benchPlayersRef.value = [];
 
-  //  populate with actual players - preserve all properties including gameweek_points
   players.forEach((player: Player) => {
-    // Make sure to spread all player properties
     const fullPlayer = { ...player };
 
     if (player.is_starter) {
@@ -561,7 +512,6 @@ function initializeTeamState() {
     }
   });
 
-  // Fill remaining starting positions with placeholders (If there is No team players for Starting 11)
   if (!startingElevenRef.value.goalkeeper.id || startingElevenRef.value.goalkeeper.id.startsWith("placeholder")) {
     startingElevenRef.value.goalkeeper = createPlaceholderPlayer("GKP", 0);
   }
@@ -580,10 +530,7 @@ function initializeTeamState() {
     benchPlayersRef.value.push(createPlaceholderPlayer("GKP", 0, false));
   }
 
-  // Reduce the benchPlayersRef array to count how many players are on the bench for each position
   const benchCounts = benchPlayersRef.value.reduce((accumulator, player) => {
-    // If the position already exists in the accumulator, increment its count
-    // Otherwise, initialize it to 1
     accumulator[player.position] = (accumulator[player.position] || 0) + 1;
     return accumulator;
   }, {
@@ -688,7 +635,7 @@ const initiateTransfer = (player: Player | null | undefined) => {
   }
 
   if (player.id.startsWith("placeholder")) {
-    // showMessage("Please select a valid player to transfer.", "info");  
+
     return;
   }
   selectedPlayer.value = player;

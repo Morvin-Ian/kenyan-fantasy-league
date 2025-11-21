@@ -7,13 +7,21 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.kpl.models import Player
 
-from ..models import FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer, TeamSelection
+from ..models import Chip, ChipType, FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer, TeamSelection
 
 
 class FantasyService:
     @staticmethod
     def create_fantasy_team(user: User, data: dict) -> FantasyTeam:
-        return FantasyTeam.objects.create(user=user, **data)
+        team = FantasyTeam.objects.create(user=user, **data)
+        
+        chips_to_create = [
+            Chip(fantasy_team=team, chip_type=chip_type, is_used=False)
+            for chip_type in ChipType.values
+        ]
+        Chip.objects.bulk_create(chips_to_create)
+        
+        return team
 
     @staticmethod
     def update_fantasy_team(team: FantasyTeam, data: dict) -> FantasyTeam:
