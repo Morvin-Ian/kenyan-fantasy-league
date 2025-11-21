@@ -57,9 +57,8 @@ class FantasyTeamViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="user-team")
     def get_user_team(self, request):
         try:
-            teams = FantasyTeam.objects.filter(user=request.user)
+            teams = FantasyTeam.objects.filter(user=request.user).select_related('user')
             
-            # Get requested gameweek if provided
             gameweek_number = request.query_params.get("gameweek")
             requested_gameweek = None
             
@@ -72,7 +71,6 @@ class FantasyTeamViewSet(ModelViewSet):
                         status=status.HTTP_404_NOT_FOUND
                     )
             
-            # Pass gameweek context to serializer
             serializer = self.get_serializer(
                 teams, 
                 many=True,
@@ -180,15 +178,20 @@ class FantasyPlayerViewSet(ModelViewSet):
             
     @action(detail=False, methods=["get"], url_path="available-gameweeks")
     def get_available_gameweeks(self, request):
+        from django.core.cache import cache
+        
         try:
             fantasy_team = FantasyTeam.objects.get(user=request.user)
+            cache_key = f"available_gameweeks_{fantasy_team.id}"
             
-            # Get gameweeks where this team has selections
+            cached_data = cache.get(cache_key)
+            if cached_data:
+                return Response(cached_data, status=status.HTTP_200_OK)
+            
             gameweeks_with_selections = Gameweek.objects.filter(
                 team_selections__fantasy_team=fantasy_team
             ).distinct().order_by('-number')
             
-            # Also include current/active gameweek
             active_gameweek = Gameweek.objects.filter(is_active=True).first()
             
             gameweeks_data = []
@@ -200,7 +203,6 @@ class FantasyPlayerViewSet(ModelViewSet):
                     'has_selection': True
                 })
             
-            # Add active gameweek if not already included
             if active_gameweek and active_gameweek not in gameweeks_with_selections:
                 gameweeks_data.append({
                     'number': active_gameweek.number,
@@ -208,6 +210,8 @@ class FantasyPlayerViewSet(ModelViewSet):
                     'is_active': True,
                     'has_selection': False
                 })
+            
+            cache.set(cache_key, gameweeks_data, 300)
             
             return Response(gameweeks_data, status=status.HTTP_200_OK)
             
@@ -280,7 +284,6 @@ class PlayerPerformanceViewSet(ModelViewSet):
         limit = int(request.query_params.get("limit", 5))
         cache_key = f"goals_leaderboard_limit_{limit}"
         
-        # Try to get from cache first
         cached_data = cache.get(cache_key)
         if cached_data:
             return Response(cached_data, status=status.HTTP_200_OK)
@@ -320,6 +323,8 @@ class PlayerPerformanceViewSet(ModelViewSet):
                     "rank": len(leaderboard_data) + 1,
                 }
             )
+
+        cache.set(cache_key, {"count": len(leaderboard_data), "results": leaderboard_data}, 600)
 
         return Response(
             {"count": len(leaderboard_data), "results": leaderboard_data},

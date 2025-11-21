@@ -3,6 +3,9 @@ from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance, T
 from apps.kpl.models import Gameweek
 from django.db.models import Sum
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
@@ -83,14 +86,13 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
             points = performance.fantasy_points
             
-            # Use captain_id for efficient comparison
             if team_selection.captain_id == obj.id:
                 points = points * 2
             
             return points
 
         except Exception as e:
-            print(f"Error calculating gameweek points: {e}")
+            logger.error(f"Error calculating gameweek points for {obj}: {e}", exc_info=True)
             return None
 
     def get_requested_gameweek_points(self, obj):
@@ -120,10 +122,11 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             fantasy_team=obj, gameweek=requested_gameweek
         ).exists()
 
-    def _get_points_for_gameweek(self, obj, gameweek):
-        team_selection = TeamSelection.objects.filter(
-            fantasy_team=obj, gameweek=gameweek
-        ).first()
+    def _get_points_for_gameweek(self, obj, gameweek, team_selection=None):
+        if team_selection is None:
+            team_selection = TeamSelection.objects.filter(
+                fantasy_team=obj, gameweek=gameweek
+            ).first()
 
         if not team_selection:
             return 0
@@ -137,25 +140,37 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             or 0
         )
 
+        if team_selection.captain_id:
+            captain_performance = PlayerPerformance.objects.filter(
+                player_id=team_selection.captain.player_id,
+                gameweek=gameweek
+            ).first()
+            if captain_performance:
+                total_points += captain_performance.fantasy_points
+
         return total_points
 
     def get_total_points(self, obj):
         total = 0
-        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related("gameweek")
+        team_selections = TeamSelection.objects.filter(
+            fantasy_team=obj
+        ).select_related("gameweek", "captain__player")
 
         for selection in team_selections:
-            total += self._get_points_for_gameweek(obj, selection.gameweek)
+            total += self._get_points_for_gameweek(obj, selection.gameweek, selection)
 
         return total
 
     def get_best_week(self, obj):
-        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related("gameweek")
+        team_selections = TeamSelection.objects.filter(
+            fantasy_team=obj
+        ).select_related("gameweek", "captain__player")
 
         best_gameweek = None
         max_points = 0
 
         for selection in team_selections:
-            gameweek_points = self._get_points_for_gameweek(obj, selection.gameweek)
+            gameweek_points = self._get_points_for_gameweek(obj, selection.gameweek, selection)
             if gameweek_points > max_points:
                 max_points = gameweek_points
                 best_gameweek = selection.gameweek.number
@@ -309,7 +324,7 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             return points
 
         except Exception as e:
-            print(f"Error calculating gameweek points: {e}")
+            logger.error(f"Error calculating gameweek points for player {obj}: {e}", exc_info=True)
             return None
 
     def get_jersey_image(self, obj):
@@ -408,5 +423,13 @@ class TeamSelectionSerializer(serializers.ModelSerializer):
             ).aggregate(total=Sum("fantasy_points"))["total"]
             or 0
         )
+
+        if obj.captain_id:
+            captain_performance = PlayerPerformance.objects.filter(
+                player_id=obj.captain.player_id,
+                gameweek=obj.gameweek
+            ).first()
+            if captain_performance:
+                total_points += captain_performance.fantasy_points
 
         return total_points
