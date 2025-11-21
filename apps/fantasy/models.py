@@ -18,6 +18,12 @@ FORMATION_CHOICES = [
 ]
 
 
+class ChipType(models.TextChoices):
+    TRIPLE_CAPTAIN = 'TC', 'Triple Captain'
+    BENCH_BOOST = 'BB', 'Bench Boost'
+    WILDCARD = 'WC', 'Wildcard'
+
+
 class FantasyTeam(TimeStampedUUIDModel):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="fantasy_teams"
@@ -38,6 +44,38 @@ class FantasyTeam(TimeStampedUUIDModel):
 
     def __str__(self):
         return f"{self.name} (Owner: {self.user.username})"
+
+
+class Chip(TimeStampedUUIDModel):
+    fantasy_team = models.ForeignKey(
+        FantasyTeam, on_delete=models.CASCADE, related_name="chips"
+    )
+    chip_type = models.CharField(max_length=2, choices=ChipType.choices)
+    is_used = models.BooleanField(default=False)
+    used_in_gameweek = models.ForeignKey(
+        Gameweek,
+        on_delete=models.PROTECT,
+        related_name="chips_used",
+        null=True,
+        blank=True
+    )
+
+    class Meta:
+        verbose_name = "Chip"
+        verbose_name_plural = "Chips"
+        unique_together = ["fantasy_team", "chip_type"]
+        indexes = [
+            models.Index(fields=['fantasy_team', 'chip_type']),
+            models.Index(fields=['is_used']),
+        ]
+
+    def __str__(self):
+        status = f"Used in GW{self.used_in_gameweek.number}" if self.is_used else "Available"
+        return f"{self.fantasy_team.name} - {self.get_chip_type_display()} ({status})"
+
+    def clean(self):
+        if self.is_used and not self.used_in_gameweek:
+            raise ValidationError("Used chips must have a gameweek specified.")
 
 
 class FantasyPlayer(TimeStampedUUIDModel):
@@ -199,6 +237,13 @@ class TeamSelection(TimeStampedUUIDModel):
     starters = models.ManyToManyField(FantasyPlayer, related_name="starter_selections")
     bench = models.ManyToManyField(FantasyPlayer, related_name="bench_selections")
     is_finalized = models.BooleanField(default=False)
+    active_chip = models.CharField(
+        max_length=2,
+        choices=ChipType.choices,
+        null=True,
+        blank=True,
+        help_text="Active chip for this gameweek (if any)"
+    )
 
     class Meta:
         verbose_name = "Team Selection"
@@ -207,10 +252,12 @@ class TeamSelection(TimeStampedUUIDModel):
         indexes = [
             models.Index(fields=['fantasy_team', 'gameweek', 'is_finalized']),
             models.Index(fields=['gameweek', 'is_finalized']),
+            models.Index(fields=['active_chip']),
         ]
 
     def __str__(self):
-        return f"{self.fantasy_team.name} - GW{self.gameweek.number} ({self.formation})"
+        chip_info = f" [{self.get_active_chip_display()}]" if self.active_chip else ""
+        return f"{self.fantasy_team.name} - GW{self.gameweek.number} ({self.formation}){chip_info}"
 
     def clean(self):
         """Validate team selection for the gameweek"""

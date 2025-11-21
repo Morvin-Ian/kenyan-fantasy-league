@@ -4,7 +4,8 @@ import type {
   FantasyPlayer,
   FantasyTeam,
   PlayerGoalsLeaderboard,
-  GoalsLeaderboardResponse
+  GoalsLeaderboardResponse,
+  Chip,
 } from "@/helpers/types/fantasy";
 
 import type { GameweekStatusResponse } from "@/helpers/types/gameweek";
@@ -21,6 +22,8 @@ export const useFantasyStore = defineStore("fantasy", {
     availableGameweeks: [] as any[],
     currentGameweek: null as number | null,
     gameweekData: null as any,
+    chips: [] as Chip[],
+    activeChip: null as string | null,
     isLoading: false,
     error: null as string | null,
   }),
@@ -241,6 +244,40 @@ export const useFantasyStore = defineStore("fantasy", {
         console.error("Error saving fantasy team players:", errMsg);
         this.error = errMsg;
         return null;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async fetchAvailableChips() {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.get("/fantasy/players/available-chips/");
+        this.chips = response.data;
+      } catch (error) {
+        console.error("Error fetching available chips:", error);
+        this.error = error instanceof Error ? error.message : String(error);
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async activateChip(chipType: 'TC' | 'BB' | 'WC', gameweek: number) {
+      try {
+        this.isLoading = true;
+        const response = await apiClient.post("/fantasy/players/activate-chip/", {
+          chip_type: chipType,
+          gameweek: gameweek,
+        });
+
+        await this.fetchAvailableChips();
+
+        return response.data;
+      } catch (error: any) {
+        console.error("Error activating chip:", error);
+        const errMsg = error.response?.data?.detail || error.message || "Failed to activate chip";
+        this.error = errMsg;
+        throw new Error(errMsg);
       } finally {
         this.isLoading = false;
       }

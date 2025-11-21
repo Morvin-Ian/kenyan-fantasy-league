@@ -3,6 +3,7 @@ from django.utils.html import format_html
 from django.utils import timezone
 
 from .models import (
+    Chip,
     FantasyLeague,
     FantasyPlayer,
     FantasyTeam,
@@ -205,6 +206,93 @@ class FantasyLeagueAdmin(admin.ModelAdmin):
         return format_html('<span style="font-weight: bold;">{}</span>', count)
 
     teams_count.short_description = "Teams"
+
+
+@admin.register(Chip)
+class ChipAdmin(admin.ModelAdmin):
+    list_display = (
+        "chip_type_display",
+        "team_name_display",
+        "status_display",
+        "used_gameweek_display",
+        "created_at_display",
+    )
+    list_filter = ("chip_type", "is_used", "used_in_gameweek")
+    search_fields = ("fantasy_team__name", "fantasy_team__user__username")
+    readonly_fields = ("id", "created_at", "updated_at")
+    
+    fieldsets = (
+        (
+            "Chip Information",
+            {
+                "fields": ("fantasy_team", "chip_type", "is_used", "used_in_gameweek")
+            },
+        ),
+        (
+            "Timestamps",
+            {
+                "fields": ("created_at", "updated_at"),
+                "classes": ("collapse",)
+            },
+        ),
+    )
+
+    def chip_type_display(self, obj):
+        return format_html(
+            '<strong>{}</strong>',
+            obj.get_chip_type_display()
+        )
+    
+    chip_type_display.short_description = "Chip Type"
+
+    def team_name_display(self, obj):
+        return format_html(
+            '<strong>{}</strong><br><small style="color: #666;">{}</small>',
+            obj.fantasy_team.name,
+            obj.fantasy_team.user.username,
+        )
+    
+    team_name_display.short_description = "Fantasy Team"
+
+    def status_display(self, obj):
+        if obj.is_used:
+            return format_html(
+                '<span style="background-color: #f44336; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">✓ USED</span>'
+            )
+        else:
+            return format_html(
+                '<span style="background-color: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">○ AVAILABLE</span>'
+            )
+    
+    status_display.short_description = "Status"
+
+    def used_gameweek_display(self, obj):
+        if obj.is_used and obj.used_in_gameweek:
+            return format_html(
+                '<span style="color: #666;">GW {}</span>',
+                obj.used_in_gameweek.number
+            )
+        return format_html('<span style="color: #ccc;">-</span>')
+    
+    used_gameweek_display.short_description = "Used In"
+
+    def created_at_display(self, obj):
+        return format_html(
+            '<span title="{}">{}</span>',
+            obj.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            obj.created_at.strftime("%b %d, %Y"),
+        )
+    
+    created_at_display.short_description = "Created"
+
+    def get_queryset(self, request):
+        """Optimize queryset with select_related"""
+        qs = super().get_queryset(request)
+        return qs.select_related(
+            "fantasy_team",
+            "fantasy_team__user",
+            "used_in_gameweek",
+        )
 
 
 @admin.register(TeamSelection)

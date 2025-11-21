@@ -271,6 +271,9 @@ class FantasyService:
     @staticmethod
     def _update_team_value(fantasy_team: FantasyTeam) -> None:
         """Update the fantasy team's budget to reflect current player values"""
+        # Refresh from database to ensure we get all newly created players
+        fantasy_team.refresh_from_db()
+        
         total_value = (
             fantasy_team.players.aggregate(total=models.Sum("current_value"))["total"]
             or 0

@@ -79,7 +79,7 @@ export const useKplStore = defineStore('kpl', {
     async fetchPlayers() {
       try {
         let nextUrl: string | null = "/kpl/players/";
-        const isProduction = true;
+        const isProduction = import.meta.env.MODE === 'production';
         while (nextUrl) {
           if (isProduction && nextUrl.startsWith('http://')) {
             nextUrl = nextUrl.replace(/^http:\/\//, 'https://');
@@ -95,21 +95,21 @@ export const useKplStore = defineStore('kpl', {
     },
 
 
-  async submitLineup(lineupData: {
-    fixture_id: string;
-    team_id: string;
-    side: 'home' | 'away';
-    formation: string;
-    starting_xi: string[];
-    bench_players: string[];
-  }) {
-    try {
-      const response = await apiClient.post(`/kpl/fixtures/submit-lineup/`, lineupData)
-      return response.data
-    } catch (error) {
-      throw error
-    }
-  },
+    async submitLineup(lineupData: {
+      fixture_id: string;
+      team_id: string;
+      side: 'home' | 'away';
+      formation: string;
+      starting_xi: string[];
+      bench_players: string[];
+    }) {
+      try {
+        const response = await apiClient.post(`/kpl/fixtures/submit-lineup/`, lineupData)
+        return response.data
+      } catch (error) {
+        throw error
+      }
+    },
 
     async fetchAllData() {
       await Promise.all([

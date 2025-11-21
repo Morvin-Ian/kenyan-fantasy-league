@@ -16,6 +16,16 @@ export interface FantasyTeam {
   has_selection_for_requested_gameweek?: boolean | null;
   requested_gameweek?: number;
   requested_gameweek_name?: string;
+  available_chips?: Chip[];
+}
+
+export interface Chip {
+  id: string;
+  chip_type: 'TC' | 'BB' | 'WC';
+  chip_type_display: string;
+  is_used: boolean;
+  used_in_gameweek: number | null;
+  used_in_gameweek_number: number | null;
 }
 
 export interface FantasyPlayer {
@@ -50,7 +60,7 @@ export interface PlayerGoalsLeaderboard {
   team_name: string | null;
   total_goals: number;
   total_assists: number;
-  total_appearances: number; 
+  total_appearances: number;
   total_fantasy_points: number;
   goals_per_game: number;
   rank: number;

@@ -1,11 +1,33 @@
 from rest_framework import serializers
-from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance, TeamSelection
+from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance, TeamSelection, Chip
 from apps.kpl.models import Gameweek
 from django.db.models import Sum
 from decimal import Decimal
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class ChipSerializer(serializers.ModelSerializer):
+    chip_type_display = serializers.CharField(source='get_chip_type_display', read_only=True)
+    used_in_gameweek_number = serializers.IntegerField(
+        source='used_in_gameweek.number',
+        read_only=True,
+        allow_null=True
+    )
+
+    class Meta:
+        model = Chip
+        fields = (
+            'id',
+            'chip_type',
+            'chip_type_display',
+            'is_used',
+            'used_in_gameweek',
+            'used_in_gameweek_number',
+        )
+        read_only_fields = ('id', 'chip_type', 'is_used', 'used_in_gameweek')
+
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
@@ -17,6 +39,7 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
     requested_gameweek_points = serializers.SerializerMethodField(read_only=True)
     requested_gameweek_formation = serializers.SerializerMethodField(read_only=True)
     has_selection_for_requested_gameweek = serializers.SerializerMethodField(read_only=True)
+    available_chips = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = FantasyTeam
@@ -35,6 +58,7 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
             "requested_gameweek_points",
             "requested_gameweek_formation",
             "has_selection_for_requested_gameweek",
+            "available_chips",
         )
 
     def get_gameweek(self, obj):
@@ -52,6 +76,10 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         ] or Decimal("0.00")
 
         return float(Decimal(str(obj.budget)) - total_players_value)
+
+    def get_available_chips(self, obj):
+        chips = obj.chips.all()
+        return ChipSerializer(chips, many=True).data
 
 
     def get_gameweek_points(self, obj):
@@ -306,8 +334,12 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             is_starter = obj.id in starter_ids
             is_bench = obj.id in bench_ids
             
-            if not (is_starter or is_bench):
-                return None
+            active_chip = team_selection.active_chip
+            is_bench_boost_active = active_chip == 'BB'
+            
+            if not is_starter:
+                if not (is_bench and is_bench_boost_active):
+                    return None
 
             performance = obj.player.performances.filter(
                 gameweek=gameweek
@@ -319,7 +351,10 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             points = performance.fantasy_points
             
             if is_starter and team_selection.captain_id == obj.id:
-                points = points * 2
+                if active_chip == 'TC':
+                    points = points * 3
+                else:
+                    points = points * 2
 
             return points
 
@@ -387,6 +422,7 @@ class TeamSelectionSerializer(serializers.ModelSerializer):
     )
     gameweek_number = serializers.IntegerField(source="gameweek.number", read_only=True)
     total_points = serializers.SerializerMethodField(read_only=True)
+    active_chip_display = serializers.CharField(source='get_active_chip_display', read_only=True)
     starters_detail = FantasyPlayerSerializer(
         source="starters", many=True, read_only=True
     )
@@ -408,6 +444,8 @@ class TeamSelectionSerializer(serializers.ModelSerializer):
             "starters_detail",
             "bench_detail",
             "is_finalized",
+            "active_chip",
+            "active_chip_display",
             "total_points",
         )
 

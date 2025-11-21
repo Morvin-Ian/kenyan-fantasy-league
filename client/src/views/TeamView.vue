@@ -1,10 +1,8 @@
 <template>
   <div class="p-4 sm:p-6 md:p-8 mx-2 sm:mx-4">
-    <!-- Gameweek Header Section -->
-    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0" 
-         class="max-w-7xl mx-auto mb-6 animate-fade-in">
+    <div v-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
+      class="max-w-7xl mx-auto mb-6 animate-fade-in">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <!-- Left: Team Info -->
         <div class="flex-1 min-w-0">
           <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 truncate">
             {{ fantasyStore.userTeam[0]?.name || 'My Team' }}
@@ -14,58 +12,57 @@
           </p>
         </div>
 
-        <!-- Right: Gameweek Selector -->
         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
-          <!-- Gameweek Dropdown -->
           <div class="relative group">
-            <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-300 px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200">
+            <div
+              class="flex items-center gap-2 bg-white rounded-xl border border-gray-300 px-4 py-3 shadow-sm hover:shadow-md transition-all duration-200">
               <svg class="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <select 
-                v-model="selectedGameweek" 
-                @change="handleGameweekChange"
-                class="bg-transparent border-none focus:ring-0 text-sm font-semibold text-gray-700 cursor-pointer appearance-none pr-6"
-              >
+              <select v-model="selectedGameweek" @change="handleGameweekChange"
+                class="bg-transparent border-none focus:ring-0 text-sm font-semibold text-gray-700 cursor-pointer appearance-none pr-6">
                 <option value="" disabled>Select Gameweek</option>
-                <option 
-                  v-for="gw in fantasyStore.availableGameweeks" 
-                  :key="gw.number" 
-                  :value="gw.number"
-                  class="text-sm"
-                >
+                <option v-for="gw in fantasyStore.availableGameweeks" :key="gw.number" :value="gw.number"
+                  class="text-sm">
                   {{ gw.name }}
                 </option>
               </select>
-              <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none" 
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-4 h-4 text-gray-400 absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none"
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </div>
           </div>
 
-          <!-- Current Gameweek Badge -->
-          <div v-if="fantasyStore.currentGameweek && currentGameweekInfo" 
-               class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
-            <div class="flex items-center gap-2">
-              <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse" 
-                   :class="{ 'bg-green-500': currentGameweekInfo.is_active }"></div>
-         
-              <span v-if="currentGameweekInfo.is_active" 
-                    class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                Active
-              </span>
-              <span v-else class="text-xs text-gray-500">
-                Past
-              </span>
+          <div class="flex items-center gap-3">
+            <div v-if="fantasyStore.currentGameweek && currentGameweekInfo"
+              class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+              <div class="flex items-center gap-2">
+                <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"
+                  :class="{ 'bg-green-500': currentGameweekInfo.is_active }"></div>
+
+                <span v-if="currentGameweekInfo.is_active"
+                  class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                  Active
+                </span>
+                <span v-else class="text-xs text-gray-500">
+                  Past
+                </span>
+              </div>
             </div>
+
+            <button @click="openChipSelector"
+              class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-black to-gray-600 hover:from-gray-700 hover:to-black text-white rounded-lg shadow-md transition-all duration-200 transform hover:scale-105">
+              <span>Apply Chips</span>
+              <span class="text-sm font-semibold hidden sm:inline">Power-Ups</span>
+            </button>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- Loading State -->
     <div v-if="isInitializing || fantasyStore.isLoading" class="flex justify-center items-center min-h-64">
       <div class="text-center">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
@@ -75,20 +72,22 @@
       </div>
     </div>
 
-    <!-- Team Management Section -->
     <div v-else-if="fantasyStore.userTeam && fantasyStore.userTeam.length > 0"
       class="max-w-7xl mx-auto mb-4 animate-fade-in">
 
-      <!-- Auto-fill and Clear buttons -->
       <div v-if="hasEmptySlots" class="flex flex-col sm:flex-row gap-3 mb-6">
         <button @click="autoFillTeam" :disabled="isAutoFilling"
           class="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2">
-          <svg v-if="isAutoFilling" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg v-if="isAutoFilling" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+            fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+            </path>
           </svg>
           <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
           <span class="text-sm sm:text-base">{{ isAutoFilling ? 'Auto-Selecting...' : 'Auto-Select Players' }}</span>
         </button>
@@ -96,35 +95,36 @@
         <button @click="clearTeamSelections"
           class="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
           <span class="text-sm sm:text-base">Clear Autoselection</span>
         </button>
       </div>
 
-      <!-- Show only clear button when team is complete -->
       <div v-else-if="fantasyStore.fantasyPlayers.length == 0" class="flex justify-center mb-6">
         <button @click="clearTeamSelections"
           class="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition transform hover:scale-105 flex items-center justify-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
           <span class="text-sm sm:text-base">Clear Autoselection</span>
         </button>
       </div>
 
-      <!-- Main Content: Pitch and Sidebar -->
       <div class="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6">
-        <!-- Pitch Section -->
         <div class="animate-fade-in w-full lg:w-2/3 relative team-card">
-          <!-- Your existing pitch component with save buttons -->
           <div class="relative">
             <div v-if="hasUnsavedChanges" class="absolute top-7 right-1 z-20 mx-4 lg:hidden">
               <button @click="saveTeamChanges" :disabled="isSaving"
                 class="animate-slide-up bg-white hover:bg-white text-dark font-semibold text-sm py-1.5 px-3 rounded-full shadow-md flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-dark"
+                  xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <path class="opacity-75" fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                  </path>
                 </svg>
                 <span class="mr-1">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
               </button>
@@ -143,31 +143,39 @@
             @formation-change="handleFormationChange" 
           />
 
-          <MessageAlert v-if="message.text" :type="message.type" :text="message.text" :dismissible="message.dismissible"
-            :auto-dismiss="message.autoDismiss" @dismiss="clearMessage" class="absolute top-4 left-0 right-0 z-20 mx-4" />
+          <MessageAlert v-if="message.text" 
+            :type="message.type" 
+            :text="message.text" 
+            :dismissible="message.dismissible"
+            :auto-dismiss="message.autoDismiss" 
+            @dismiss="clearMessage"
+            class="absolute top-4 left-0 right-0 z-20 mx-4" 
+          />
 
-          <!-- Save Changes Button for Larger Devices -->
-          <div v-if="hasUnsavedChanges && canEditCurrentGameweek" class="hidden lg:block absolute bottom-4 right-4 z-10">
+          <div v-if="hasUnsavedChanges && canEditCurrentGameweek"
+            class="hidden lg:block absolute bottom-4 right-4 z-10">
             <button @click="saveTeamChanges" :disabled="isSaving"
               class="animate-slide-up bg-white hover:bg-white text-dark font-bold py-2 px-6 rounded-full shadow-lg flex items-center transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-              <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg v-if="isSaving" class="animate-spin -ml-1 mr-2 h-5 w-5 text-dark" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                <path class="opacity-75" fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                </path>
               </svg>
               <span class="mr-2">{{ isSaving ? 'Saving...' : 'Save Changes' }}</span>
             </button>
           </div>
         </div>
 
-        <!-- Sidebar -->
         <Sidebar 
           :total-points="totalPoints" 
           :average-points="averagePoints" 
           :highest-points="highestPoints"
           :overall-rank="overallRank" 
-          :team="userTeamName"
+          :team="userTeamName" 
           :in-bank="remainingBudget"
-          :currentGameweek="fantasyStore.currentGameweek"
+          :currentGameweek="fantasyStore.currentGameweek" 
         />
       </div>
     </div>
@@ -176,22 +184,79 @@
     <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
       class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
       <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
-      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by creating your team now.</p>
+      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
+        creating your team now.</p>
       <button @click="toggleModal"
-        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create Your Team</button>
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">Create
+        Your Team</button>
     </div>
 
-    <!-- Your existing modals -->
-    <PlayerModal v-if="userTeam && userTeam.length" :show-modal="showModal" :selected-player="selectedPlayer"
-      @close-modal="closeModal" @initiate-switch="initiateSwitch" @transfer-player="initiateTransfer"
-      @make-captain="makeCaptain" @make-vice-captain="makeViceCaptain" />
+    <PlayerModal v-if="userTeam && userTeam.length" 
+      :show-modal="showModal" 
+      :selected-player="selectedPlayer"
+      @close-modal="closeModal" 
+      @initiate-switch="initiateSwitch" 
+      @transfer-player="initiateTransfer"
+      @make-captain="makeCaptain" 
+      @make-vice-captain="makeViceCaptain" 
+    />
 
-    <SearchPlayer :show-search-modal="showSearchModal" :selectedPlayer="selectedPlayer" @close-modal="closeSearchModal"
-      @select-player="handlePlayerTransfer" />
+    <SearchPlayer 
+      :show-search-modal="showSearchModal" 
+      :selectedPlayer="selectedPlayer" 
+      @close-modal="closeSearchModal"
+      @select-player="handlePlayerTransfer" 
+    />
 
-    <div v-if="showCreateTeamModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-      <!-- Your existing create team modal -->
+    <div v-if="showCreateTeamModal"
+      class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+      <div class="animate-slide-up bg-white rounded-xl p-6 w-full max-w-md border border-gray-100 shadow-xl">
+      
+      <MessageAlert v-if="modalMessage.text" 
+        :type="modalMessage.type" 
+        :text="modalMessage.text"
+        :dismissible="modalMessage.dismissible" 
+        @dismiss="clearModalMessage" 
+        class="mb-4" 
+      />
+
+      <h3 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Create Your KPL Team</h3>
+      <form @submit.prevent="createTeam">
+        <div class="mb-4">
+          <label for="teamName" class="block text-gray-700 font-medium mb-2">Team Name</label>
+          <input v-model="teamName" id="teamName" type="text"
+            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+            placeholder="Enter your team name" required />
+        </div>
+        <div class="mb-4">
+          <label for="formation" class="block text-gray-700 font-medium mb-2">Select Formation</label>
+          <select v-model="selectedFormation" id="formation"
+            class="w-full p-2 border border-gray-200 rounded focus:outline-none focus:ring-2 focus:ring-gray-500"
+            required>
+            <option value="" disabled>Select a formation</option>
+            <option value="3-4-3">3-4-3</option>
+            <option value="4-4-2">4-4-2</option>
+            <option value="4-3-3">4-3-3</option>
+          </select>
+        </div>
+
+        <div class="flex justify-end gap-4">
+          <button type="button" @click="showCreateTeamModal = false"
+            class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Cancel</button>
+          <button type="submit"
+            class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 px-4 rounded-lg transition transform hover:scale-105">Create
+            Team</button>
+        </div>
+      </form>
+      </div>
     </div>
+
+    <ChipSelector 
+      :show="showChipSelector" 
+      :chips="fantasyStore.chips" 
+      @close="showChipSelector = false"
+      @select="handleChipSelection" 
+    />
   </div>
 </template>
 
@@ -201,6 +266,7 @@ import memoizeOne from 'memoize-one';
 import Pitch from "@/components/Team/Pitch.vue";
 import Sidebar from "@/components/Team/SideBar.vue";
 import MessageAlert from "@/components/common/MessageAlert.vue";
+import ChipSelector from "@/components/Team/ChipSelector.vue";
 import type { StartingEleven, TeamData, Player as KplPlayer } from "@/helpers/types/team";
 import type { FantasyPlayer as Player, PositionSlot } from "@/helpers/types/fantasy";
 import { useAuthStore } from "@/stores/auth";
@@ -241,11 +307,11 @@ const handleGameweekChange = async () => {
   try {
     isSwitchingGameweek.value = true;
     showMessage(`Loading Gameweek ${selectedGameweek.value}...`, 'info');
-    
+
     await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
     await fantasyStore.fetchUserFantasyTeam(selectedGameweek.value)
     initializeTeamState();
-    
+
     showMessage(`Gameweek ${selectedGameweek.value} loaded successfully!`, 'success', 3000);
   } catch (error) {
     console.error('Error switching gameweek:', error);
@@ -271,12 +337,12 @@ onMounted(async () => {
     if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
       // Fetch available gameweeks first
       await fantasyStore.fetchAvailableGameweeks();
-      
+
       // Set initial gameweek to current active one or first available
       const currentGw = fantasyStore.availableGameweeks.find(gw => gw.is_active);
-      selectedGameweek.value = currentGw?.number || 
-                              (fantasyStore.availableGameweeks[0]?.number || null);
-      
+      selectedGameweek.value = currentGw?.number ||
+        (fantasyStore.availableGameweeks[0]?.number || null);
+
       // Fetch players for the selected gameweek
       if (selectedGameweek.value) {
         await fantasyStore.fetchFantasyTeamPlayers(selectedGameweek.value);
@@ -327,6 +393,7 @@ const selectedFormation = ref("");
 const hasUnsavedChanges = ref(false);
 const isSaving = ref(false);
 const isInitializing = ref(true);
+const showChipSelector = ref(false);
 const initialTeamState = ref<{
   startingEleven: StartingEleven;
   benchPlayers: Player[];
@@ -483,7 +550,7 @@ function initializeTeamState() {
   players.forEach((player: Player) => {
     // Make sure to spread all player properties
     const fullPlayer = { ...player };
-    
+
     if (player.is_starter) {
       if (player.position === "GKP") startingElevenRef.value.goalkeeper = fullPlayer;
       else if (player.position === "DEF") startingElevenRef.value.defenders.push(fullPlayer);
@@ -1300,6 +1367,33 @@ const clearTeamSelections = () => {
 
   hasUnsavedChanges.value = true;
   showMessage("Team cleared! You can now auto-select new players.", "success");
+};
+
+const openChipSelector = async () => {
+  // Fetch chips if not already loaded
+  if (!fantasyStore.chips || fantasyStore.chips.length === 0) {
+    await fantasyStore.fetchAvailableChips();
+  }
+  showChipSelector.value = true;
+};
+
+const handleChipSelection = async (chipType: 'TC' | 'BB' | 'WC') => {
+  try {
+    if (!fantasyStore.currentGameweek) {
+      showMessage('No active gameweek found. Please try again.', 'error');
+      return;
+    }
+
+    const response = await fantasyStore.activateChip(chipType, fantasyStore.currentGameweek);
+
+    showChipSelector.value = false;
+    await fantasyStore.fetchAvailableChips(); // Refresh chip status
+    showMessage(`${chipType === 'TC' ? 'Triple Captain' : chipType === 'BB' ? 'Bench Boost' : 'Wildcard'} activated successfully!`, 'success');
+  } catch (error: any) {
+    showChipSelector.value = false;
+    console.error('Error activating chip:', error);
+    showMessage(error.message || 'Failed to activate chip. Please try again.', 'error');
+  }
 };
 
 onMounted(async () => {

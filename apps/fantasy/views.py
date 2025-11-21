@@ -7,6 +7,8 @@ from rest_framework.viewsets import ModelViewSet
 from django.db import IntegrityError, transaction
 
 from apps.fantasy.models import (
+    Chip,
+    ChipType,
     FantasyPlayer,
     FantasyTeam,
     PlayerPerformance,
@@ -15,6 +17,7 @@ from apps.fantasy.models import (
 from apps.kpl.models import Gameweek, Player
 
 from .serializers import (
+    ChipSerializer,
     FantasyPlayerSerializer,
     FantasyTeamSerializer,
     PlayerPerformanceSerializer,
@@ -227,6 +230,129 @@ class FantasyPlayerViewSet(ModelViewSet):
             )
             
 
+
+    @action(detail=False, methods=["get"], url_path="available-chips")
+    def available_chips(self, request):
+        """Get all chips for the user's fantasy team"""
+        try:
+            fantasy_team = FantasyTeam.objects.get(user=request.user)
+            chips = Chip.objects.filter(fantasy_team=fantasy_team)
+            serializer = ChipSerializer(chips, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except FantasyTeam.DoesNotExist:
+            return Response(
+                {"detail": "Fantasy team not found."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "An unexpected error occurred.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"], url_path="activate-chip")
+    def activate_chip(self, request):
+        """Activate a chip for a specific gameweek"""
+        try:
+            fantasy_team = FantasyTeam.objects.get(user=request.user)
+            chip_type = request.data.get("chip_type")
+            gameweek_number = request.data.get("gameweek")
+
+            if not chip_type:
+                return Response(
+                    {"detail": "chip_type is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not gameweek_number:
+                return Response(
+                    {"detail": "gameweek is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                gameweek = Gameweek.objects.get(number=gameweek_number)
+            except Gameweek.DoesNotExist:
+                return Response(
+                    {"detail": f"Gameweek {gameweek_number} not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if not gameweek.is_active:
+                return Response(
+                    {"detail": "Cannot activate chip for a non-active gameweek."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                chip = Chip.objects.get(fantasy_team=fantasy_team, chip_type=chip_type)
+            except Chip.DoesNotExist:
+                return Response(
+                    {"detail": f"Chip {chip_type} not found for your team."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            if chip.is_used:
+                return Response(
+                    {
+                        "detail": f"Chip already used in Gameweek {chip.used_in_gameweek.number}.",
+                        "used_in_gameweek": chip.used_in_gameweek.number,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            with transaction.atomic():
+                # Check if team selection exists for this gameweek
+                try:
+                    team_selection = TeamSelection.objects.get(
+                        fantasy_team=fantasy_team,
+                        gameweek=gameweek
+                    )
+                except TeamSelection.DoesNotExist:
+                    return Response(
+                        {
+                            "detail": f"No team selection found for Gameweek {gameweek.number}. Please save your team first before activating a chip."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Check if another chip is already active for this gameweek
+                if team_selection.active_chip:
+                    active_chip_display = dict(ChipType.choices).get(team_selection.active_chip, team_selection.active_chip)
+                    return Response(
+                        {
+                            "detail": f"You already have {active_chip_display} active for Gameweek {gameweek.number}. Only one chip can be used per gameweek."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Activate the chip
+                chip.is_used = True
+                chip.used_in_gameweek = gameweek
+                chip.save()
+
+                # Update team selection with active chip
+                team_selection.active_chip = chip_type
+                team_selection.save()
+
+            return Response(
+                {
+                    "detail": f"{chip.get_chip_type_display()} activated for Gameweek {gameweek.number}!",
+                    "chip": ChipSerializer(chip).data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except FantasyTeam.DoesNotExist:
+            return Response(
+                {"detail": "Fantasy team not found."}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"detail": "An unexpected error occurred.", "error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
     @action(detail=False, methods=["post"], url_path="save-team-players")
     def save_team_players(self, request):
         try:
@@ -347,7 +473,7 @@ class PlayerPerformanceViewSet(ModelViewSet):
         if not team_data:
             return Response(
                 {"detail": "No performances found for this gameweek."},
-                status=status.HTTP_404_NOT_FOUND,
+                status=status.HTTP_200_OK,
             )
 
         serialized = TeamOfTheWeekService.serialize_team(team_data, gameweek.number)
