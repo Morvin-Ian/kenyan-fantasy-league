@@ -370,7 +370,7 @@ class MatchEventService:
                         continue
                     
                     team = Team.objects.get(id=team_id)
-                    player = find_player(player_name, team_id=team_id)
+                    player = find_player(player_name, team_id=team_id, auto_create=True)
 
                     if not player:
                         errors.append({
@@ -498,7 +498,7 @@ class MatchEventService:
                         continue
                     
                     team = Team.objects.get(id=team_id)
-                    player = find_player(player_name, team_id=team_id)
+                    player = find_player(player_name, team_id=team_id, auto_create=True)
 
                     if not player:
                         errors.append({
@@ -652,7 +652,7 @@ class MatchEventService:
                 }
             
             team = Team.objects.get(id=team_id)
-            player = find_player(player_name, team_id=team_id)
+            player = find_player(player_name, team_id=team_id, auto_create=True)
 
             if not player:
                 return {
@@ -784,7 +784,7 @@ class MatchEventService:
                     team = Team.objects.get(id=team_id)
 
                     # Process player out
-                    player_out = find_player(player_out_name, team_id=team_id)
+                    player_out = find_player(player_out_name, team_id=team_id, auto_create=True)
                     if player_out:
                         # Generate unique event key for substitution out
                         event_key_out = MatchEventService._generate_event_key(
@@ -860,7 +860,7 @@ class MatchEventService:
                         })
 
                     # Process player in
-                    player_in = find_player(player_in_name, team_id=team_id)
+                    player_in = find_player(player_in_name, team_id=team_id, auto_create=True)
                     if player_in:
                         # Generate unique event key for substitution in
                         event_key_in = MatchEventService._generate_event_key(

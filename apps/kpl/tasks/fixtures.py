@@ -95,12 +95,65 @@ def generate_name_variants(name: str) -> list[str]:
     return list(set(variants))
 
 
-def find_player(player_name: str, team_id: Optional[str] = None, team_name: Optional[str] = None) -> Player | None:    
+def clean_player_name(name: str) -> Optional[str]:
+    """
+    Clean player name by removing minute markers and extra whitespace.
+    
+    Examples:
+        "Elvis Noor  54'" -> "Elvis Noor"
+        "Christofer Kaloti  84'" -> "Christofer Kaloti"
+        "45'" -> None
+        "  John Doe  " -> "John Doe"
+    
+    Args:
+        name: Raw player name from scraper
+        
+    Returns:
+        Cleaned name or None if name is invalid
+    """
+    if not name:
+        return None
+    
+    cleaned = re.sub(r"\s*\d+'\s*$", "", name)
+    
+    cleaned = cleaned.strip()
+    
+    # If the entire string was just a minute marker (e.g., "45'"), return None
+    if not cleaned or re.match(r"^\d+'$", cleaned):
+        return None
+    
+    return cleaned
+
+
+def create_missing_player(player_name: str, team: Team) -> Player:
+    player = Player.objects.create(
+        name=player_name,
+        team=team,
+        position="MID",  
+        current_value=5.5,
+        jersey_number=None,
+        age=None
+    )
+    
+    logger.warning(
+        f"AUTO-CREATED PLAYER: '{player_name}' for team '{team.name}' "
+        f"(position=MID, value=5.5). Please verify and update position if needed."
+    )
+    
+    return player
+
+
+def find_player(player_name: str, team_id: Optional[str] = None, team_name: Optional[str] = None, auto_create: bool = False) -> Player | None:    
     if not player_name or not player_name.strip():
         logger.warning(f"Empty player name provided")
         return None
-        
-    player_name = player_name.strip()
+    
+    cleaned_name = clean_player_name(player_name)
+    if not cleaned_name:
+        logger.warning(f"Player name '{player_name}' became empty after cleaning")
+        return None
+    
+    player_name = cleaned_name
     
     require_team_match = bool(team_id or team_name)
     
@@ -180,6 +233,19 @@ def find_player(player_name: str, team_id: Optional[str] = None, team_name: Opti
             if found_player:
                 logger.debug(f"Found fuzzy match for '{player_name}': {found_player.name} (Team: {found_player.team.name}) - Consider verifying")
                 return found_player
+    
+    # Player not found - auto-create 
+    if auto_create and team_id:
+        try:
+            team = Team.objects.get(id=team_id)
+            new_player = create_missing_player(player_name, team)
+            return new_player
+        except Team.DoesNotExist:
+            logger.error(f"Cannot auto-create player '{player_name}': Team with id {team_id} not found")
+            return None
+        except Exception as e:
+            logger.error(f"Error auto-creating player '{player_name}': {e}")
+            return None
     
     if require_team_match:
         team_info = f"team_id={team_id}" if team_id else f"team_name={team_name}"
