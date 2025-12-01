@@ -30,7 +30,7 @@ djoser==2.2.3
 flake8==7.1.1
 flower==2.0.1
 html5lib==1.1
-humanize==4.10.0
+humanize==4.14.0
 idna==3.10
 isort==5.13.2
 kombu==5.4.2
