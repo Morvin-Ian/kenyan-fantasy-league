@@ -2,7 +2,6 @@ import logging
 import logging.config
 import os
 from datetime import datetime
-from django.core.cache import cache
 
 import requests
 from bs4 import BeautifulSoup
@@ -11,7 +10,6 @@ from celery import shared_task
 from apps.kpl.models import Standing, Team
 from config.settings import base
 from util.views import headers
-from django_redis import get_redis_connection
 from .fixtures import find_team
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -38,7 +36,6 @@ def extract_table_standings_data(headers) -> str:
         existing_team_count = all_teams.count()
         logger.info(f"Found {existing_team_count} existing teams in database")
 
-        # Clear existing standings
         Standing.objects.all().delete()
 
         soup = BeautifulSoup(web_content.text, "lxml")
@@ -54,14 +51,14 @@ def extract_table_standings_data(headers) -> str:
                 data_rows = row.find_all("td")
                 if len(data_rows) >= 8:
                     stats = [
-                        data_rows[0].text.strip(),  # Played
-                        data_rows[1].text.strip(),  # Won
-                        data_rows[2].text.strip(),  # Drawn
-                        data_rows[3].text.strip(),  # Lost
-                        data_rows[4].text.strip(),  # Goals For
-                        data_rows[5].text.strip(),  # Goals Against
-                        data_rows[6].text.strip(),  # Goal Difference
-                        data_rows[7].text.strip(),  # Points
+                        data_rows[0].text.strip(),
+                        data_rows[1].text.strip(),
+                        data_rows[2].text.strip(),
+                        data_rows[3].text.strip(),
+                        data_rows[4].text.strip(),
+                        data_rows[5].text.strip(),
+                        data_rows[6].text.strip(),
+                        data_rows[7].text.strip(),
                     ]
                     team_stats.append(stats)
                 else:
@@ -98,19 +95,17 @@ def extract_table_standings_data(headers) -> str:
                     teams_found_in_extraction.append(team.name)
 
                     if created:
-                        logger.info(f"Created new team: {team_name} (marked as active)")
+                        logger.info(f"Created new team: {team_name}")
                     else:
-                        # Make sure team is marked as active if found in extraction
                         if team.is_relegated:
                             team.is_relegated = False
                             team.save()
                             logger.info(f"Reactivated team: {team_name}")
 
-                    # Add standings entry if stats available
                     if idx < len(team_stats) and position != "N/A":
                         stats = team_stats[idx]
                         try:
-                            standing = Standing.objects.create(
+                            Standing.objects.create(
                                 position=int(position),
                                 team=team,
                                 played=int(stats[0]),
@@ -137,7 +132,6 @@ def extract_table_standings_data(headers) -> str:
                     logger.error(f"Error processing team row {idx+1}: {str(e)}")
                     continue
 
-            # After processing all teams, mark those not found as relegated
             all_teams = Team.objects.all()
             for team in all_teams:
                 if team.name not in teams_found_in_extraction:
@@ -151,15 +145,8 @@ def extract_table_standings_data(headers) -> str:
 
             logger.info(f"Relegation status update complete:")
             logger.info(
-                f"  - Active teams: {active_teams.count()} ({', '.join(active_teams.values_list('name', flat=True))})"
+                f"Active: {active_teams.count()} | Relegated: {relegated_teams.count()}"
             )
-            logger.info(f"  - Relegated teams: {relegated_teams.count()}")
-
-            if relegated_teams.exists():
-                relegated_names = ", ".join(
-                    relegated_teams.values_list("name", flat=True)
-                )
-                logger.info(f"  - Teams marked as relegated: {relegated_names}")
 
             return "Successfully updated the table standings."
 
@@ -213,9 +200,9 @@ def edit_team_logo(headers) -> str:
                         team_obj.save()
                         updated_count += 1
                     else:
-                        logger.warning(f"No logo URL found for team: {full_name}")
+                        logger.warning(f"No logo URL for team: {full_name}")
                 else:
-                    logger.warning(f"No team found in database for: {full_name}")
+                    logger.warning(f"No team found in DB for: {full_name}")
 
             except Exception as e:
                 logger.error(f"Error processing logo for row {i+1}: {str(e)}")
@@ -246,12 +233,6 @@ def get_kpl_table():
 
     final_result = f"{first_response} - {second_response}"
 
-    redis_conn = get_redis_connection("default")
-    keys = redis_conn.keys("standings_list_page_*")
-    if keys:
-        redis_conn.delete(*keys)
-        logger.info(f"Deleted {len(keys)} cache keys matching standings_list_page_*")
-    else:
-        logger.info("No cache keys found for standings_list_page_*")
+    # All caching removed
 
     return final_result
