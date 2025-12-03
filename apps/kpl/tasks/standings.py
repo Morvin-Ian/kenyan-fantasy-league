@@ -32,14 +32,11 @@ def extract_table_standings_data(headers) -> str:
         
         session = requests.Session()
         
-        # Create custom headers without Accept-Encoding to avoid gzip compression issues
         custom_headers = headers.copy()
-        # Remove Accept-Encoding if present to get uncompressed response
         custom_headers.pop('Accept-Encoding', None)
         
         session.headers.update(custom_headers)
         
-        # Add a small random delay to mimic human behavior
         time.sleep(random.uniform(1, 3))
         
         web_content = session.get(url, timeout=30)
@@ -74,7 +71,6 @@ def extract_table_standings_data(headers) -> str:
                 table_body = table.find("tbody")
                 logger.debug(f"Strategy 2 (tbody in table): {'Found' if table_body else 'Not found'}")
                 if not table_body:
-                    # Use the table itself if no tbody
                     table_body = table
                     logger.debug("Using table element directly as tbody not found")
         
