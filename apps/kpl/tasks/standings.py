@@ -18,10 +18,13 @@ logger = logging.getLogger(__name__)
 
 
 def extract_table_standings_data(headers) -> str:
-    url = os.getenv("TABLE_STANDINGS_URL")
-    if not url:
-        logger.error("TABLE_STANDINGS_URL environment variable not set")
-        return "Configuration error: TABLE_STANDINGS_URL not found"
+    # url = os.getenv("TABLE_STANDINGS_URL")
+    # if not url:
+    #     logger.error("TABLE_STANDINGS_URL environment variable not set")
+    #     return "Configuration error: TABLE_STANDINGS_URL not found"
+    
+    # Using the new URL directly as requested
+    url = "https://kenyafootballdata.com/tournament_stats.php?t=uftn0043"
 
     current_year = datetime.now().year
     previous_year = current_year - 1
