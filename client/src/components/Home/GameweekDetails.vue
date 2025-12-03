@@ -16,8 +16,7 @@
                   Gameweek {{ gameweekStatus.gameweek.number }}
                 </h2>
 
-                <span
-                  class="bg-gray-800 text-xs sm:text-sm text-white font-semibold px-3 py-1.5 rounded-full w-fit">
+                <span class="bg-gray-800 text-xs sm:text-sm text-white font-semibold px-3 py-1.5 rounded-full w-fit">
                   {{ gameweekStatus.gameweek.status }}
                 </span>
               </div>
@@ -35,11 +34,8 @@
                 </thead>
 
                 <tbody>
-                  <tr
-                    v-for="(day, index) in gameweekStatus.match_days"
-                    :key="index"
-                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                  >
+                  <tr v-for="(day, index) in gameweekStatus.match_days" :key="index"
+                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td class="py-3 px-4">
                       <div class="flex items-center gap-3">
                         <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -58,15 +54,13 @@
                     </td>
 
                     <td class="py-3 px-4 text-right">
-                      <span
-                        class="inline-block bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                      <span class="inline-block bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
                         {{ day.match_status }}
                       </span>
                     </td>
 
                     <td class="py-3 px-4 text-right">
-                      <span
-                        class="inline-block bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
+                      <span class="inline-block bg-gray-100 text-gray-700 px-2.5 py-1 rounded-full text-xs font-medium">
                         {{ day.bonus_status }}
                       </span>
                     </td>
@@ -93,14 +87,14 @@
 
         <!-- ================= RIGHT PANEL (TEAM OF THE WEEK) ================= -->
         <div class="lg:col-span-1">
-          <div class="bg-white rounded-xl shadow-md border border-gray-100 h-full flex flex-col">
+          <div class="bg-white rounded-xl shadow-md border border-gray-100 h-full max-h-[700px] flex flex-col">
 
             <!-- Header -->
             <div class="bg-gray-800 p-4 sm:p-6 flex-shrink-0">
               <div class="flex items-start gap-3">
                 <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-600 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-gray-300"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 sm:h-6 sm:w-6 text-gray-300" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                   </svg>
@@ -139,24 +133,17 @@
                     </td>
                   </tr>
 
-                  <tr
-                    v-else
-                    v-for="(player, index) in formattedTeamOfWeek"
-                    :key="index"
-                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
-                  >
+                  <tr v-else v-for="(player, index) in formattedTeamOfWeek" :key="index"
+                    class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td class="py-2.5 px-3 text-center text-gray-400 font-medium">{{ index + 1 }}</td>
 
                     <td class="py-2.5 px-3">
-                      <span
-                        :class="{
-                          'bg-yellow-100 text-yellow-800': player.position === 'GKP',
-                          'bg-gray-100 text-gray-800': player.position === 'DEF',
-                          'bg-green-100 text-green-800': player.position === 'MID',
-                          'bg-red-100 text-red-800': player.position === 'FWD'
-                        }"
-                        class="px-2 py-1 rounded-md text-xs font-semibold"
-                      >
+                      <span :class="{
+                        'bg-yellow-100 text-yellow-800': player.position === 'GKP',
+                        'bg-gray-100 text-gray-800': player.position === 'DEF',
+                        'bg-green-100 text-green-800': player.position === 'MID',
+                        'bg-red-100 text-red-800': player.position === 'FWD'
+                      }" class="px-2 py-1 rounded-md text-xs font-semibold">
                         {{ player.position }}
                       </span>
                     </td>
@@ -168,14 +155,11 @@
                       </div>
                     </td>
 
-                    <td
-                      class="py-2.5 px-3 text-right font-bold text-base"
-                      :class="{
-                        'text-green-600': player.points > 12,
-                        'text-gray-600': player.points > 9 && player.points <= 12,
-                        'text-gray-900': player.points <= 9
-                      }"
-                    >
+                    <td class="py-2.5 px-3 text-right font-bold text-base" :class="{
+                      'text-green-600': player.points > 12,
+                      'text-gray-600': player.points > 9 && player.points <= 12,
+                      'text-gray-900': player.points <= 9
+                    }">
                       {{ player.points }}
                     </td>
                   </tr>
@@ -220,7 +204,7 @@ const fetchTeamOfWeek = async () => {
   try {
     await fantasyStore.fetchTeamOfWeek();
 
-    const data = teamOfWeek.value; 
+    const data = teamOfWeek.value;
     if (!data) return;
 
     const formatted = [];
