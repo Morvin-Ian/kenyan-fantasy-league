@@ -375,9 +375,9 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
         "schedule": crontab(day_of_week=4, hour=0, minute=0),  # Thursday at midnight
     },
-    "scrape-top-scorers": {
+    "update-top-scorers": {
         "task": "apps.kpl.tasks.scorers.scrape_top_scorers",
-        "schedule": crontab(day_of_week=0, hour=23, minute=0),  # Sunday at 11 PM
+        "schedule": crontab(day_of_week=1, hour=23, minute=0),  # Monday at 11 PM
     },
 }
 

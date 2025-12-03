@@ -51,52 +51,69 @@ def extract_table_standings_data(headers) -> str:
         Standing.objects.all().delete()
 
         soup = BeautifulSoup(web_content.text, "lxml")
-        tables = soup.find_all("tbody", class_="Table__TBODY")
-        logger.info(f"Found {len(tables)} table bodies on the page")
+        # The new site seems to have a single table with all data
+        table_body = soup.find("tbody")
+        
+        if not table_body:
+             # Fallback if tbody is not found, try finding the table directly
+            table = soup.find("table")
+            if table:
+                table_body = table.find("tbody") or table
 
-        if tables and len(tables) > 1:
-            first_table = tables[0].find_all("tr")
-            second_table = tables[1].find_all("tr")
-
-            team_stats = []
-            for i, row in enumerate(second_table):
-                data_rows = row.find_all("td")
-                if len(data_rows) >= 8:
-                    stats = [
-                        data_rows[0].text.strip(),  # Played
-                        data_rows[1].text.strip(),  # Won
-                        data_rows[2].text.strip(),  # Drawn
-                        data_rows[3].text.strip(),  # Lost
-                        data_rows[4].text.strip(),  # Goals For
-                        data_rows[5].text.strip(),  # Goals Against
-                        data_rows[6].text.strip(),  # Goal Difference
-                        data_rows[7].text.strip(),  # Points
-                    ]
-                    team_stats.append(stats)
-                else:
-                    logger.warning(
-                        f"Row {i+1} in statistics table has insufficient columns ({len(data_rows)})"
-                    )
+        if table_body:
+            rows = table_body.find_all("tr")
+            logger.info(f"Found {len(rows)} rows in the standings table")
 
             teams_found_in_extraction = []
             created_standings = 0
 
-            for idx, row in enumerate(first_table):
+            for idx, row in enumerate(rows):
                 try:
-                    position_elem = row.find("span", class_="team-position")
-                    position = position_elem.text if position_elem else "N/A"
+                    cols = row.find_all("td")
+                    if not cols or len(cols) < 12:
+                        logger.warning(f"Row {idx+1} has insufficient columns: {len(cols)}")
+                        continue
 
-                    abbr_elem = row.find("abbr")
-                    team_name = abbr_elem["title"] if abbr_elem else "N/A"
+                    # Extract data based on new structure:
+                    # 0: Position
+                    # 1: Logo
+                    # 2: Team Name
+                    # 3: Empty?
+                    # 4: Played
+                    # 5: Won
+                    # 6: Drawn
+                    # 7: Lost
+                    # 8: GF
+                    # 9: GA
+                    # 10: GD
+                    # 11: Points
 
-                    img_elem = row.find("img")
-                    logo = img_elem["src"] if img_elem else "N/A"
+                    position_text = cols[0].text.strip()
+                    # Handle cases where position might be non-numeric or empty
+                    if not position_text.isdigit():
+                         logger.warning(f"Invalid position at row {idx+1}: {position_text}")
+                         continue
+                    position = int(position_text)
+
+                    # Team Name
+                    team_name_elem = cols[2].find("a")
+                    team_name = team_name_elem.text.strip() if team_name_elem else cols[2].text.strip()
+
+                    # Logo
+                    img_elem = cols[1].find("img")
+                    logo_src = img_elem["src"] if img_elem else ""
+                    # Ensure full URL for logo if it's relative
+                    if logo_src and not logo_src.startswith("http"):
+                        # Base URL seems to be https://kenyafootballdata.com/
+                        logo = f"https://kenyafootballdata.com/{logo_src}"
+                    else:
+                        logo = logo_src
 
                     logger.debug(
                         f"Processing team {idx+1}: {team_name} (Position: {position})"
                     )
 
-                    if team_name == "N/A":
+                    if not team_name:
                         logger.warning(f"Could not extract team name for row {idx+1}")
                         continue
 
@@ -109,35 +126,36 @@ def extract_table_standings_data(headers) -> str:
                     if created:
                         logger.info(f"Created new team: {team_name} (marked as active)")
                     else:
+                        # Update logo if we found one and the existing one is empty or different? 
+                        # For now, let's stick to the logic of just reactivating if relegated.
+                        # But we might want to update the logo if it's better.
+                        if logo and (not team.logo_url or "kenyafootballdata" in logo):
+                             team.logo_url = logo
+                        
                         if team.is_relegated:
                             team.is_relegated = False
-                            team.save()
                             logger.info(f"Reactivated team: {team_name}")
+                        
+                        team.save()
 
-                    if idx < len(team_stats) and position != "N/A":
-                        stats = team_stats[idx]
-                        try:
-                            standing = Standing.objects.create(
-                                position=int(position),
-                                team=team,
-                                played=int(stats[0]),
-                                wins=int(stats[1]),
-                                draws=int(stats[2]),
-                                losses=int(stats[3]),
-                                goals_for=int(stats[4]),
-                                goals_against=int(stats[5]),
-                                goal_differential=int(stats[6]),
-                                points=int(stats[7]),
-                                period=period,
-                            )
-                            created_standings += 1
-                        except (ValueError, IndexError) as e:
-                            logger.error(
-                                f"Error creating standing for {team_name}: {str(e)}"
-                            )
-                    else:
-                        logger.warning(
-                            f"No statistics available for team {team_name} at index {idx}"
+                    try:
+                        standing = Standing.objects.create(
+                            position=position,
+                            team=team,
+                            played=int(cols[4].text.strip()),
+                            wins=int(cols[5].text.strip()),
+                            draws=int(cols[6].text.strip()),
+                            losses=int(cols[7].text.strip()),
+                            goals_for=int(cols[8].text.strip()),
+                            goals_against=int(cols[9].text.strip()),
+                            goal_differential=int(cols[10].text.strip()),
+                            points=int(cols[11].text.strip()),
+                            period=period,
+                        )
+                        created_standings += 1
+                    except (ValueError, IndexError) as e:
+                        logger.error(
+                            f"Error creating standing for {team_name}: {str(e)}"
                         )
 
                 except Exception as e:
@@ -161,13 +179,7 @@ def extract_table_standings_data(headers) -> str:
             )
             logger.info(f"  - Relegated teams: {relegated_teams.count()}")
 
-            if relegated_teams.exists():
-                relegated_names = ", ".join(
-                    relegated_teams.values_list("name", flat=True)
-                )
-                logger.info(f"  - Teams marked as relegated: {relegated_names}")
-
-            return "Successfully updated the table standings."
+            return f"Successfully updated the table standings. Processed {created_standings} rows."
 
         else:
             return "Table not found"
