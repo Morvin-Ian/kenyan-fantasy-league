@@ -28,8 +28,19 @@ def extract_table_standings_data(headers) -> str:
     period = f"{previous_year}-{current_year}"
 
     try:
-        web_content = requests.get(url, headers=headers, timeout=30)
+        import time
+        import random
+        
+        session = requests.Session()
+        session.headers.update(headers)
+        
+        # Add a small random delay to mimic human behavior
+        time.sleep(random.uniform(1, 3))
+        
+        web_content = session.get(url, timeout=30)
+        logger.info(f"Request to {url} returned status code: {web_content.status_code}")
     except requests.RequestException as e:
+        logger.error(f"Network error when fetching standings: {str(e)}")
         return f"Network error: {str(e)}"
 
     if web_content.status_code == 200:
