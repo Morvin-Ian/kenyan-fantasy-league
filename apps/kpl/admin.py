@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    TopcorerData,
     Fixture,
     FixtureLineup,
     FixtureLineupPlayer,
@@ -257,3 +258,28 @@ class ProcessedMatchEventAdmin(admin.ModelAdmin):
         return response
     
     export_events_to_csv.short_description = "Export selected events to CSV"
+
+
+@admin.register(TopcorerData)
+class TopScorerDataAdmin(admin.ModelAdmin):
+    list_display = (
+        "rank",
+        "player_name",
+        "team_name",
+        "goals",
+        "gameweek",
+        "player_link",
+        "scraped_at",
+    )
+    list_filter = ("gameweek", "scraped_at")
+    search_fields = ("player_name", "team_name")
+    readonly_fields = ("scraped_at",)
+    
+    def player_link(self, obj):
+        return f"{obj.player.name} ({obj.player.team})" if obj.player else "Not matched"
+    player_link.short_description = "Matched Player"
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related(
+            'gameweek', 'player', 'player__team'
+        )

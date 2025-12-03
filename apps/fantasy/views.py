@@ -406,6 +406,7 @@ class PlayerPerformanceViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="goals-leaderboard")
     def goals_leaderboard(self, request):
         from django.core.cache import cache
+        from apps.kpl.models import TopcorerData, Gameweek
         
         limit = int(request.query_params.get("limit", 5))
         cache_key = f"goals_leaderboard_limit_{limit}"
@@ -414,48 +415,39 @@ class PlayerPerformanceViewSet(ModelViewSet):
         if cached_data:
             return Response(cached_data, status=status.HTTP_200_OK)
 
-        players_goals = (
-            Player.objects.annotate(
-                total_goals=Sum("performances__goals_scored"),
-                total_assists=Sum("performances__assists"),
-                total_appearances=Count(
-                    "performances", filter=Q(performances__minutes_played__gt=0)
-                ),
-                total_fantasy_points=Sum("performances__fantasy_points"),
+        # Get the active gameweek
+        active_gameweek = Gameweek.objects.filter(is_active=True).first()
+        
+        if not active_gameweek:
+            return Response(
+                {"detail": "No active gameweek found."},
+                status=status.HTTP_404_NOT_FOUND
             )
-            .filter(total_goals__gt=0)
-            .order_by("-total_goals")[:limit]
-        )
-
+        
+        # Fetch top scorers from scraped data
+        top_scorers = TopcorerData.objects.filter(
+            gameweek=active_gameweek
+        ).select_related('player', 'player__team').order_by('rank')[:limit]
+        
         leaderboard_data = []
-        for player in players_goals:
-            leaderboard_data.append(
-                {
-                    "player_id": player.id,
-                    "player_name": player.name,
-                    "team_name": player.team.name if player.team else None,
-                    "total_goals": player.total_goals or 0,
-                    "total_assists": player.total_assists or 0,
-                    "total_appearances": player.total_appearances or 0,
-                    "total_fantasy_points": player.total_fantasy_points or 0,
-                    "goals_per_game": (
-                        round(
-                            (player.total_goals or 0) / (player.total_appearances or 1),
-                            2,
-                        )
-                        if player.total_appearances
-                        else 0
-                    ),
-                    "rank": len(leaderboard_data) + 1,
-                }
-            )
+        for scorer in top_scorers:
+            leaderboard_data.append({
+                "rank": scorer.rank,
+                "player_id": scorer.player.id if scorer.player else None,
+                "player_name": scorer.player_name,
+                "team_name": scorer.team_name,
+                "total_goals": scorer.goals,
+                "total_assists": 0,  # Not available from external source
+                "total_appearances": 0,  # Not available from external source
+                "total_fantasy_points": 0,  # Not available from external source
+                "goals_per_game": 0,  # Not available from external source
+            })
+        
+        result = {"count": len(leaderboard_data), "results": leaderboard_data}
+        cache.set(cache_key, result, 600)
+        
+        return Response(result, status=status.HTTP_200_OK)
 
-        cache.set(cache_key, {"count": len(leaderboard_data), "results": leaderboard_data}, 600)
-
-        return Response(
-            {"count": len(leaderboard_data), "results": leaderboard_data},
-            status=status.HTTP_200_OK,
-        )
 
     @action(detail=False, methods=["get"], url_path="gameweek-team")
     def team_of_the_week(self, request):

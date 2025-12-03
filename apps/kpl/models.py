@@ -260,3 +260,31 @@ class ProcessedMatchEvent(TimeStampedUUIDModel):
         
     def __str__(self):
         return f"{self.event_type} - {self.fixture} - Minute {self.minute}"
+
+
+class TopcorerData(TimeStampedUUIDModel):
+    player_name = models.CharField(max_length=200)
+    team_name = models.CharField(max_length=200)
+    goals = models.PositiveIntegerField()
+    rank = models.PositiveIntegerField()
+    gameweek = models.ForeignKey(
+        Gameweek, on_delete=models.CASCADE, related_name='external_scorers'
+    )
+    scraped_at = models.DateTimeField(auto_now_add=True)
+    
+    player = models.ForeignKey(
+        Player, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name='external_scorer_records'
+    )
+    
+    class Meta:
+        ordering = ['gameweek', 'rank']
+        unique_together = ('gameweek', 'player_name')
+        verbose_name = "Top Scorer Data"
+        verbose_name_plural = "Top Scorer Data"
+        
+    def __str__(self):
+        return f"{self.rank}. {self.player_name} ({self.team_name}) - {self.goals} goals"
