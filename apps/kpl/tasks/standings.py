@@ -18,14 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 def extract_table_standings_data(headers) -> str:
-    # url = os.getenv("TABLE_STANDINGS_URL")
-    # if not url:
-    #     logger.error("TABLE_STANDINGS_URL environment variable not set")
-    #     return "Configuration error: TABLE_STANDINGS_URL not found"
-    
-    # Using the new URL directly as requested
-    url = "https://kenyafootballdata.com/tournament_stats.php?t=uftn0043"
-
+    url = os.getenv("TABLE_STANDINGS_URL")
+    if not url:
+        logger.error("TABLE_STANDINGS_URL environment variable not set")
+        return "Configuration error: TABLE_STANDINGS_URL not found"
     current_year = datetime.now().year
     previous_year = current_year - 1
     period = f"{previous_year}-{current_year}"
@@ -35,13 +31,21 @@ def extract_table_standings_data(headers) -> str:
         import random
         
         session = requests.Session()
-        session.headers.update(headers)
+        
+        # Create custom headers without Accept-Encoding to avoid gzip compression issues
+        custom_headers = headers.copy()
+        # Remove Accept-Encoding if present to get uncompressed response
+        custom_headers.pop('Accept-Encoding', None)
+        
+        session.headers.update(custom_headers)
         
         # Add a small random delay to mimic human behavior
         time.sleep(random.uniform(1, 3))
         
         web_content = session.get(url, timeout=30)
         logger.info(f"Request to {url} returned status code: {web_content.status_code}")
+        logger.debug(f"Response encoding: {web_content.encoding}")
+        logger.debug(f"Content-Type: {web_content.headers.get('Content-Type', 'N/A')}")
     except requests.RequestException as e:
         logger.error(f"Network error when fetching standings: {str(e)}")
         return f"Network error: {str(e)}"
@@ -53,15 +57,41 @@ def extract_table_standings_data(headers) -> str:
 
         Standing.objects.all().delete()
 
-        soup = BeautifulSoup(web_content.text, "lxml")
-        # The new site seems to have a single table with all data
-        table_body = soup.find("tbody")
+        soup = BeautifulSoup(web_content.text, "html.parser")
         
+        # Try multiple strategies to find the table
+        table_body = None
+        
+        # Strategy 1: Find tbody directly
+        table_body = soup.find("tbody")
+        logger.debug(f"Strategy 1 (find tbody): {'Found' if table_body else 'Not found'}")
+        
+        # Strategy 2: Find table first, then tbody
         if not table_body:
-             # Fallback if tbody is not found, try finding the table directly
             table = soup.find("table")
+            logger.debug(f"Strategy 2 (find table): {'Found' if table else 'Not found'}")
             if table:
-                table_body = table.find("tbody") or table
+                table_body = table.find("tbody")
+                logger.debug(f"Strategy 2 (tbody in table): {'Found' if table_body else 'Not found'}")
+                if not table_body:
+                    # Use the table itself if no tbody
+                    table_body = table
+                    logger.debug("Using table element directly as tbody not found")
+        
+        # Strategy 3: Find all tables and use the first one with rows
+        if not table_body:
+            all_tables = soup.find_all("table")
+            logger.debug(f"Strategy 3: Found {len(all_tables)} table(s)")
+            for i, tbl in enumerate(all_tables):
+                tbody = tbl.find("tbody")
+                if tbody and tbody.find_all("tr"):
+                    table_body = tbody
+                    logger.debug(f"Using tbody from table {i+1}")
+                    break
+                elif tbl.find_all("tr"):
+                    table_body = tbl
+                    logger.debug(f"Using table {i+1} directly (no tbody)")
+                    break
 
         if table_body:
             rows = table_body.find_all("tr")
@@ -74,7 +104,7 @@ def extract_table_standings_data(headers) -> str:
                 try:
                     cols = row.find_all("td")
                     if not cols or len(cols) < 12:
-                        logger.warning(f"Row {idx+1} has insufficient columns: {len(cols)}")
+                        logger.debug(f"Row {idx+1} has {len(cols)} columns (need 12), skipping")
                         continue
 
                     # Extract data based on new structure:
@@ -94,7 +124,7 @@ def extract_table_standings_data(headers) -> str:
                     position_text = cols[0].text.strip()
                     # Handle cases where position might be non-numeric or empty
                     if not position_text.isdigit():
-                         logger.warning(f"Invalid position at row {idx+1}: {position_text}")
+                         logger.debug(f"Row {idx+1}: Position '{position_text}' is not numeric, skipping")
                          continue
                     position = int(position_text)
 
@@ -156,13 +186,14 @@ def extract_table_standings_data(headers) -> str:
                             period=period,
                         )
                         created_standings += 1
+                        logger.debug(f"Created standing for {team_name}: {position} position, {cols[11].text.strip()} points")
                     except (ValueError, IndexError) as e:
                         logger.error(
                             f"Error creating standing for {team_name}: {str(e)}"
                         )
 
                 except Exception as e:
-                    logger.error(f"Error processing team row {idx+1}: {str(e)}")
+                    logger.error(f"Error processing team row {idx+1}: {str(e)}", exc_info=True)
                     continue
 
             all_teams = Team.objects.all()
@@ -185,6 +216,8 @@ def extract_table_standings_data(headers) -> str:
             return f"Successfully updated the table standings. Processed {created_standings} rows."
 
         else:
+            logger.error("Table not found after trying all strategies")
+            logger.error(f"HTML preview (first 1000 chars): {web_content.text[:1000]}")
             return "Table not found"
 
     else:
