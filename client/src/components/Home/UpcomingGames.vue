@@ -11,20 +11,10 @@
         </p>
       </div>
       <div class="flex items-center gap-2 sm:gap-4 justify-start">
-        <router-link
-          to="/fixtures"
-          class="flex items-center gap-1 sm:gap-2 text-blue-600 hover:text-blue-700 transition-colors"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-3 h-3 sm:w-4 sm:h-4"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
+        <router-link to="/fixtures"
+          class="flex items-center gap-1 sm:gap-2 text-blue-600 hover:text-blue-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -33,37 +23,17 @@
           <span class="text-xs sm:text-sm font-medium">Full Calendar</span>
         </router-link>
         <div class="flex gap-1 sm:gap-2">
-          <button
-            @click="scroll('left')"
-            class="p-1 sm:p-2 rounded-full bg-white shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+          <button @click="scroll('left')"
+            class="p-1 sm:p-2 rounded-full bg-white shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="15 18 9 12 15 6"></polyline>
             </svg>
           </button>
-          <button
-            @click="scroll('right')"
-            class="p-1 sm:p-2 rounded-full bg-white shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+          <button @click="scroll('right')"
+            class="p-1 sm:p-2 rounded-full bg-white shadow-sm hover:bg-gray-50 border border-gray-200 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
@@ -72,48 +42,35 @@
     </div>
 
     <!-- Matches Container -->
-    <div
-      v-if="activeStandings.length > 0"
-      ref="scrollContainer"
-      class="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-4 sm:pb-6 mt-4 hide-scrollbar"
-    >
-      <div
-        v-for="(game, index) in activeStandings"
-        :key="game.id"
-        :style="{ animationDelay: `${index * 100}ms` }"
+    <div v-if="activeStandings.length > 0" ref="scrollContainer"
+      class="flex gap-3 sm:gap-4 md:gap-6 overflow-x-auto pb-4 sm:pb-6 mt-4 hide-scrollbar">
+      <div v-for="(game, index) in activeStandings" :key="game.id" :style="{ animationDelay: `${index * 100}ms` }"
         class="animate-slide-up flex-shrink-0 w-56 sm:w-64 md:w-72 rounded-xl sm:rounded-2xl bg-white border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group"
         :class="[
           game.status === 'upcoming' ? 'border-gray-100 shadow-lg' : 'border-gray-100 shadow-md',
           game.status === 'postponed' ? 'opacity-75' : '',
           game.status === 'live' ? '' : '',
-        ]"
-      >
+        ]">
         <div class="p-3 sm:p-4 md:p-6 space-y-3 sm:space-y-4">
           <!-- League & Status -->
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2 sm:gap-3">
               <div
-                class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-50 rounded-full p-2 group-hover:scale-110 transition-transform duration-300"
-              >
-                <img
-                  :src="game.home_team?.logo_url || defaultLogo"
-                  :alt="`${game.home_team.name} logo`"
-                  loading="lazy"
-                  class="w-full h-full object-contain"
-                />
+                class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-50 rounded-full p-2 group-hover:scale-110 transition-transform duration-300">
+                <img :src="getTeamLogoUrl(game.home_team.id) || game.home_team?.logo_url || defaultLogo"
+                  :alt="`${game.home_team.name} logo`" loading="lazy" class="w-full h-full object-contain"
+                  @error="(e) => handleLogoError(e, game.home_team.id)" />
               </div>
             </div>
-            <div
-              :class="[
-                'px-2 sm:px-3 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-300',
-                {
-                  'bg-blue-100 text-blue-700 group-hover:bg-blue-200': game.status === 'upcoming',
-                  'bg-gray-100 text-gray-600 group-hover:bg-gray-200': game.status === 'completed',
-                  'bg-red-100 text-red-700 animate-pulse': game.status === 'live',
-                  'bg-red-50 text-red-600 group-hover:bg-red-100': game.status === 'postponed',
-                },
-              ]"
-            >
+            <div :class="[
+              'px-2 sm:px-3 py-1 rounded-full text-xs font-bold tracking-wide transition-colors duration-300',
+              {
+                'bg-blue-100 text-blue-700 group-hover:bg-blue-200': game.status === 'upcoming',
+                'bg-gray-100 text-gray-600 group-hover:bg-gray-200': game.status === 'completed',
+                'bg-red-100 text-red-700 animate-pulse': game.status === 'live',
+                'bg-red-50 text-red-600 group-hover:bg-red-100': game.status === 'postponed',
+              },
+            ]">
               {{ game.status.toUpperCase() }}
             </div>
           </div>
@@ -124,25 +81,19 @@
             <template v-if="game.status === 'live' || game.status === 'completed'">
               <div class="flex items-center justify-between text-sm sm:text-base font-bold">
                 <span class="text-gray-900">{{ game.home_team.name }}</span>
-                <span
-                  class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold"
-                  :class="{
-                    'bg-red-100 text-red-600': game.status === 'live',
-                    'bg-gray-50 text-gray-600': game.status === 'completed',
-                  }"
-                >
+                <span class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold" :class="{
+                  'bg-red-100 text-red-600': game.status === 'live',
+                  'bg-gray-50 text-gray-600': game.status === 'completed',
+                }">
                   {{ game.home_team_score ?? 0 }}
                 </span>
               </div>
               <div class="flex items-center justify-between text-sm sm:text-base font-bold">
                 <span class="text-gray-900">{{ game.away_team.name }}</span>
-                <span
-                  class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold"
-                  :class="{
-                    'bg-red-100 text-red-600': game.status === 'live',
-                    'bg-gray-50 text-gray-600': game.status === 'completed',
-                  }"
-                >
+                <span class="px-2 py-0.5 rounded-md text-xs sm:text-sm font-extrabold" :class="{
+                  'bg-red-100 text-red-600': game.status === 'live',
+                  'bg-gray-50 text-gray-600': game.status === 'completed',
+                }">
                   {{ game.away_team_score ?? 0 }}
                 </span>
               </div>
@@ -162,16 +113,8 @@
           <!-- Date & Time -->
           <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
             <div class="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="w-3 h-3 sm:w-4 sm:h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                 <line x1="16" y1="2" x2="16" y2="6"></line>
                 <line x1="8" y1="2" x2="8" y2="6"></line>
@@ -187,23 +130,12 @@
     </div>
 
     <!-- No Upcoming Fixtures Fallback -->
-    <div
-      v-else
-      class="flex flex-col items-center justify-center py-10 text-center text-gray-500 bg-white rounded-xl mt-6 border border-dashed border-gray-200"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="w-10 h-10 mb-3 text-gray-400"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="1.5"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M8 7V3m8 4V3m-9 8h10m-11 8h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z"
-        />
+    <div v-else
+      class="flex flex-col items-center justify-center py-10 text-center text-gray-500 bg-white rounded-xl mt-6 border border-dashed border-gray-200">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mb-3 text-gray-400" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M8 7V3m8 4V3m-9 8h10m-11 8h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2z" />
       </svg>
       <p class="text-sm sm:text-base font-medium">Upcoming fixtures not available yet</p>
       <p class="text-xs sm:text-sm text-gray-400 mt-1">
@@ -212,9 +144,7 @@
     </div>
 
     <!-- League Standings Header -->
-    <div
-      class="animate-fade-in mb-6 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mt-8"
-    >
+    <div class="animate-fade-in mb-6 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center mt-8">
       <div>
         <h2 class="text-xl sm:text-2xl font-bold text-gray-700 bg-clip-text">
           League Standings
@@ -223,20 +153,10 @@
           Stay updated with the latest standings
         </p>
       </div>
-      <router-link
-        to="/standings"
-        class="flex items-center gap-1 sm:gap-2 text-blue-600 hover:text-blue-700 transition-colors mt-2 sm:mt-0"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-3 h-3 sm:w-4 sm:h-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
+      <router-link to="/standings"
+        class="flex items-center gap-1 sm:gap-2 text-blue-600 hover:text-blue-700 transition-colors mt-2 sm:mt-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="9 18 15 12 9 6"></polyline>
         </svg>
         <span class="text-xs sm:text-sm font-medium">View Full Table</span>
@@ -245,41 +165,30 @@
 
     <!-- Standings Table -->
     <div
-      class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 overflow-hidden relative"
-    >
+      class="bg-white rounded-xl md:rounded-3xl shadow-lg md:shadow-xl p-4 md:p-8 border border-gray-100 overflow-hidden relative">
       <div class="overflow-x-auto relative">
         <table class="w-full min-w-full table-auto">
           <thead>
             <tr class="border-b border-gray-100">
               <th
-                class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm"
-              >
+                class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
                 Pos
               </th>
               <th
-                class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm"
-              >
+                class="py-3 px-2 sm:px-4 text-left text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
                 Team
               </th>
-              <th
-                v-for="col in ['MP','W','D','L','GF','GA','GD','PTS']"
-                :key="col"
-                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm"
-              >
+              <th v-for="col in ['MP', 'W', 'D', 'L', 'GF', 'GA', 'GD', 'PTS']" :key="col"
+                class="py-3 px-2 sm:px-4 text-center text-gray-500 font-semibold uppercase tracking-wider text-xs sm:text-sm">
                 {{ col }}
               </th>
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(team, index) in firstFiveStandings"
-              :key="team.id"
-              class="border-b hover:bg-gray-50 transition-colors"
-            >
-              <td
-                class="py-3 md:py-4 px-2 md:px-4 font-medium text-xs sm:text-sm"
-                :class="{ 'text-gray-600': index < 4, 'text-red-500': index > 16 }"
-              >
+            <tr v-for="(team, index) in firstFiveStandings" :key="team.id"
+              class="border-b hover:bg-gray-50 transition-colors">
+              <td class="py-3 md:py-4 px-2 md:px-4 font-medium text-xs sm:text-sm"
+                :class="{ 'text-gray-600': index < 4, 'text-red-500': index > 16 }">
                 {{ index + 1 }}
               </td>
               <td class="py-3 md:py-4 px-2 md:px-4">
@@ -289,9 +198,7 @@
               </td>
               <td
                 v-for="value in [team.played, team.wins, team.draws, team.losses, team.goals_for, team.goals_against, team.goal_differential, team.points]"
-                :key="value"
-                class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm font-medium"
-              >
+                :key="value" class="py-3 md:py-4 px-2 md:px-4 text-center text-gray-700 text-xs sm:text-sm font-medium">
                 {{ value }}
               </td>
             </tr>
@@ -302,23 +209,13 @@
       <!-- Mobile scroll hint -->
       <div class="flex justify-center mt-3 md:hidden">
         <div class="flex space-x-1 items-center text-xs text-gray-500">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-gray-400 animate-pulse"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 animate-pulse" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
           <span>Swipe right to see more</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-4 w-4 text-gray-400 animate-pulse"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 animate-pulse" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
         </div>
@@ -350,7 +247,7 @@ const activeStandings = computed(() =>
     .sort((a, b) => {
       const dateA = new Date(a.match_date || '').getTime();
       const dateB = new Date(b.match_date || '').getTime();
-      return dateA - dateB; 
+      return dateA - dateB;
     })
 );
 
@@ -389,6 +286,32 @@ const formatTimePart = (dateStr?: string) => {
     minute: "2-digit",
     hour12: true
   }).format(date);
+};
+
+const logoCache = ref<Map<string, string>>(new Map());
+
+const getTeamLogoUrl = (teamId: string): string => {
+  if (logoCache.value.has(teamId)) {
+    return logoCache.value.get(teamId)!;
+  }
+
+  const standing = props.standings.find(s => s.team.id === teamId);
+  const logoUrl = standing?.team.logo_url || '';
+  if (logoUrl) {
+    logoCache.value.set(teamId, logoUrl);
+  }
+  return logoUrl;
+};
+
+const handleLogoError = (event: Event, teamId: string) => {
+  const img = event.target as HTMLImageElement;
+  const standingsLogo = getTeamLogoUrl(teamId);
+
+  if (standingsLogo && img.src !== standingsLogo) {
+    img.src = standingsLogo;
+  } else if (!standingsLogo && img.src !== defaultLogo) {
+    img.src = defaultLogo;
+  }
 };
 </script>
 
