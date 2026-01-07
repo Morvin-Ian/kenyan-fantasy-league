@@ -78,6 +78,7 @@ THIRD_PARTY_APPS = [
     "django_filters",
     "djoser",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",  # For token rotation security
     "djcelery_email",
     "django_celery_beat",
 ]
@@ -195,11 +196,14 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "AUTH_HEADERS_TYPES": ("Bearer", "JWT"),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=4),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),  
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7), 
+    "ROTATE_REFRESH_TOKENS": True, 
+    "BLACKLIST_AFTER_ROTATION": True, 
     "SIGNING_KEY": os.getenv("SIGNING_KEY"),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "UPDATE_LAST_LOGIN": True, 
 }
 
 

@@ -74,25 +74,30 @@ export const useAuthStore = defineStore("auth", {
         if (credentials.rememberMe) {
           localStorage.setItem("rememberMe", "true");
         }
+        this.setLoading(false);
         return data;
       } catch (error: any) {
+        this.setLoading(false);
         const errorMessage = error.response?.data?.detail || "No active account found with the given credentials";
         this.setError(errorMessage);
         throw new Error(errorMessage);
-      } finally {
-        this.setLoading(false);
       }
     },
 
 
     async refreshToken(): Promise<void> {
       const refresh = this.refresh;
-      if (!refresh) throw new Error("No refresh token");
+      if (!refresh) {
+        this.logout();
+        throw new Error("No refresh token");
+      }
 
       try {
         const { data } = await apiClient.post<AuthResponse>("/auth/jwt/refresh/", { refresh });
-        this.setToken(data.access, refresh); 
+        const newRefresh = data.refresh || refresh;
+        this.setToken(data.access, newRefresh);
       } catch (error: any) {
+        this.setLoading(false);
         this.logout();
         throw new Error("Session expired");
       }

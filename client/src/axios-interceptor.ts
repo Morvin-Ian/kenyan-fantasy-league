@@ -50,14 +50,17 @@ apiClient.interceptors.response.use(
     const authStore = useAuthStore();
     const originalRequest = error.config;
 
-    const isRefreshRequest = originalRequest.url?.includes("/jwt/refresh");
+    const isRefreshRequest = originalRequest?.url?.includes("/jwt/refresh");
+    const isAuthEndpoint = originalRequest?.url?.includes("/jwt/create") ||
+      originalRequest?.url?.includes("/auth/users/");
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       // If the refresh token request itself failed, logout immediately
       if (isRefreshRequest) {
         isRefreshing = false;
         subscribers = []; // Clear any pending requests
-        authStore.logout();
+        authStore.setLoading(false); // Ensure loading state is cleared
+        await authStore.logout();
         router.push("/sign-in");
         return Promise.reject(error);
       }
@@ -75,8 +78,9 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } catch (e) {
           isRefreshing = false;
-          subscribers = []; 
-          authStore.logout();
+          subscribers = [];
+          authStore.setLoading(false); 
+          await authStore.logout();
           router.push("/sign-in");
           return Promise.reject(e);
         }

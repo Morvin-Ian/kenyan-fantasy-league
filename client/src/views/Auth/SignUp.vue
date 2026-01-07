@@ -246,16 +246,16 @@ const handleSubmit = async () => {
 
     if (!authStore.error) {
       toast.success(
-        "Succesfull registration",
+        "Successful registration! Please check your email to activate your account.",
         {
           timeout: 10000,
         }
       );
       router.push({ path: "/sign-in" });
     }
-
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration failed:", error);
+    // Error is already set in store, loading state is already cleared
   }
 };
 

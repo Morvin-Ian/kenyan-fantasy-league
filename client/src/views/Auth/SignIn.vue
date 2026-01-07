@@ -138,8 +138,10 @@ const handleSubmit = async () => {
 
     try {
         await authStore.login({ email: form.email, password: form.password });
-        router.push({ path: "/" });
-    } catch (error) {
+        if (!authStore.error) {
+            router.push({ path: "/" });
+        }
+    } catch (error: any) {
         console.error("Sign-in failed:", error);
     }
 };
