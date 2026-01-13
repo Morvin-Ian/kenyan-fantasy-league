@@ -51,3 +51,24 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         user.is_active = True
         user.save()
         return user
+
+
+class GoogleAuthSerializer(serializers.Serializer):    
+    code = serializers.CharField(required=False)
+    id_token = serializers.CharField(required=False)
+    access_token = serializers.CharField(required=False)
+    
+    def validate(self, attrs):
+        if not any([attrs.get("code"), attrs.get("id_token"), attrs.get("access_token")]):
+            raise serializers.ValidationError(
+                "At least one of: code, id_token, or access_token is required"
+            )
+        return attrs
+
+
+class GoogleAuthResponseSerializer(serializers.Serializer):    
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+    user = UserSerializer()
+    is_new_user = serializers.BooleanField()
+    expires_in = serializers.DateTimeField()
