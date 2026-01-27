@@ -164,6 +164,9 @@ class PlayerTransfer(TimeStampedUUIDModel):
     class Meta:
         verbose_name = "Player Transfer"
         verbose_name_plural = "Player Transfers"
+        indexes = [
+            models.Index(fields=['fantasy_team', 'gameweek']),
+        ]
 
     def __str__(self):
         return f"{self.fantasy_team.name}: {self.player_out.name} → {self.player_in.name} (GW {self.gameweek.number})"

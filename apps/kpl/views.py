@@ -50,9 +50,9 @@ class StandingViewSet(ReadOnlyModelViewSet):
         page_number = request.query_params.get("page", 1)
         cache_key = f"standings_list_page_{page_number}"
 
-        # cached_data = cache.get(cache_key)
-        # if cached_data:
-        #     return Response(cached_data)
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return Response(cached_data)
 
         queryset = self.get_queryset()
         page = self.paginate_queryset(queryset)
@@ -89,7 +89,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
                 try:
                     active_gw = Gameweek.objects.filter(is_active=True).values("number").first()
                     active_gw_number = active_gw["number"] if active_gw else 1
-                    cache.set(cache_key, active_gw_number, timeout=3600)  # 1 hour cache
+                    cache.set(cache_key, active_gw_number, timeout=300)  # 5 minutes cache
                 except:
                     active_gw_number = 1
 
@@ -140,7 +140,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
         response_data = serializer.data
         
         # Cache for 30 minutes
-        cache.set(cache_key, response_data, timeout=1800)
+        cache.set(cache_key, response_data, timeout=600)  # 10 minutes
         return Response(response_data)
 
     @action(detail=False, methods=['post'], url_path='submit-lineup')

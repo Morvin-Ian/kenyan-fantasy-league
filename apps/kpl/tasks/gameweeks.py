@@ -111,7 +111,7 @@ def finalize_gameweek_teams(gameweek_id):
                 logger.error(f"Error finalizing team {team.name} (ID: {team.id}): {e}")
                 continue
 
-        FantasyTeam.objects.update(transfers_available=F("free_transfers") + 1)
+        FantasyTeam.objects.update(free_transfers=F("free_transfers") + 1)
 
         logger.info(
             f"Gameweek {gameweek.number} finalization complete. "

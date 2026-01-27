@@ -41,23 +41,59 @@ export const useKplStore = defineStore('kpl', {
     async fetchFixtures(includeLineups: boolean = true) {
       try {
         const baseQuery = '?up_to_active=true';
-        const query = includeLineups ? baseQuery : baseQuery;
-        let allFixtures: any[] = [];
-        let currentPage = 1;
-        let shouldFetchNext = true;
 
-        while (shouldFetchNext) {
-          const pageQuery = `${query}&page=${currentPage}`;
-          const response = await apiClient.get(`/kpl/fixtures/${pageQuery}`);
-          const { results, next } = response.data;
-          allFixtures = [...allFixtures, ...results];
-          shouldFetchNext = next !== null;
-          currentPage++;
+        // First request to get total count
+        const firstResponse = await apiClient.get(`/kpl/fixtures/${baseQuery}&page=1`);
+        const { results, next } = firstResponse.data;
+
+        // If there's no next page, we're done
+        if (!next) {
+          this.fixtures = results;
+          return;
+        }
+
+        // Parse the next URL to determine total pages
+        // Most Django REST pagination includes page info
+        let allFixtures = [...results];
+        let currentPage = 2;
+        const maxConcurrentRequests = 3; // Limit concurrent requests
+
+        // Fetch remaining pages in batches
+        while (true) {
+          const pagePromises = [];
+          for (let i = 0; i < maxConcurrentRequests; i++) {
+            const pageQuery = `${baseQuery}&page=${currentPage + i}`;
+            pagePromises.push(
+              apiClient.get(`/kpl/fixtures/${pageQuery}`)
+                .then(res => res.data)
+                .catch(err => {
+                  // If page doesn't exist, we've reached the end
+                  if (err.response?.status === 404) return null;
+                  throw err;
+                })
+            );
+          }
+
+          const responses = await Promise.all(pagePromises);
+          const validResponses = responses.filter(r => r !== null);
+
+          if (validResponses.length === 0) break;
+
+          for (const response of validResponses) {
+            allFixtures = [...allFixtures, ...response.results];
+          }
+
+          // Check if we should continue
+          const lastResponse = validResponses[validResponses.length - 1];
+          if (!lastResponse || !lastResponse.next) break;
+
+          currentPage += maxConcurrentRequests;
         }
 
         this.fixtures = allFixtures;
       } catch (error) {
         console.error("Error fetching fixtures:", error);
+        this.fixtures = [];
       }
     },
 
@@ -78,14 +114,18 @@ export const useKplStore = defineStore('kpl', {
 
     async fetchPlayers() {
       try {
-        let nextUrl: string | null = "/kpl/players/";
         const isProduction = import.meta.env.MODE === 'production';
+        let nextUrl: string | null = "/kpl/players/";
+
+        // Fetch all pages sequentially for now (simpler and more reliable)
+        // Can be optimized later if needed
         while (nextUrl) {
-          if (isProduction && nextUrl.startsWith('http://')) {
-            nextUrl = nextUrl.replace(/^http:\/\//, 'https://');
+          let url = nextUrl;
+          if (isProduction && url.startsWith('http://')) {
+            url = url.replace(/^http:\/\//, 'https://');
           }
 
-          const response: { data: PaginatedResponse<Player> } = await apiClient.get(nextUrl);
+          const response: { data: PaginatedResponse<Player> } = await apiClient.get(url);
           this.players = this.players.concat(response.data.results);
           nextUrl = response.data.next;
         }

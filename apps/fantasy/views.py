@@ -1,4 +1,5 @@
 from django.db.models import Count, Q, Sum
+from django.core.cache import cache
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -29,7 +30,11 @@ from .services.team_service import TeamOfTheWeekService
 
 
 class FantasyTeamViewSet(ModelViewSet):
-    queryset = FantasyTeam.objects.all()
+    queryset = FantasyTeam.objects.select_related('user').prefetch_related(
+        'players__player__team',
+        'players__player__performances',
+        'chips__used_in_gameweek'
+    )
     serializer_class = FantasyTeamSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
@@ -59,48 +64,88 @@ class FantasyTeamViewSet(ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="user-team")
     def get_user_team(self, request):
+        """Get the authenticated user's fantasy team with optional gameweek filtering."""
+        gameweek_number = request.query_params.get("gameweek")
+        
+        # Cache key includes user ID and gameweek
+        cache_key = f"user_team_{request.user.id}_{gameweek_number or 'current'}"
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data, status=status.HTTP_200_OK)
+        
         try:
             teams = FantasyTeam.objects.filter(user=request.user).select_related('user')
             
-            gameweek_number = request.query_params.get("gameweek")
-            requested_gameweek = None
+            if not teams.exists():
+                return Response(
+                    {"detail": "No fantasy team found for this user."},
+                    status=status.HTTP_200_OK,
+                )
+
+            context = {'request': request}
             
             if gameweek_number:
                 try:
-                    requested_gameweek = Gameweek.objects.get(number=gameweek_number)
+                    requested_gameweek = Gameweek.objects.get(number=int(gameweek_number))
+                    context['requested_gameweek'] = requested_gameweek
                 except Gameweek.DoesNotExist:
                     return Response(
                         {"detail": f"Gameweek {gameweek_number} not found."},
-                        status=status.HTTP_404_NOT_FOUND
+                        status=status.HTTP_404_NOT_FOUND,
                     )
+
+            serializer = self.get_serializer(teams, many=True, context=context)
             
-            serializer = self.get_serializer(
-                teams, 
-                many=True,
-                context={'requested_gameweek': requested_gameweek}
-            )
+            # Cache for 5 minutes
+            cache.set(cache_key, serializer.data, 300)
             
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {"detail": "An unexpected error occurred.", "error": str(e)},
+                {"detail": f"An error occurred: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
 
 class FantasyPlayerViewSet(ModelViewSet):
-    queryset = FantasyPlayer.objects.all()
+    queryset = FantasyPlayer.objects.select_related(
+        'player__team',
+        'fantasy_team__user'
+    ).prefetch_related(
+        'player__performances__gameweek'
+    )
     serializer_class = FantasyPlayerSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
 
     @action(detail=False, methods=["get"], url_path="team-players")
     def get_team_players(self, request):
+        """Get all players in the user's fantasy team."""
         try:
             team = FantasyTeam.objects.filter(user=request.user)
             if team.exists():
-                players = FantasyPlayer.objects.filter(fantasy_team=team.first())
+                team_id = team.first().id
+                cache_key = f"team_players_{team_id}"
+                
+                # Check cache first
+                cached_data = cache.get(cache_key)
+                if cached_data:
+                    return Response(cached_data, status=status.HTTP_200_OK)
+                
+                players = FantasyPlayer.objects.filter(
+                    fantasy_team=team.first()
+                ).select_related(
+                    'player__team',
+                    'fantasy_team'
+                ).prefetch_related(
+                    'player__performances'
+                )
                 serializer = self.get_serializer(players, many=True)
+                
+                # Cache for 5 minutes
+                cache.set(cache_key, serializer.data, 300)
+                
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response(
@@ -214,7 +259,7 @@ class FantasyPlayerViewSet(ModelViewSet):
                     'has_selection': False
                 })
             
-            cache.set(cache_key, gameweeks_data, 300)
+            cache.set(cache_key, gameweeks_data, 60)  # 1 minute
             
             return Response(gameweeks_data, status=status.HTTP_200_OK)
             
@@ -444,7 +489,7 @@ class PlayerPerformanceViewSet(ModelViewSet):
             })
         
         result = {"count": len(leaderboard_data), "results": leaderboard_data}
-        cache.set(cache_key, result, 600)
+        cache.set(cache_key, result, 300)  # 5 minutes
         
         return Response(result, status=status.HTTP_200_OK)
 
