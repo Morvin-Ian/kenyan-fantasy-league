@@ -47,10 +47,10 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
       - ./docker/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
-      
+
     build:
-      context: ./client  
-      dockerfile: ./production/Dockerfile 
+      context: ./client
+      dockerfile: ./production/Dockerfile
     ports:
       - "80:80"
       - "443:443"
@@ -94,10 +94,10 @@ services:
     container_name: selenium
     shm_size: 2gb
     ports:
-      - "127.0.0.1:4444:4444" 
+      - "127.0.0.1:4444:4444"
     environment:
-      - SE_NODE_SESSION_TIMEOUT=300 
-      - SE_NODE_MAX_SESSIONS=3 
+      - SE_NODE_SESSION_TIMEOUT=300
+      - SE_NODE_MAX_SESSIONS=3
       - SE_NODE_OVERRIDE_MAX_SESSIONS=true
       - SE_SESSION_REQUEST_TIMEOUT=300
       - SE_NODE_SESSION_RETRY_INTERVAL=5

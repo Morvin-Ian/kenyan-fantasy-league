@@ -65,8 +65,11 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
     build:
-      context: ./docker/local/nginx
-      dockerfile: Dockerfile
+      context: ./client
+      dockerfile: production/Dockerfile
+      args:
+        VITE_MODE: production
+        VITE_API_BASE_URL: http://localhost:8080/api/v1
     ports:
       - "8080:80"
     networks:
