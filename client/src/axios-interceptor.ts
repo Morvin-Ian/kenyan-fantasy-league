@@ -55,13 +55,17 @@ apiClient.interceptors.response.use(
       originalRequest?.url?.includes("/auth/users/");
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
-      // If the refresh token request itself failed, logout immediately
+      // If the refresh token request itself failed, logout only on auth errors
       if (isRefreshRequest) {
         isRefreshing = false;
         subscribers = []; // Clear any pending requests
         authStore.setLoading(false); // Ensure loading state is cleared
-        await authStore.logout();
-        router.push("/sign-in");
+        // Only logout if the error is auth-related (401/403), not a network error
+        const refreshStatus = error.response?.status;
+        if (refreshStatus === 401 || refreshStatus === 403) {
+          await authStore.logout();
+          router.push("/sign-in");
+        }
         return Promise.reject(error);
       }
 
@@ -79,9 +83,14 @@ apiClient.interceptors.response.use(
         } catch (e) {
           isRefreshing = false;
           subscribers = [];
-          authStore.setLoading(false); 
-          await authStore.logout();
-          router.push("/sign-in");
+          authStore.setLoading(false);
+          // Only logout on auth errors, not transient network/server errors
+          const axiosErr = e as AxiosError;
+          const errStatus = axiosErr?.response?.status;
+          if (errStatus === 401 || errStatus === 403) {
+            await authStore.logout();
+            router.push("/sign-in");
+          }
           return Promise.reject(e);
         }
       }

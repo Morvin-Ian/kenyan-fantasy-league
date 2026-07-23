@@ -208,7 +208,16 @@ export const useAuthStore = defineStore("auth", {
           throw new Error("Profile data is missing");
         }
       } catch (error: any) {
-        await this.logout();
+        // Only logout on auth errors (401/403), not on transient network errors
+        // or server errors (e.g. when Docker/backend is temporarily down).
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          await this.logout();
+        } else {
+          this.setError(
+            "Unable to load profile. The server may be temporarily unavailable."
+          );
+        }
         throw error;
       } finally {
         this.setLoading(false);
