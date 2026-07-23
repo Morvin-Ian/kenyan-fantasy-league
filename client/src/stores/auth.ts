@@ -208,7 +208,6 @@ export const useAuthStore = defineStore("auth", {
           throw new Error("Profile data is missing");
         }
       } catch (error: any) {
-        await this.logout();
         throw error;
       } finally {
         this.setLoading(false);
