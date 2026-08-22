@@ -1,16 +1,9 @@
 from django.contrib import admin
-from django.utils.html import format_html
 from django.utils import timezone
+from django.utils.html import format_html
 
-from .models import (
-    Chip,
-    FantasyLeague,
-    FantasyPlayer,
-    FantasyTeam,
-    PlayerPerformance,
-    PlayerTransfer,
-    TeamSelection,
-)
+from .models import (Chip, FantasyLeague, FantasyPlayer, FantasyTeam,
+                     PlayerPerformance, PlayerTransfer, TeamSelection)
 
 
 @admin.register(FantasyTeam)
@@ -220,29 +213,21 @@ class ChipAdmin(admin.ModelAdmin):
     list_filter = ("chip_type", "is_used", "used_in_gameweek")
     search_fields = ("fantasy_team__name", "fantasy_team__user__username")
     readonly_fields = ("id", "created_at", "updated_at")
-    
+
     fieldsets = (
         (
             "Chip Information",
-            {
-                "fields": ("fantasy_team", "chip_type", "is_used", "used_in_gameweek")
-            },
+            {"fields": ("fantasy_team", "chip_type", "is_used", "used_in_gameweek")},
         ),
         (
             "Timestamps",
-            {
-                "fields": ("created_at", "updated_at"),
-                "classes": ("collapse",)
-            },
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
         ),
     )
 
     def chip_type_display(self, obj):
-        return format_html(
-            '<strong>{}</strong>',
-            obj.get_chip_type_display()
-        )
-    
+        return format_html("<strong>{}</strong>", obj.get_chip_type_display())
+
     chip_type_display.short_description = "Chip Type"
 
     def team_name_display(self, obj):
@@ -251,7 +236,7 @@ class ChipAdmin(admin.ModelAdmin):
             obj.fantasy_team.name,
             obj.fantasy_team.user.username,
         )
-    
+
     team_name_display.short_description = "Fantasy Team"
 
     def status_display(self, obj):
@@ -263,17 +248,16 @@ class ChipAdmin(admin.ModelAdmin):
             return format_html(
                 '<span style="background-color: #4CAF50; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;">○ AVAILABLE</span>'
             )
-    
+
     status_display.short_description = "Status"
 
     def used_gameweek_display(self, obj):
         if obj.is_used and obj.used_in_gameweek:
             return format_html(
-                '<span style="color: #666;">GW {}</span>',
-                obj.used_in_gameweek.number
+                '<span style="color: #666;">GW {}</span>', obj.used_in_gameweek.number
             )
         return format_html('<span style="color: #ccc;">-</span>')
-    
+
     used_gameweek_display.short_description = "Used In"
 
     def created_at_display(self, obj):
@@ -282,7 +266,7 @@ class ChipAdmin(admin.ModelAdmin):
             obj.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             obj.created_at.strftime("%b %d, %Y"),
         )
-    
+
     created_at_display.short_description = "Created"
 
     def get_queryset(self, request):

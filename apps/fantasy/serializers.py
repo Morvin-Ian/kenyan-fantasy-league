@@ -1,32 +1,35 @@
-from rest_framework import serializers
-from apps.fantasy.models import FantasyPlayer, FantasyTeam, PlayerPerformance, TeamSelection, Chip
-from apps.kpl.models import Gameweek
-from django.db.models import Sum
-from decimal import Decimal
 import logging
+from decimal import Decimal
+
+from django.db.models import Sum
+from rest_framework import serializers
+
+from apps.fantasy.models import (Chip, FantasyPlayer, FantasyTeam,
+                                 PlayerPerformance, TeamSelection)
+from apps.kpl.models import Gameweek
 
 logger = logging.getLogger(__name__)
 
 
 class ChipSerializer(serializers.ModelSerializer):
-    chip_type_display = serializers.CharField(source='get_chip_type_display', read_only=True)
+    chip_type_display = serializers.CharField(
+        source="get_chip_type_display", read_only=True
+    )
     used_in_gameweek_number = serializers.IntegerField(
-        source='used_in_gameweek.number',
-        read_only=True,
-        allow_null=True
+        source="used_in_gameweek.number", read_only=True, allow_null=True
     )
 
     class Meta:
         model = Chip
         fields = (
-            'id',
-            'chip_type',
-            'chip_type_display',
-            'is_used',
-            'used_in_gameweek',
-            'used_in_gameweek_number',
+            "id",
+            "chip_type",
+            "chip_type_display",
+            "is_used",
+            "used_in_gameweek",
+            "used_in_gameweek_number",
         )
-        read_only_fields = ('id', 'chip_type', 'is_used', 'used_in_gameweek')
+        read_only_fields = ("id", "chip_type", "is_used", "used_in_gameweek")
 
 
 class FantasyTeamSerializer(serializers.ModelSerializer):
@@ -38,7 +41,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
     best_week = serializers.SerializerMethodField(read_only=True)
     requested_gameweek_points = serializers.SerializerMethodField(read_only=True)
     requested_gameweek_formation = serializers.SerializerMethodField(read_only=True)
-    has_selection_for_requested_gameweek = serializers.SerializerMethodField(read_only=True)
+    has_selection_for_requested_gameweek = serializers.SerializerMethodField(
+        read_only=True
+    )
     available_chips = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -62,9 +67,11 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         )
 
     def get_gameweek(self, obj):
-        if '_active_gameweek_cached' not in self.context:
-            self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
-        active_gameweek = self.context.get('_active_gameweek_cached')
+        if "_active_gameweek_cached" not in self.context:
+            self.context["_active_gameweek_cached"] = Gameweek.objects.filter(
+                is_active=True
+            ).first()
+        active_gameweek = self.context.get("_active_gameweek_cached")
         return active_gameweek.number if active_gameweek else None
 
     def get_balance(self, obj):
@@ -81,50 +88,53 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         chips = obj.chips.all()
         return ChipSerializer(chips, many=True).data
 
-
     def get_gameweek_points(self, obj):
         try:
-            requested_gameweek = self.context.get('requested_gameweek')
-            
+            requested_gameweek = self.context.get("requested_gameweek")
+
             if requested_gameweek:
                 gameweek = requested_gameweek
             else:
-                if '_active_gameweek_cached' not in self.context:
-                    self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
-                gameweek = self.context.get('_active_gameweek_cached')
-            
+                if "_active_gameweek_cached" not in self.context:
+                    self.context["_active_gameweek_cached"] = Gameweek.objects.filter(
+                        is_active=True
+                    ).first()
+                gameweek = self.context.get("_active_gameweek_cached")
+
             if not gameweek:
                 return None
 
             return self._get_points_for_gameweek(obj, gameweek)
 
         except Exception as e:
-            logger.error(f"Error calculating gameweek points for {obj}: {e}", exc_info=True)
+            logger.error(
+                f"Error calculating gameweek points for {obj}: {e}", exc_info=True
+            )
             return None
 
     def get_requested_gameweek_points(self, obj):
-        requested_gameweek = self.context.get('requested_gameweek')
+        requested_gameweek = self.context.get("requested_gameweek")
         if not requested_gameweek:
             return None
-        
+
         return self._get_points_for_gameweek(obj, requested_gameweek)
 
     def get_requested_gameweek_formation(self, obj):
-        requested_gameweek = self.context.get('requested_gameweek')
+        requested_gameweek = self.context.get("requested_gameweek")
         if not requested_gameweek:
             return None
-        
+
         team_selection = TeamSelection.objects.filter(
             fantasy_team=obj, gameweek=requested_gameweek
         ).first()
-        
+
         return team_selection.formation if team_selection else None
 
     def get_has_selection_for_requested_gameweek(self, obj):
-        requested_gameweek = self.context.get('requested_gameweek')
+        requested_gameweek = self.context.get("requested_gameweek")
         if not requested_gameweek:
             return None
-        
+
         return TeamSelection.objects.filter(
             fantasy_team=obj, gameweek=requested_gameweek
         ).exists()
@@ -149,8 +159,7 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
         if team_selection.captain_id:
             captain_performance = PlayerPerformance.objects.filter(
-                player_id=team_selection.captain.player_id,
-                gameweek=gameweek
+                player_id=team_selection.captain.player_id, gameweek=gameweek
             ).first()
             if captain_performance:
                 total_points += captain_performance.fantasy_points
@@ -159,9 +168,9 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
 
     def get_total_points(self, obj):
         total = 0
-        team_selections = TeamSelection.objects.filter(
-            fantasy_team=obj
-        ).select_related("gameweek", "captain__player")
+        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related(
+            "gameweek", "captain__player"
+        )
 
         for selection in team_selections:
             total += self._get_points_for_gameweek(obj, selection.gameweek, selection)
@@ -169,15 +178,17 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
         return total
 
     def get_best_week(self, obj):
-        team_selections = TeamSelection.objects.filter(
-            fantasy_team=obj
-        ).select_related("gameweek", "captain__player")
+        team_selections = TeamSelection.objects.filter(fantasy_team=obj).select_related(
+            "gameweek", "captain__player"
+        )
 
         best_gameweek = None
         max_points = 0
 
         for selection in team_selections:
-            gameweek_points = self._get_points_for_gameweek(obj, selection.gameweek, selection)
+            gameweek_points = self._get_points_for_gameweek(
+                obj, selection.gameweek, selection
+            )
             if gameweek_points > max_points:
                 max_points = gameweek_points
                 best_gameweek = selection.gameweek.number
@@ -187,19 +198,23 @@ class FantasyTeamSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         """Add gameweek context to the response"""
         data = super().to_representation(instance)
-        
-        requested_gameweek = self.context.get('requested_gameweek')
+
+        requested_gameweek = self.context.get("requested_gameweek")
         if requested_gameweek:
-            data['requested_gameweek'] = requested_gameweek.number
-            data['requested_gameweek_name'] = f"Gameweek {requested_gameweek.number}"
+            data["requested_gameweek"] = requested_gameweek.number
+            data["requested_gameweek_name"] = f"Gameweek {requested_gameweek.number}"
         else:
-            if '_active_gameweek_cached' not in self.context:
-                self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
-            active_gameweek = self.context.get('_active_gameweek_cached')
+            if "_active_gameweek_cached" not in self.context:
+                self.context["_active_gameweek_cached"] = Gameweek.objects.filter(
+                    is_active=True
+                ).first()
+            active_gameweek = self.context.get("_active_gameweek_cached")
             if active_gameweek:
-                data['requested_gameweek'] = active_gameweek.number
-                data['requested_gameweek_name'] = f"Gameweek {active_gameweek.number} (Current)"
-        
+                data["requested_gameweek"] = active_gameweek.number
+                data["requested_gameweek_name"] = (
+                    f"Gameweek {active_gameweek.number} (Current)"
+                )
+
         return data
 
 
@@ -288,49 +303,53 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
     def get_gameweek_points(self, obj):
         try:
-            requested_gameweek = self.context.get('requested_gameweek')
-            
+            requested_gameweek = self.context.get("requested_gameweek")
+
             if requested_gameweek:
                 gameweek = requested_gameweek
             else:
-                if '_active_gameweek_cached' not in self.context:
-                    self.context['_active_gameweek_cached'] = Gameweek.objects.filter(is_active=True).first()
-                gameweek = self.context.get('_active_gameweek_cached')
-            
+                if "_active_gameweek_cached" not in self.context:
+                    self.context["_active_gameweek_cached"] = Gameweek.objects.filter(
+                        is_active=True
+                    ).first()
+                gameweek = self.context.get("_active_gameweek_cached")
+
             if not gameweek:
                 return None
 
-            team_selection = TeamSelection.objects.filter(
-                fantasy_team=obj.fantasy_team, gameweek=gameweek
-            ).prefetch_related('starters', 'bench').first()
+            team_selection = (
+                TeamSelection.objects.filter(
+                    fantasy_team=obj.fantasy_team, gameweek=gameweek
+                )
+                .prefetch_related("starters", "bench")
+                .first()
+            )
 
             if not team_selection:
                 return None
 
             starter_ids = [s.id for s in team_selection.starters.all()]
             bench_ids = [b.id for b in team_selection.bench.all()]
-            
+
             is_starter = obj.id in starter_ids
             is_bench = obj.id in bench_ids
-            
+
             active_chip = team_selection.active_chip
-            is_bench_boost_active = active_chip == 'BB'
-            
+            is_bench_boost_active = active_chip == "BB"
+
             if not is_starter:
                 if not (is_bench and is_bench_boost_active):
                     return None
 
-            performance = obj.player.performances.filter(
-                gameweek=gameweek
-            ).first()
+            performance = obj.player.performances.filter(gameweek=gameweek).first()
 
             if not performance:
                 return None
 
             points = performance.fantasy_points
-            
+
             if is_starter and team_selection.captain_id == obj.id:
-                if active_chip == 'TC':
+                if active_chip == "TC":
                     points = points * 3
                 else:
                     points = points * 2
@@ -338,7 +357,10 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             return points
 
         except Exception as e:
-            logger.error(f"Error calculating gameweek points for player {obj}: {e}", exc_info=True)
+            logger.error(
+                f"Error calculating gameweek points for player {obj}: {e}",
+                exc_info=True,
+            )
             return None
 
     def get_jersey_image(self, obj):
@@ -401,7 +423,9 @@ class TeamSelectionSerializer(serializers.ModelSerializer):
     )
     gameweek_number = serializers.IntegerField(source="gameweek.number", read_only=True)
     total_points = serializers.SerializerMethodField(read_only=True)
-    active_chip_display = serializers.CharField(source='get_active_chip_display', read_only=True)
+    active_chip_display = serializers.CharField(
+        source="get_active_chip_display", read_only=True
+    )
     starters_detail = FantasyPlayerSerializer(
         source="starters", many=True, read_only=True
     )
@@ -443,8 +467,7 @@ class TeamSelectionSerializer(serializers.ModelSerializer):
 
         if obj.captain_id:
             captain_performance = PlayerPerformance.objects.filter(
-                player_id=obj.captain.player_id,
-                gameweek=obj.gameweek
+                player_id=obj.captain.player_id, gameweek=obj.gameweek
             ).first()
             if captain_performance:
                 total_points += captain_performance.fantasy_points

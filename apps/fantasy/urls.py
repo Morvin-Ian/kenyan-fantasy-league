@@ -1,12 +1,8 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (
-    FantasyPlayerViewSet,
-    FantasyTeamViewSet,
-    GameweekViewSet,
-    PlayerPerformanceViewSet,
-)
+from .views import (FantasyPlayerViewSet, FantasyTeamViewSet, GameweekViewSet,
+                    PlayerPerformanceViewSet)
 
 router = DefaultRouter()
 router.register(r"teams", FantasyTeamViewSet, basename="fantasy-teams")

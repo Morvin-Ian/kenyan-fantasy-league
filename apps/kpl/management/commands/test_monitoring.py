@@ -6,7 +6,8 @@ from django.core.management.base import BaseCommand
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 
 from apps.kpl.models import Fixture, Gameweek
-from apps.kpl.tasks.live_games import monitor_fixture_score, setup_gameweek_monitoring
+from apps.kpl.tasks.live_games import (monitor_fixture_score,
+                                       setup_gameweek_monitoring)
 
 logger = logging.getLogger(__name__)
 

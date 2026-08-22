@@ -1,39 +1,29 @@
-from django.db.models import Count, Q, Sum
 from django.core.cache import cache
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Q, Sum
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from django.db import IntegrityError, transaction
 
-from apps.fantasy.models import (
-    Chip,
-    ChipType,
-    FantasyPlayer,
-    FantasyTeam,
-    PlayerPerformance,
-    TeamSelection,
-)
+from apps.fantasy.models import (Chip, ChipType, FantasyPlayer, FantasyTeam,
+                                 PlayerPerformance, TeamSelection)
 from apps.kpl.models import Gameweek, Player
 
-from .serializers import (
-    ChipSerializer,
-    FantasyPlayerSerializer,
-    FantasyTeamSerializer,
-    PlayerPerformanceSerializer,
-    TeamSelectionSerializer,
-)
+from .serializers import (ChipSerializer, FantasyPlayerSerializer,
+                          FantasyTeamSerializer, PlayerPerformanceSerializer,
+                          TeamSelectionSerializer)
 from .services.fantasy import FantasyService
 from .services.gameweek_status import GameweekStatusService
 from .services.team_service import TeamOfTheWeekService
 
 
 class FantasyTeamViewSet(ModelViewSet):
-    queryset = FantasyTeam.objects.select_related('user').prefetch_related(
-        'players__player__team',
-        'players__player__performances',
-        'chips__used_in_gameweek'
+    queryset = FantasyTeam.objects.select_related("user").prefetch_related(
+        "players__player__team",
+        "players__player__performances",
+        "chips__used_in_gameweek",
     )
     serializer_class = FantasyTeamSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -66,29 +56,31 @@ class FantasyTeamViewSet(ModelViewSet):
     def get_user_team(self, request):
         """Get the authenticated user's fantasy team with optional gameweek filtering."""
         gameweek_number = request.query_params.get("gameweek")
-        
+
         # Cache key includes user ID and gameweek
         cache_key = f"user_team_{request.user.id}_{gameweek_number or 'current'}"
         cached_data = cache.get(cache_key)
-        
+
         if cached_data:
             return Response(cached_data, status=status.HTTP_200_OK)
-        
+
         try:
-            teams = FantasyTeam.objects.filter(user=request.user).select_related('user')
-            
+            teams = FantasyTeam.objects.filter(user=request.user).select_related("user")
+
             if not teams.exists():
                 return Response(
                     {"detail": "No fantasy team found for this user."},
                     status=status.HTTP_200_OK,
                 )
 
-            context = {'request': request}
-            
+            context = {"request": request}
+
             if gameweek_number:
                 try:
-                    requested_gameweek = Gameweek.objects.get(number=int(gameweek_number))
-                    context['requested_gameweek'] = requested_gameweek
+                    requested_gameweek = Gameweek.objects.get(
+                        number=int(gameweek_number)
+                    )
+                    context["requested_gameweek"] = requested_gameweek
                 except Gameweek.DoesNotExist:
                     return Response(
                         {"detail": f"Gameweek {gameweek_number} not found."},
@@ -96,10 +88,10 @@ class FantasyTeamViewSet(ModelViewSet):
                     )
 
             serializer = self.get_serializer(teams, many=True, context=context)
-            
+
             # Cache for 5 minutes
             cache.set(cache_key, serializer.data, 300)
-            
+
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
@@ -110,11 +102,8 @@ class FantasyTeamViewSet(ModelViewSet):
 
 class FantasyPlayerViewSet(ModelViewSet):
     queryset = FantasyPlayer.objects.select_related(
-        'player__team',
-        'fantasy_team__user'
-    ).prefetch_related(
-        'player__performances__gameweek'
-    )
+        "player__team", "fantasy_team__user"
+    ).prefetch_related("player__performances__gameweek")
     serializer_class = FantasyPlayerSerializer
     permission_classes = [permissions.IsAuthenticated]
     lookup_field = "id"
@@ -127,25 +116,22 @@ class FantasyPlayerViewSet(ModelViewSet):
             if team.exists():
                 team_id = team.first().id
                 cache_key = f"team_players_{team_id}"
-                
+
                 # Check cache first
                 cached_data = cache.get(cache_key)
                 if cached_data:
                     return Response(cached_data, status=status.HTTP_200_OK)
-                
-                players = FantasyPlayer.objects.filter(
-                    fantasy_team=team.first()
-                ).select_related(
-                    'player__team',
-                    'fantasy_team'
-                ).prefetch_related(
-                    'player__performances'
+
+                players = (
+                    FantasyPlayer.objects.filter(fantasy_team=team.first())
+                    .select_related("player__team", "fantasy_team")
+                    .prefetch_related("player__performances")
                 )
                 serializer = self.get_serializer(players, many=True)
-                
+
                 # Cache for 5 minutes
                 cache.set(cache_key, serializer.data, 300)
-                
+
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
                 return Response(
@@ -180,24 +166,24 @@ class FantasyPlayerViewSet(ModelViewSet):
 
             try:
                 # Optimize: prefetch related data to avoid N+1 queries
-                team_selection = TeamSelection.objects.prefetch_related(
-                    'starters__player__team',
-                    'starters__player__performances',
-                    'bench__player__team',
-                    'bench__player__performances'
-                ).select_related('captain', 'vice_captain').get(
-                    fantasy_team=fantasy_team, gameweek=gameweek
+                team_selection = (
+                    TeamSelection.objects.prefetch_related(
+                        "starters__player__team",
+                        "starters__player__performances",
+                        "bench__player__team",
+                        "bench__player__performances",
+                    )
+                    .select_related("captain", "vice_captain")
+                    .get(fantasy_team=fantasy_team, gameweek=gameweek)
                 )
 
                 # Combine and select_related to avoid N+1 queries when serializing
-                players = list(team_selection.starters.select_related('player__team').all()) + list(
-                    team_selection.bench.select_related('player__team').all()
-                )
+                players = list(
+                    team_selection.starters.select_related("player__team").all()
+                ) + list(team_selection.bench.select_related("player__team").all())
 
                 serializer = FantasyPlayerSerializer(
-                    players, 
-                    many=True,
-                    context={'requested_gameweek': gameweek}
+                    players, many=True, context={"requested_gameweek": gameweek}
                 )
                 return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -223,58 +209,61 @@ class FantasyPlayerViewSet(ModelViewSet):
                 {"detail": "An unexpected error occurred.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-            
+
     @action(detail=False, methods=["get"], url_path="available-gameweeks")
     def get_available_gameweeks(self, request):
         from django.core.cache import cache
-        
+
         try:
             fantasy_team = FantasyTeam.objects.get(user=request.user)
             cache_key = f"available_gameweeks_{fantasy_team.id}"
-            
+
             cached_data = cache.get(cache_key)
             if cached_data:
                 return Response(cached_data, status=status.HTTP_200_OK)
-            
-            gameweeks_with_selections = Gameweek.objects.filter(
-                team_selections__fantasy_team=fantasy_team
-            ).distinct().order_by('-number')
-            
+
+            gameweeks_with_selections = (
+                Gameweek.objects.filter(team_selections__fantasy_team=fantasy_team)
+                .distinct()
+                .order_by("-number")
+            )
+
             active_gameweek = Gameweek.objects.filter(is_active=True).first()
-            
+
             gameweeks_data = []
             for gw in gameweeks_with_selections:
-                gameweeks_data.append({
-                    'number': gw.number,
-                    'name': f'Gameweek {gw.number}',
-                    'is_active': gw.is_active,
-                    'has_selection': True
-                })
-            
+                gameweeks_data.append(
+                    {
+                        "number": gw.number,
+                        "name": f"Gameweek {gw.number}",
+                        "is_active": gw.is_active,
+                        "has_selection": True,
+                    }
+                )
+
             if active_gameweek and active_gameweek not in gameweeks_with_selections:
-                gameweeks_data.append({
-                    'number': active_gameweek.number,
-                    'name': f'Gameweek {active_gameweek.number} (Current)',
-                    'is_active': True,
-                    'has_selection': False
-                })
-            
+                gameweeks_data.append(
+                    {
+                        "number": active_gameweek.number,
+                        "name": f"Gameweek {active_gameweek.number} (Current)",
+                        "is_active": True,
+                        "has_selection": False,
+                    }
+                )
+
             cache.set(cache_key, gameweeks_data, 60)  # 1 minute
-            
+
             return Response(gameweeks_data, status=status.HTTP_200_OK)
-            
+
         except FantasyTeam.DoesNotExist:
             return Response(
-                {"detail": "Fantasy team not found."}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Fantasy team not found."}, status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
                 {"detail": "An unexpected error occurred.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-            
-
 
     @action(detail=False, methods=["get"], url_path="available-chips")
     def available_chips(self, request):
@@ -286,8 +275,7 @@ class FantasyPlayerViewSet(ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except FantasyTeam.DoesNotExist:
             return Response(
-                {"detail": "Fantasy team not found."}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Fantasy team not found."}, status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
@@ -350,8 +338,7 @@ class FantasyPlayerViewSet(ModelViewSet):
                 # Check if team selection exists for this gameweek
                 try:
                     team_selection = TeamSelection.objects.get(
-                        fantasy_team=fantasy_team,
-                        gameweek=gameweek
+                        fantasy_team=fantasy_team, gameweek=gameweek
                     )
                 except TeamSelection.DoesNotExist:
                     return Response(
@@ -363,7 +350,9 @@ class FantasyPlayerViewSet(ModelViewSet):
 
                 # Check if another chip is already active for this gameweek
                 if team_selection.active_chip:
-                    active_chip_display = dict(ChipType.choices).get(team_selection.active_chip, team_selection.active_chip)
+                    active_chip_display = dict(ChipType.choices).get(
+                        team_selection.active_chip, team_selection.active_chip
+                    )
                     return Response(
                         {
                             "detail": f"You already have {active_chip_display} active for Gameweek {gameweek.number}. Only one chip can be used per gameweek."
@@ -390,14 +379,14 @@ class FantasyPlayerViewSet(ModelViewSet):
 
         except FantasyTeam.DoesNotExist:
             return Response(
-                {"detail": "Fantasy team not found."}, 
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Fantasy team not found."}, status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
                 {"detail": "An unexpected error occurred.", "error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
     @action(detail=False, methods=["post"], url_path="save-team-players")
     def save_team_players(self, request):
         try:
@@ -451,48 +440,52 @@ class PlayerPerformanceViewSet(ModelViewSet):
     @action(detail=False, methods=["get"], url_path="goals-leaderboard")
     def goals_leaderboard(self, request):
         from django.core.cache import cache
-        from apps.kpl.models import TopcorerData, Gameweek
-        
+
+        from apps.kpl.models import Gameweek, TopcorerData
+
         limit = int(request.query_params.get("limit", 5))
         cache_key = f"goals_leaderboard_limit_{limit}"
-        
+
         cached_data = cache.get(cache_key)
         if cached_data:
             return Response(cached_data, status=status.HTTP_200_OK)
 
         # Get the active gameweek
         active_gameweek = Gameweek.objects.filter(is_active=True).first()
-        
+
         if not active_gameweek:
             return Response(
                 {"detail": "No active gameweek found."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
-        
+
         # Fetch top scorers from scraped data
-        top_scorers = TopcorerData.objects.filter(
-            gameweek=active_gameweek
-        ).select_related('player', 'player__team').order_by('rank')[:limit]
-        
+        top_scorers = (
+            TopcorerData.objects.filter(gameweek=active_gameweek)
+            .select_related("player", "player__team")
+            .order_by("rank")[:limit]
+        )
+
         leaderboard_data = []
         for scorer in top_scorers:
-            leaderboard_data.append({
-                "rank": scorer.rank,
-                "player_id": scorer.player.id if scorer.player else None,
-                "player_name": scorer.player_name,
-                "team_name": scorer.team_name,
-                "total_goals": scorer.goals,
-                "total_assists": 0,  # Not available from external source
-                "total_appearances": 0,  # Not available from external source
-                "total_fantasy_points": 0,  # Not available from external source
-                "goals_per_game": 0,  # Not available from external source
-            })
-        
+            leaderboard_data.append(
+                {
+                    "rank": scorer.rank,
+                    "player_id": scorer.player.id if scorer.player else None,
+                    "player_name": scorer.player_name,
+                    "team_name": scorer.team_name,
+                    "total_goals": scorer.goals,
+                    "total_assists": 0,  # Not available from external source
+                    "total_appearances": 0,  # Not available from external source
+                    "total_fantasy_points": 0,  # Not available from external source
+                    "goals_per_game": 0,  # Not available from external source
+                }
+            )
+
         result = {"count": len(leaderboard_data), "results": leaderboard_data}
         cache.set(cache_key, result, 300)  # 5 minutes
-        
-        return Response(result, status=status.HTTP_200_OK)
 
+        return Response(result, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_path="gameweek-team")
     def team_of_the_week(self, request):

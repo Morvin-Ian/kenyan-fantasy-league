@@ -196,14 +196,14 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     "AUTH_HEADERS_TYPES": ("Bearer", "JWT"),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),  
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7), 
-    "ROTATE_REFRESH_TOKENS": True, 
-    "BLACKLIST_AFTER_ROTATION": True, 
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "SIGNING_KEY": os.getenv("SIGNING_KEY"),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
-    "UPDATE_LAST_LOGIN": True, 
+    "UPDATE_LAST_LOGIN": True,
 }
 
 
@@ -278,7 +278,7 @@ DEFAULT_LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "file",
             "filename": LOG_DIR / "fantasy_league.log",
-            "maxBytes": 30485760,  
+            "maxBytes": 30485760,
             "backupCount": 5,
         },
         "celery_file": {
@@ -286,7 +286,7 @@ DEFAULT_LOGGING = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "celery",
             "filename": LOG_DIR / "celery.log",
-            "maxBytes": 30485760, 
+            "maxBytes": 30485760,
             "backupCount": 5,
         },
         "celery_console": {
@@ -384,7 +384,6 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(day_of_week=1, hour=23, minute=0),  # Monday at 11 PM
     },
 }
-
 
 
 CACHES = {

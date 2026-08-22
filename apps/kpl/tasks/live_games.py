@@ -9,19 +9,18 @@ from celery import shared_task
 from django.db.models import Q
 from django.utils import timezone
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 
+from apps.fantasy.tasks.fixture_completion import \
+    process_clean_sheets_on_completion
+from apps.kpl.models import Fixture, Gameweek
 from apps.kpl.services.match_events import MatchEventService
 from apps.kpl.tasks.gameweeks import setup_team_finalization_task
-from apps.kpl.models import Fixture, Gameweek
-from apps.fantasy.tasks.fixture_completion import process_clean_sheets_on_completion
 from config.settings import base
 from util.selenium import SeleniumManager
-
-
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
@@ -30,62 +29,63 @@ logger = logging.getLogger(__name__)
 def select_date_on_page(selenium_manager, target_date_text):
     """
     Click on a specific date in the date selector
-    
+
     Args:
         selenium_manager: SeleniumManager instance
         target_date_text: The text of the date to click (e.g., "25 OCT")
-    
+
     Returns:
         bool: True if date was selected successfully, False otherwise
     """
     try:
         logger.info(f"🗓️ Looking for date selector with text '{target_date_text}'...")
-        
+
         WebDriverWait(selenium_manager.driver, 10).until(
-            EC.presence_of_element_located(
-                (By.CSS_SELECTOR, ".cursor-pointer")
-            )
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".cursor-pointer"))
         )
-        
+
         date_containers = selenium_manager.driver.find_elements(
-            By.CSS_SELECTOR, 
-            ".cursor-pointer"
+            By.CSS_SELECTOR, ".cursor-pointer"
         )
-        
+
         logger.info(f"Found {len(date_containers)} date containers")
-        
+
         for container in date_containers:
             try:
                 date_text_div = container.find_element(By.CSS_SELECTOR, ".py-1")
                 date_text = date_text_div.text.strip()
-                
+
                 if date_text.upper() == target_date_text.upper():
                     logger.info(f" Found date: '{date_text}'")
-                    
+
                     selenium_manager.driver.execute_script(
-                        "arguments[0].scrollIntoView({block: 'center'});", 
-                        container
+                        "arguments[0].scrollIntoView({block: 'center'});", container
                     )
                     time.sleep(0.5)
-                    
-                    selenium_manager.driver.execute_script("arguments[0].click();", container)
+
+                    selenium_manager.driver.execute_script(
+                        "arguments[0].click();", container
+                    )
                     logger.info(f" Clicked on date '{target_date_text}'")
-                    
+
                     time.sleep(3)
                     return True
-                        
+
             except Exception as e:
                 continue
-        
-        logger.warning(f"Date '{target_date_text}' not found, proceeding with default date")
+
+        logger.warning(
+            f"Date '{target_date_text}' not found, proceeding with default date"
+        )
         return False
-        
+
     except TimeoutException:
         logger.warning(f"Date selector not found")
         return False
     except Exception as e:
         logger.error(f"Error selecting date: {e}")
         return False
+
 
 def extract_fixture_data(selenium_manager, match_url, target_date=None):
     try:
@@ -121,11 +121,11 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                     By.CSS_SELECTOR, ".font-semibold.text-sm.bg-black-lighter"
                 )
                 league_name = league_elem.text.strip()
-                
+
                 if "SportPesa League" not in league_name:
                     logger.info(f"Skipping league: {league_name}")
                     continue
-                
+
                 logger.info(f"Processing league: {league_name}")
 
                 matches = container.find_elements(By.CSS_SELECTOR, ".m-1.border-b")
@@ -229,7 +229,7 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                 league_containers = selenium_manager.driver.find_elements(
                     By.CSS_SELECTOR, ".flex.flex-col.border.rounded-xl"
                 )
-                
+
                 # Find the SportPesa League container
                 sportpesa_container = None
                 for container in league_containers:
@@ -242,9 +242,11 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                             break
                     except:
                         continue
-                
+
                 if not sportpesa_container:
-                    logger.warning(f"Could not find SportPesa League container after navigation")
+                    logger.warning(
+                        f"Could not find SportPesa League container after navigation"
+                    )
                     continue
 
                 # Get all match cards within the SportPesa League container
@@ -252,14 +254,14 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                     By.CSS_SELECTOR,
                     ".m-1.border-b.border-gray-300.rounded-md.py-3.hover\\:bg-gray-300.cursor-pointer.text-primary",
                 )
-                
+
                 logger.info(f"Found {len(match_cards)} match cards in SportPesa League")
 
                 # Find the correct card by matching team names
                 fixture_to_match = all_matches_data[i]
                 target_card = None
                 card_index = None
-                
+
                 for card_idx, card in enumerate(match_cards):
                     try:
                         # Extract team names from this card
@@ -273,10 +275,12 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                             )
                             card_home = home_team_div.text.strip()
                             card_away = away_team_div.text.strip()
-                            
+
                             # Check if this card matches our fixture
-                            if (card_home == fixture_to_match["home"] and 
-                                card_away == fixture_to_match["away"]):
+                            if (
+                                card_home == fixture_to_match["home"]
+                                and card_away == fixture_to_match["away"]
+                            ):
                                 target_card = card
                                 card_index = card_idx
                                 logger.info(
@@ -287,7 +291,7 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                     except Exception as e:
                         logger.debug(f"Error reading card {card_idx}: {e}")
                         continue
-                
+
                 if not target_card:
                     logger.error(
                         f"Could not find matching card for fixture: "
@@ -305,7 +309,9 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                     f"Clicking matched fixture card for: "
                     f"{fixture_to_match['home']} vs {fixture_to_match['away']}"
                 )
-                selenium_manager.driver.execute_script("arguments[0].click();", target_card)
+                selenium_manager.driver.execute_script(
+                    "arguments[0].click();", target_card
+                )
 
                 # Wait for detail page to load
                 try:
@@ -347,6 +353,7 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
     except Exception as e:
         logger.error(f"Could not extract fixture data: {e}", exc_info=True)
         return []
+
 
 def extract_match_events_from_detail_page(selenium_manager, fixture, match_link):
     try:
@@ -423,7 +430,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                 except:
                     events_skipped += 1
                     continue
-                
+
                 event_text = event_content.text.strip()
 
                 if not event_text:
@@ -441,7 +448,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                             "player_name": event.get("player", "Unknown"),
                             "team_id": match_events[f"{team}_team"]["team_id"],
                             "count": 1,
-                            "minute": event.get("minute", 0), 
+                            "minute": event.get("minute", 0),
                         }
                         match_events[f"{team}_team"]["goals"].append(event_data)
                         events_processed += 1
@@ -451,7 +458,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                             "player_name": event.get("player", "Unknown"),
                             "team_id": match_events[f"{team}_team"]["team_id"],
                             "count": 1,
-                            "minute": event.get("minute", 0),  
+                            "minute": event.get("minute", 0),
                         }
                         match_events[f"{team}_team"]["yellow_cards"].append(event_data)
                         events_processed += 1
@@ -461,7 +468,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                             "player_name": event.get("player", "Unknown"),
                             "team_id": match_events[f"{team}_team"]["team_id"],
                             "count": 1,
-                            "minute": event.get("minute", 0), 
+                            "minute": event.get("minute", 0),
                         }
                         match_events[f"{team}_team"]["red_cards"].append(event_data)
                         events_processed += 1
@@ -501,6 +508,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
         logger.error(f"Error extracting match events: {e}", exc_info=True)
         return None
 
+
 def parse_event_with_team(event_element, event_text):
     event = {}
 
@@ -509,7 +517,7 @@ def parse_event_with_team(event_element, event_text):
         if minute_match:
             event["minute"] = int(minute_match.group(1))
         else:
-            event["minute"] = 0 
+            event["minute"] = 0
 
         parent_html = event_element.get_attribute("outerHTML")
 
@@ -561,6 +569,7 @@ def parse_event_with_team(event_element, event_text):
 
     return event
 
+
 def update_match_events_in_db(fixture, match_events):
     if not match_events:
         logger.warning(f"No match events to update for fixture {fixture.id}")
@@ -573,15 +582,19 @@ def update_match_events_in_db(fixture, match_events):
         if all_goals:
             logger.info(f"Updating {len(all_goals)} goals for fixture {fixture.id}")
             result = MatchEventService.update_goals(fixture, all_goals)
-            
-            if result['errors']:
+
+            if result["errors"]:
                 logger.error(f"🔴 GOAL UPDATE FAILURES for {fixture.id}:")
-                for error in result['errors']:
-                    logger.error(f"   - {error.get('player_name', 'Unknown')}: {error.get('error', 'Unknown error')}")
-            if result['updated_players']:
+                for error in result["errors"]:
+                    logger.error(
+                        f"   - {error.get('player_name', 'Unknown')}: {error.get('error', 'Unknown error')}"
+                    )
+            if result["updated_players"]:
                 logger.info(f"🟢 GOAL UPDATE SUCCESSES for {fixture.id}:")
-                for player in result['updated_players']:
-                    logger.info(f"   + {player['player_name']}: {player['old_goals']} → {player['new_goals']} goals")
+                for player in result["updated_players"]:
+                    logger.info(
+                        f"   + {player['player_name']}: {player['old_goals']} → {player['new_goals']} goals"
+                    )
 
         all_yellow_cards = (
             match_events["home_team"]["yellow_cards"]
@@ -600,16 +613,18 @@ def update_match_events_in_db(fixture, match_events):
             result = MatchEventService.update_cards(
                 fixture, all_yellow_cards, all_red_cards
             )
-            
+
             # Enhanced logging for cards
-            if result['errors']:
+            if result["errors"]:
                 logger.error(f"🔴 CARD UPDATE FAILURES for {fixture.id}:")
-                for error in result['errors']:
-                    logger.error(f"   - {error.get('player_name', 'Unknown')}: {error.get('error', 'Unknown error')}")
-            if result['updated_players']:
+                for error in result["errors"]:
+                    logger.error(
+                        f"   - {error.get('player_name', 'Unknown')}: {error.get('error', 'Unknown error')}"
+                    )
+            if result["updated_players"]:
                 logger.info(f"🟢 CARD UPDATE SUCCESSES for {fixture.id}:")
-                for player in result['updated_players']:
-                    card_type = player.get('card_type', 'card')
+                for player in result["updated_players"]:
+                    card_type = player.get("card_type", "card")
                     logger.info(f"   + {player['player_name']}: {card_type} card added")
 
         all_substitutions = (
@@ -621,22 +636,25 @@ def update_match_events_in_db(fixture, match_events):
                 f"Updating {len(all_substitutions)} substitutions for fixture {fixture.id}"
             )
             result = MatchEventService.update_substitutions(fixture, all_substitutions)
-            
+
             # Enhanced logging for substitutions
-            if result['errors']:
+            if result["errors"]:
                 logger.error(f"🔴 SUBSTITUTION UPDATE FAILURES for {fixture.id}:")
-                for error in result['errors']:
+                for error in result["errors"]:
                     logger.error(f"   - {error.get('error', 'Unknown error')}")
-            if result['updated_players']:
+            if result["updated_players"]:
                 logger.info(f"🟢 SUBSTITUTION UPDATE SUCCESSES for {fixture.id}:")
-                for player in result['updated_players']:
-                    status = player.get('status', 'substituted')
-                    logger.info(f"   + {player['player_name']}: {status} at {player.get('new_minutes', '?')} min")
+                for player in result["updated_players"]:
+                    status = player.get("status", "substituted")
+                    logger.info(
+                        f"   + {player['player_name']}: {status} at {player.get('new_minutes', '?')} min"
+                    )
 
         logger.info(f"Successfully updated all match events for fixture {fixture.id}")
 
     except Exception as e:
         logger.error(f"Error updating match events in database: {e}", exc_info=True)
+
 
 def update_fixture_task(selenium_manager, live_data):
     from .fixtures import find_team
@@ -709,13 +727,16 @@ def update_fixture_task(selenium_manager, live_data):
                     fixture.status = "completed"
                     fixture.save(update_fields=["status"])
                     logger.info(f"Updated fixture {fixture.id} status to completed")
-                    
+
                     try:
-                        logger.info(f"Triggering clean sheet processing for fixture {fixture.id}")
+                        logger.info(
+                            f"Triggering clean sheet processing for fixture {fixture.id}"
+                        )
                         process_clean_sheets_on_completion.delay(str(fixture.id))
                     except Exception as e:
-                        logger.error(f"Failed to trigger clean sheet processing for fixture {fixture.id}: {e}")
-
+                        logger.error(
+                            f"Failed to trigger clean sheet processing for fixture {fixture.id}: {e}"
+                        )
 
                 if pt:
                     pt.enabled = False
@@ -788,7 +809,7 @@ def update_fixture_task(selenium_manager, live_data):
 
 
 @shared_task
-def monitor_fixture_score(fixture_id=None, target_date=None):  
+def monitor_fixture_score(fixture_id=None, target_date=None):
     selenium_manager = None
     successful_updates = 0
     failed_updates = 0

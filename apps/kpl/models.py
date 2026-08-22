@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+
 from util.models import TimeStampedUUIDModel
 
 FIXTURE_STATUS = [
@@ -242,22 +243,35 @@ class PlayerAlias(TimeStampedUUIDModel):
             f"{self.normalized_name} -> {self.canonical_player.name} ({self.team.name})"
         )
 
+
 class ProcessedMatchEvent(TimeStampedUUIDModel):
     fixture = models.ForeignKey(Fixture, on_delete=models.CASCADE)
-    event_type = models.CharField(max_length=50)  
+    event_type = models.CharField(max_length=50)
     player = models.ForeignKey(Player, on_delete=models.CASCADE, null=True, blank=True)
-    player_in = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='substitutions_in')
-    player_out = models.ForeignKey(Player, on_delete=models.SET_NULL, null=True, blank=True, related_name='substitutions_out')
-    event_key = models.CharField(max_length=255)  
+    player_in = models.ForeignKey(
+        Player,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="substitutions_in",
+    )
+    player_out = models.ForeignKey(
+        Player,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="substitutions_out",
+    )
+    event_key = models.CharField(max_length=255)
     minute = models.IntegerField(null=True, blank=True)
-    
+
     class Meta:
-        unique_together = ['fixture', 'event_key']
+        unique_together = ["fixture", "event_key"]
         indexes = [
-            models.Index(fields=['fixture', 'event_type']),
-            models.Index(fields=['event_key']),
+            models.Index(fields=["fixture", "event_type"]),
+            models.Index(fields=["event_key"]),
         ]
-        
+
     def __str__(self):
         return f"{self.event_type} - {self.fixture} - Minute {self.minute}"
 
@@ -268,23 +282,25 @@ class TopcorerData(TimeStampedUUIDModel):
     goals = models.PositiveIntegerField()
     rank = models.PositiveIntegerField()
     gameweek = models.ForeignKey(
-        Gameweek, on_delete=models.CASCADE, related_name='external_scorers'
+        Gameweek, on_delete=models.CASCADE, related_name="external_scorers"
     )
     scraped_at = models.DateTimeField(auto_now_add=True)
-    
+
     player = models.ForeignKey(
-        Player, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        blank=True, 
-        related_name='external_scorer_records'
+        Player,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="external_scorer_records",
     )
-    
+
     class Meta:
-        ordering = ['gameweek', 'rank']
-        unique_together = ('gameweek', 'player_name')
+        ordering = ["gameweek", "rank"]
+        unique_together = ("gameweek", "player_name")
         verbose_name = "Top Scorer Data"
         verbose_name_plural = "Top Scorer Data"
-        
+
     def __str__(self):
-        return f"{self.rank}. {self.player_name} ({self.team_name}) - {self.goals} goals"
+        return (
+            f"{self.rank}. {self.player_name} ({self.team_name}) - {self.goals} goals"
+        )

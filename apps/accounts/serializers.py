@@ -1,9 +1,9 @@
 from django.contrib.auth import get_user_model
 from django_countries.serializer_fields import CountryField
 from djoser.serializers import UserCreateSerializer
+from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from phonenumber_field.serializerfields import PhoneNumberField
 from rest_framework import serializers
-from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 
 User = get_user_model()
 
@@ -53,20 +53,22 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         return user
 
 
-class GoogleAuthSerializer(serializers.Serializer):    
+class GoogleAuthSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     id_token = serializers.CharField(required=False)
     access_token = serializers.CharField(required=False)
-    
+
     def validate(self, attrs):
-        if not any([attrs.get("code"), attrs.get("id_token"), attrs.get("access_token")]):
+        if not any(
+            [attrs.get("code"), attrs.get("id_token"), attrs.get("access_token")]
+        ):
             raise serializers.ValidationError(
                 "At least one of: code, id_token, or access_token is required"
             )
         return attrs
 
 
-class GoogleAuthResponseSerializer(serializers.Serializer):    
+class GoogleAuthResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
     refresh = serializers.CharField()
     user = UserSerializer()

@@ -3,13 +3,10 @@ import io
 import logging
 from typing import Dict
 
-from django.db import transaction
 from django.core.cache import cache
+from django.db import transaction
 
-from apps.kpl.models import (
-    Player,
-    Team,
-)
+from apps.kpl.models import Player, Team
 from apps.kpl.tasks.fixtures import find_player
 
 logger = logging.getLogger(__name__)

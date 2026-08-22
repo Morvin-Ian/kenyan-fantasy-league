@@ -7,14 +7,8 @@ from typing import Dict, Iterable, List, Optional, Tuple, cast
 
 from django.db import transaction
 
-from apps.kpl.models import (
-    Fixture,
-    FixtureLineup,
-    FixtureLineupPlayer,
-    Player,
-    PlayerAlias,
-    Team,
-)
+from apps.kpl.models import (Fixture, FixtureLineup, FixtureLineupPlayer,
+                             Player, PlayerAlias, Team)
 
 logger = logging.getLogger(__name__)
 

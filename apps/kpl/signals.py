@@ -1,7 +1,9 @@
-from django_redis import get_redis_connection
-from apps.kpl.models import Player, Standing, FixtureLineup, TopcorerData, Gameweek
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
+from django_redis import get_redis_connection
+
+from apps.kpl.models import (FixtureLineup, Gameweek, Player, Standing,
+                             TopcorerData)
 
 
 @receiver([post_save, post_delete], sender=Player)

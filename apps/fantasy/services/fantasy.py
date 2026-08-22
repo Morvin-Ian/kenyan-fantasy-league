@@ -1,26 +1,27 @@
 import random
 
 from django.core.exceptions import ValidationError
-from django.db import transaction, models
+from django.db import models, transaction
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.kpl.models import Player
 
-from ..models import Chip, ChipType, FantasyPlayer, FantasyTeam, Gameweek, PlayerTransfer, TeamSelection
+from ..models import (Chip, ChipType, FantasyPlayer, FantasyTeam, Gameweek,
+                      PlayerTransfer, TeamSelection)
 
 
 class FantasyService:
     @staticmethod
     def create_fantasy_team(user: User, data: dict) -> FantasyTeam:
         team = FantasyTeam.objects.create(user=user, **data)
-        
+
         chips_to_create = [
             Chip(fantasy_team=team, chip_type=chip_type, is_used=False)
             for chip_type in ChipType.values
         ]
         Chip.objects.bulk_create(chips_to_create)
-        
+
         return team
 
     @staticmethod
@@ -281,7 +282,7 @@ class FantasyService:
         """Update the fantasy team's budget to reflect current player values"""
         # Refresh from database to ensure we get all newly created players
         fantasy_team.refresh_from_db()
-        
+
         total_value = (
             fantasy_team.players.aggregate(total=models.Sum("current_value"))["total"]
             or 0

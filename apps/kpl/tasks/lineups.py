@@ -9,7 +9,6 @@ from typing import Dict, List, Optional, Tuple
 from celery import shared_task
 from django.db import transaction  # noqa: F401
 from django.utils import timezone  # noqa: F401
-
 # pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 from django_celery_beat.models import ClockedSchedule, PeriodicTask
 

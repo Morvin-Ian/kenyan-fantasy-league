@@ -19,9 +19,9 @@ FORMATION_CHOICES = [
 
 
 class ChipType(models.TextChoices):
-    TRIPLE_CAPTAIN = 'TC', 'Triple Captain'
-    BENCH_BOOST = 'BB', 'Bench Boost'
-    WILDCARD = 'WC', 'Wildcard'
+    TRIPLE_CAPTAIN = "TC", "Triple Captain"
+    BENCH_BOOST = "BB", "Bench Boost"
+    WILDCARD = "WC", "Wildcard"
 
 
 class FantasyTeam(TimeStampedUUIDModel):
@@ -57,7 +57,7 @@ class Chip(TimeStampedUUIDModel):
         on_delete=models.PROTECT,
         related_name="chips_used",
         null=True,
-        blank=True
+        blank=True,
     )
 
     class Meta:
@@ -65,12 +65,14 @@ class Chip(TimeStampedUUIDModel):
         verbose_name_plural = "Chips"
         unique_together = ["fantasy_team", "chip_type"]
         indexes = [
-            models.Index(fields=['fantasy_team', 'chip_type']),
-            models.Index(fields=['is_used']),
+            models.Index(fields=["fantasy_team", "chip_type"]),
+            models.Index(fields=["is_used"]),
         ]
 
     def __str__(self):
-        status = f"Used in GW{self.used_in_gameweek.number}" if self.is_used else "Available"
+        status = (
+            f"Used in GW{self.used_in_gameweek.number}" if self.is_used else "Available"
+        )
         return f"{self.fantasy_team.name} - {self.get_chip_type_display()} ({status})"
 
     def clean(self):
@@ -102,10 +104,10 @@ class FantasyPlayer(TimeStampedUUIDModel):
         verbose_name_plural = "Fantasy Players"
         unique_together = ["fantasy_team", "player"]
         indexes = [
-            models.Index(fields=['fantasy_team', 'is_starter']),
-            models.Index(fields=['player', 'fantasy_team']),
-            models.Index(fields=['is_captain']),
-            models.Index(fields=['is_vice_captain']),
+            models.Index(fields=["fantasy_team", "is_starter"]),
+            models.Index(fields=["player", "fantasy_team"]),
+            models.Index(fields=["is_captain"]),
+            models.Index(fields=["is_vice_captain"]),
         ]
 
     def __str__(self):
@@ -165,7 +167,7 @@ class PlayerTransfer(TimeStampedUUIDModel):
         verbose_name = "Player Transfer"
         verbose_name_plural = "Player Transfers"
         indexes = [
-            models.Index(fields=['fantasy_team', 'gameweek']),
+            models.Index(fields=["fantasy_team", "gameweek"]),
         ]
 
     def __str__(self):
@@ -211,10 +213,10 @@ class PlayerPerformance(TimeStampedUUIDModel):
         verbose_name_plural = "Player Performances"
         unique_together = ["player", "fixture"]
         indexes = [
-            models.Index(fields=['gameweek', '-fantasy_points']),
-            models.Index(fields=['player', 'gameweek']),
-            models.Index(fields=['-goals_scored']),
-            models.Index(fields=['fixture']),
+            models.Index(fields=["gameweek", "-fantasy_points"]),
+            models.Index(fields=["player", "gameweek"]),
+            models.Index(fields=["-goals_scored"]),
+            models.Index(fields=["fixture"]),
         ]
 
     def __str__(self):
@@ -245,7 +247,7 @@ class TeamSelection(TimeStampedUUIDModel):
         choices=ChipType.choices,
         null=True,
         blank=True,
-        help_text="Active chip for this gameweek (if any)"
+        help_text="Active chip for this gameweek (if any)",
     )
 
     class Meta:
@@ -253,9 +255,9 @@ class TeamSelection(TimeStampedUUIDModel):
         verbose_name_plural = "Team Selections"
         unique_together = ["fantasy_team", "gameweek"]
         indexes = [
-            models.Index(fields=['fantasy_team', 'gameweek', 'is_finalized']),
-            models.Index(fields=['gameweek', 'is_finalized']),
-            models.Index(fields=['active_chip']),
+            models.Index(fields=["fantasy_team", "gameweek", "is_finalized"]),
+            models.Index(fields=["gameweek", "is_finalized"]),
+            models.Index(fields=["active_chip"]),
         ]
 
     def __str__(self):

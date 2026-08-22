@@ -2,15 +2,16 @@ import logging
 import logging.config
 import os
 from datetime import datetime
-from django.core.cache import cache
 
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
+from django.core.cache import cache
 
 from apps.kpl.models import Standing, Team
 from config.settings import base
 from util.views import headers
+
 from .fixtures import find_team
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -27,18 +28,18 @@ def extract_table_standings_data(headers) -> str:
     period = f"{previous_year}-{current_year}"
 
     try:
-        import time
         import random
-        
+        import time
+
         session = requests.Session()
-        
+
         custom_headers = headers.copy()
-        custom_headers.pop('Accept-Encoding', None)
-        
+        custom_headers.pop("Accept-Encoding", None)
+
         session.headers.update(custom_headers)
-        
+
         time.sleep(random.uniform(1, 3))
-        
+
         web_content = session.get(url, timeout=30)
         logger.info(f"Request to {url} returned status code: {web_content.status_code}")
         logger.debug(f"Response encoding: {web_content.encoding}")
@@ -55,25 +56,31 @@ def extract_table_standings_data(headers) -> str:
         Standing.objects.all().delete()
 
         soup = BeautifulSoup(web_content.text, "html.parser")
-        
+
         # Try multiple strategies to find the table
         table_body = None
-        
+
         # Strategy 1: Find tbody directly
         table_body = soup.find("tbody")
-        logger.debug(f"Strategy 1 (find tbody): {'Found' if table_body else 'Not found'}")
-        
+        logger.debug(
+            f"Strategy 1 (find tbody): {'Found' if table_body else 'Not found'}"
+        )
+
         # Strategy 2: Find table first, then tbody
         if not table_body:
             table = soup.find("table")
-            logger.debug(f"Strategy 2 (find table): {'Found' if table else 'Not found'}")
+            logger.debug(
+                f"Strategy 2 (find table): {'Found' if table else 'Not found'}"
+            )
             if table:
                 table_body = table.find("tbody")
-                logger.debug(f"Strategy 2 (tbody in table): {'Found' if table_body else 'Not found'}")
+                logger.debug(
+                    f"Strategy 2 (tbody in table): {'Found' if table_body else 'Not found'}"
+                )
                 if not table_body:
                     table_body = table
                     logger.debug("Using table element directly as tbody not found")
-        
+
         # Strategy 3: Find all tables and use the first one with rows
         if not table_body:
             all_tables = soup.find_all("table")
@@ -100,7 +107,9 @@ def extract_table_standings_data(headers) -> str:
                 try:
                     cols = row.find_all("td")
                     if not cols or len(cols) < 12:
-                        logger.debug(f"Row {idx+1} has {len(cols)} columns (need 12), skipping")
+                        logger.debug(
+                            f"Row {idx+1} has {len(cols)} columns (need 12), skipping"
+                        )
                         continue
 
                     # Extract data based on new structure:
@@ -120,13 +129,19 @@ def extract_table_standings_data(headers) -> str:
                     position_text = cols[0].text.strip()
                     # Handle cases where position might be non-numeric or empty
                     if not position_text.isdigit():
-                         logger.debug(f"Row {idx+1}: Position '{position_text}' is not numeric, skipping")
-                         continue
+                        logger.debug(
+                            f"Row {idx+1}: Position '{position_text}' is not numeric, skipping"
+                        )
+                        continue
                     position = int(position_text)
 
                     # Team Name
                     team_name_elem = cols[2].find("a")
-                    team_name = team_name_elem.text.strip() if team_name_elem else cols[2].text.strip()
+                    team_name = (
+                        team_name_elem.text.strip()
+                        if team_name_elem
+                        else cols[2].text.strip()
+                    )
 
                     # Logo
                     img_elem = cols[1].find("img")
@@ -155,16 +170,16 @@ def extract_table_standings_data(headers) -> str:
                     if created:
                         logger.info(f"Created new team: {team_name} (marked as active)")
                     else:
-                        # Update logo if we found one and the existing one is empty or different? 
+                        # Update logo if we found one and the existing one is empty or different?
                         # For now, let's stick to the logic of just reactivating if relegated.
                         # But we might want to update the logo if it's better.
                         if logo and (not team.logo_url or "kenyafootballdata" in logo):
-                             team.logo_url = logo
-                        
+                            team.logo_url = logo
+
                         if team.is_relegated:
                             team.is_relegated = False
                             logger.info(f"Reactivated team: {team_name}")
-                        
+
                         team.save()
 
                     try:
@@ -182,14 +197,18 @@ def extract_table_standings_data(headers) -> str:
                             period=period,
                         )
                         created_standings += 1
-                        logger.debug(f"Created standing for {team_name}: {position} position, {cols[11].text.strip()} points")
+                        logger.debug(
+                            f"Created standing for {team_name}: {position} position, {cols[11].text.strip()} points"
+                        )
                     except (ValueError, IndexError) as e:
                         logger.error(
                             f"Error creating standing for {team_name}: {str(e)}"
                         )
 
                 except Exception as e:
-                    logger.error(f"Error processing team row {idx+1}: {str(e)}", exc_info=True)
+                    logger.error(
+                        f"Error processing team row {idx+1}: {str(e)}", exc_info=True
+                    )
                     continue
 
             all_teams = Team.objects.all()
@@ -295,6 +314,5 @@ def get_kpl_table():
         logger.error(f"Logo update failed: {str(e)}", exc_info=True)
 
     final_result = f"{first_response} - {second_response}"
-
 
     return final_result
