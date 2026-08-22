@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 import logging
 import logging.config
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
 
@@ -27,24 +28,37 @@ load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
+def env(name, default=None):
+    """os.getenv, but tolerant of stray whitespace around values.
+
+    docker-compose's env_file keeps values verbatim, so a trailing space on a
+    line makes its way into the value and breaks things far from the cause
+    (e.g. a Google client_id arriving as "...googleusercontent.com%20").
+    """
+    value = os.getenv(name, default)
+    return value.strip() if isinstance(value, str) else value
+
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "false").lower() == "true"
+DEBUG = env("DEBUG", "false").lower() == "true"
 
 # Feature flags
 LINEUPS_SCRAPING_ENABLED = (
-    os.getenv("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
+    env("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
 )
-PRIMARY_LINEUP_SOURCE = os.getenv("PRIMARY_LINEUP_SOURCE", "fkf")
+PRIMARY_LINEUP_SOURCE = env("PRIMARY_LINEUP_SOURCE", "fkf")
 SELENIUM_REMOTE_URL = os.getenv("SELENIUM_REMOTE_URL", "http://selenium:4444/wd/hub")
-LINEUP_SCRAPER_MAX_CONCURRENCY = int(os.getenv("LINEUP_SCRAPER_MAX_CONCURRENCY", "2"))
+LINEUP_SCRAPER_MAX_CONCURRENCY = int(env("LINEUP_SCRAPER_MAX_CONCURRENCY", "2"))
 SCRAPER_USER_AGENT = os.getenv(
     "SCRAPER_USER_AGENT", "kenyan-fantasy-league/lineups-scraper"
 )
 
-ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "*").split(" ") if h]
+ALLOWED_HOSTS = [
+    h.strip() for h in re.split(r"[,\s]+", env("ALLOWED_HOSTS", "*")) if h.strip()
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8080",
@@ -199,7 +213,7 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
-    "SIGNING_KEY": os.getenv("SIGNING_KEY"),
+    "SIGNING_KEY": env("SIGNING_KEY"),
     "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
     "UPDATE_LAST_LOGIN": True,
@@ -389,7 +403,7 @@ CACHES = {
 }
 
 
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-BASE_BACKEND_URL = os.getenv("BASE_BACKEND_URL", "http://localhost:8080")
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:8080")
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
+BASE_BACKEND_URL = env("BASE_BACKEND_URL", "http://localhost:8080")
+FRONTEND_URL = env("FRONTEND_URL", "http://localhost:8080")
