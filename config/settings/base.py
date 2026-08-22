@@ -31,7 +31,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG")
+DEBUG = os.getenv("DEBUG", "false").lower() == "true"
 
 # Feature flags
 LINEUPS_SCRAPING_ENABLED = (
@@ -44,8 +44,7 @@ SCRAPER_USER_AGENT = os.getenv(
     "SCRAPER_USER_AGENT", "kenyan-fantasy-league/lineups-scraper"
 )
 
-# ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS").split(" ")
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "*").split(" ") if h]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8080",

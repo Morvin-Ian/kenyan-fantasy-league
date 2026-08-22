@@ -325,10 +325,6 @@ onMounted(() => {
     window.addEventListener('resize', () => {
         itemsPerPage.value = window.innerWidth < 640 ? 9 : 10;
     });
-
-    if (kplStore.standings.length === 0) {
-        fetchStandings();
-    }
 });
 </script>
 
