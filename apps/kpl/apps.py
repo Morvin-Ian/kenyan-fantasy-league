@@ -6,4 +6,4 @@ class KplConfig(AppConfig):
     name = "apps.kpl"
 
     def ready(self):
-        import apps.kpl.signals
+        import apps.kpl.signals  # noqa: F401  connect the receivers

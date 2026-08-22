@@ -10,7 +10,7 @@ class CustomUserManager(BaseUserManager):
         try:
             validate_email(email)
         except ValidationError as e:
-            raise ValueError(_("Invalid email address."))
+            raise ValueError(_("Invalid email address.")) from e
 
     def generate_missing_field_error(self, field) -> str:
         return f"{field} must be provided."

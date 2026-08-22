@@ -167,9 +167,7 @@ def finalize_team_for_gameweek(fantasy_team, gameweek):
         return "skipped"
 
     try:
-        new_selection = create_selection_from_previous(
-            fantasy_team, gameweek, previous_selection
-        )
+        create_selection_from_previous(fantasy_team, gameweek, previous_selection)
         logger.info(
             f"Created and finalized selection for {fantasy_team.name} "
             f"in Gameweek {gameweek.number} from Gameweek {previous_selection.gameweek.number}"

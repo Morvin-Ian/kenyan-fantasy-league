@@ -9,7 +9,7 @@ from config.settings import base
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
 
-### SAMPLE STRUCTURE FOR match_data PARAMETER
+# SAMPLE STRUCTURE FOR match_data PARAMETER
 match_data = {
     "home_assists": ["Mohamed Salah", "Darwin Nunez", "Trent Alexander-Arnold"],
     "away_assists": ["Kevin De Bruyne", "Phil Foden"],

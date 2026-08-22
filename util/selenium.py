@@ -186,7 +186,7 @@ class SeleniumManager:
                     if element.is_displayed():
                         logger.info(f"Found element with selector: {selector}")
                         return element, selector
-                except:
+                except Exception:
                     continue
             time.sleep(0.5)
 
@@ -207,7 +207,7 @@ class SeleniumManager:
                 alert = self.driver.switch_to.alert
                 alert.dismiss()
                 logger.info("JavaScript alert dismissed")
-            except:
+            except Exception:
                 logger.debug("No JavaScript alert found")
 
             # Common cookie consent buttons
@@ -231,7 +231,7 @@ class SeleniumManager:
                     time.sleep(1)
                     dismissed = True
                     break
-                except:
+                except Exception:
                     logger.debug(f"Selector not found for popup: {sel}")
                     continue
 
@@ -257,7 +257,7 @@ class SeleniumManager:
                     time.sleep(1)
                     dismissed_modal = True
                     break
-                except:
+                except Exception:
                     logger.debug(f"Selector not found for modal: {sel}")
                     continue
 

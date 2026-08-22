@@ -16,7 +16,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from django.utils.log import DEFAULT_LOGGING
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -244,8 +244,6 @@ logger = logging.getLogger(__name__)
 
 LOG_LEVEL = "INFO"
 
-import os
-
 LOG_DIR = BASE_DIR / "logs"
 os.makedirs(LOG_DIR, exist_ok=True)
 filename = LOG_DIR / "fantasy_league.log"
@@ -360,11 +358,6 @@ DEFAULT_LOGGING = {
 
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
-
-
-from datetime import timedelta
-
-from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     "update-kpl-standings": {

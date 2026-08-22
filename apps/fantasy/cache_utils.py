@@ -8,7 +8,7 @@ and ensure consistent cache key generation and invalidation.
 import hashlib
 import json
 from functools import wraps
-from typing import Any, Callable, List
+from typing import Any, Callable
 
 from django.core.cache import cache
 

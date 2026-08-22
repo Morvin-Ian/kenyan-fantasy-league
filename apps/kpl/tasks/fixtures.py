@@ -14,9 +14,11 @@ from apps.kpl.models import Fixture, Gameweek, Player, Team
 from config.settings import base
 from util.views import headers
 
-from .gameweeks import (check_current_active_gameweek,
-                        set_active_gameweek_from_date_ranges,
-                        set_active_gameweek_from_fixtures)
+from .gameweeks import (
+    check_current_active_gameweek,
+    set_active_gameweek_from_date_ranges,
+    set_active_gameweek_from_fixtures,
+)
 from .live_games import setup_gameweek_monitoring
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
@@ -147,7 +149,7 @@ def find_player(
     auto_create: bool = False,
 ) -> Player | None:
     if not player_name or not player_name.strip():
-        logger.warning(f"Empty player name provided")
+        logger.warning("Empty player name provided")
         return None
 
     cleaned_name = clean_player_name(player_name)
@@ -172,7 +174,7 @@ def find_player(
         logger.debug(f"   Filtered by team name: {team_name}")
     else:
         base_queryset = Player.objects.all()
-        logger.debug(f"   No team filter - searching all players")
+        logger.debug("   No team filter - searching all players")
 
     exact_match = base_queryset.filter(name__iexact=player_name).first()
     if exact_match:

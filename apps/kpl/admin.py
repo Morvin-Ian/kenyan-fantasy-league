@@ -1,7 +1,16 @@
 from django.contrib import admin
 
-from .models import (Fixture, FixtureLineup, FixtureLineupPlayer, Gameweek,
-                     Player, ProcessedMatchEvent, Standing, Team, TopcorerData)
+from .models import (
+    Fixture,
+    FixtureLineup,
+    FixtureLineupPlayer,
+    Gameweek,
+    Player,
+    ProcessedMatchEvent,
+    Standing,
+    Team,
+    TopcorerData,
+)
 
 
 @admin.register(Team)
@@ -65,8 +74,8 @@ class FixtureAdmin(admin.ModelAdmin):
         qs = queryset.filter(match_date__gte=window_start, match_date__lte=window_end)
         ids = []
         for f in qs.prefetch_related("lineups"):
-            has_home = any(l.side == "home" for l in f.lineups.all())
-            has_away = any(l.side == "away" for l in f.lineups.all())
+            has_home = any(line.side == "home" for line in f.lineups.all())
+            has_away = any(line.side == "away" for line in f.lineups.all())
             if not (has_home and has_away):
                 ids.append(str(f.id))
         self.message_user(

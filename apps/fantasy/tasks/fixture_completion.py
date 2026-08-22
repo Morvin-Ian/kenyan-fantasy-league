@@ -1,15 +1,16 @@
 import logging
-from typing import Dict, List
+from typing import Dict
 
 from celery import shared_task
 from django.db import transaction
-from django.db.models import Q
 
 from apps.fantasy.models import FantasyPlayer, PlayerPerformance, TeamSelection
 from apps.kpl.models import Fixture, Team
-from apps.kpl.services.match_events import (FantasyPointsCalculator,
-                                            FixtureValidator,
-                                            MatchEventService)
+from apps.kpl.services.match_events import (
+    FantasyPointsCalculator,
+    FixtureValidator,
+    MatchEventService,
+)
 
 logger = logging.getLogger(__name__)
 

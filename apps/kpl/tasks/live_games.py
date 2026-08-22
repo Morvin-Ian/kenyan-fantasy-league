@@ -14,8 +14,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from apps.fantasy.tasks.fixture_completion import \
-    process_clean_sheets_on_completion
+from apps.fantasy.tasks.fixture_completion import process_clean_sheets_on_completion
 from apps.kpl.models import Fixture, Gameweek
 from apps.kpl.services.match_events import MatchEventService
 from apps.kpl.tasks.gameweeks import setup_team_finalization_task
@@ -71,7 +70,7 @@ def select_date_on_page(selenium_manager, target_date_text):
                     time.sleep(3)
                     return True
 
-            except Exception as e:
+            except Exception:
                 continue
 
         logger.warning(
@@ -80,7 +79,7 @@ def select_date_on_page(selenium_manager, target_date_text):
         return False
 
     except TimeoutException:
-        logger.warning(f"Date selector not found")
+        logger.warning("Date selector not found")
         return False
     except Exception as e:
         logger.error(f"Error selecting date: {e}")
@@ -208,7 +207,7 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
         for i in range(len(all_matches_data)):
             try:
                 if i > 0:
-                    logger.info(f"Navigating back from previous fixture...")
+                    logger.info("Navigating back from previous fixture...")
                     selenium_manager.driver.execute_script("window.history.go(-1)")
 
                     WebDriverWait(selenium_manager.driver, 15).until(
@@ -222,7 +221,7 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                         == "complete"
                     )
 
-                    logger.info(f"Waiting for page to re-render...")
+                    logger.info("Waiting for page to re-render...")
                     time.sleep(5)
 
                 # Re-find ALL match containers after navigation
@@ -240,12 +239,12 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                         if "SportPesa League" in league_elem.text:
                             sportpesa_container = container
                             break
-                    except:
+                    except Exception:
                         continue
 
                 if not sportpesa_container:
                     logger.warning(
-                        f"Could not find SportPesa League container after navigation"
+                        "Could not find SportPesa League container after navigation"
                     )
                     continue
 
@@ -260,7 +259,6 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                 # Find the correct card by matching team names
                 fixture_to_match = all_matches_data[i]
                 target_card = None
-                card_index = None
 
                 for card_idx, card in enumerate(match_cards):
                     try:
@@ -282,7 +280,6 @@ def extract_fixture_data(selenium_manager, match_url, target_date=None):
                                 and card_away == fixture_to_match["away"]
                             ):
                                 target_card = card
-                                card_index = card_idx
                                 logger.info(
                                     f"✓ Matched card {card_idx} to fixture: "
                                     f"{fixture_to_match['home']} vs {fixture_to_match['away']}"
@@ -404,7 +401,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
             events_container = selenium_manager.driver.find_element(
                 By.CSS_SELECTOR, ".mt-2.text-gray-700.bg-white.rounded-md"
             )
-        except:
+        except Exception:
             logger.warning("Could not find events container")
             return match_events
 
@@ -427,7 +424,7 @@ def extract_match_events_from_detail_page(selenium_manager, fixture, match_link)
                     event_content = event_div.find_element(
                         By.CSS_SELECTOR, "div.p-2.font-semibold"
                     )
-                except:
+                except Exception:
                     events_skipped += 1
                     continue
 
@@ -857,7 +854,7 @@ def monitor_fixture_score(fixture_id=None, target_date=None):
             if selenium_manager:
                 try:
                     selenium_manager.close()
-                except:
+                except Exception:
                     pass
             return False
 

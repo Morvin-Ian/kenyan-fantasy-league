@@ -1,5 +1,4 @@
 from collections import defaultdict
-from datetime import datetime
 
 from django.utils import timezone
 

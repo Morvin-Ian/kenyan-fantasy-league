@@ -10,14 +10,26 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
-from apps.kpl.models import (Fixture, FixtureLineup, FixtureLineupPlayer,
-                             Gameweek, Player, Standing, Team)
+from apps.kpl.models import (
+    Fixture,
+    FixtureLineup,
+    FixtureLineupPlayer,
+    Gameweek,
+    Player,
+    Standing,
+    Team,
+)
 from config.settings import base
 
-from .serializers import (FixtureLineupDetailSerializer, FixtureSerializer,
-                          LineupSubmissionSerializer,
-                          PlayerBulkUploadSerializer, PlayerSerializer,
-                          StandingSerializer, TeamSerializer)
+from .serializers import (
+    FixtureLineupDetailSerializer,
+    FixtureSerializer,
+    LineupSubmissionSerializer,
+    PlayerBulkUploadSerializer,
+    PlayerSerializer,
+    StandingSerializer,
+    TeamSerializer,
+)
 from .services.lineup import LineupService
 from .services.match_events import MatchEventService
 from .services.player import PlayerService
@@ -89,7 +101,7 @@ class FixtureViewSet(ReadOnlyModelViewSet):
                     cache.set(
                         cache_key, active_gw_number, timeout=300
                     )  # 5 minutes cache
-                except:
+                except Exception:
                     active_gw_number = 1
 
             # Only fetch current and recent gameweeks for better performance

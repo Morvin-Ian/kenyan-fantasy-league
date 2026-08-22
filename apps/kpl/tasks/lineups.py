@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Tuple
 from celery import shared_task
 from django.db import transaction  # noqa: F401
 from django.utils import timezone  # noqa: F401
+
 # pyright: reportMissingTypeStubs=false, reportMissingImports=false, reportGeneralTypeIssues=false
 from django_celery_beat.models import ClockedSchedule, PeriodicTask
 
@@ -234,8 +235,13 @@ def scan_upcoming_fixtures_for_lineups() -> str:
 
     for fixture in fixtures:
         # Skip if both sides are confirmed
-        has_home_confirmed = any(l.side == "home" and l.is_confirmed for l in fixture.lineups.all())  # type: ignore[attr-defined]
-        has_away_confirmed = any(l.side == "away" and l.is_confirmed for l in fixture.lineups.all())  # type: ignore[attr-defined]
+        lineups = fixture.lineups.all()  # type: ignore[attr-defined]
+        has_home_confirmed = any(
+            line.side == "home" and line.is_confirmed for line in lineups
+        )
+        has_away_confirmed = any(
+            line.side == "away" and line.is_confirmed for line in lineups
+        )
         if has_home_confirmed and has_away_confirmed:
             continue
 

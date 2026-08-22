@@ -1,13 +1,10 @@
 import logging
-import os
-from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
-from django.utils import timezone
 
-from apps.kpl.models import Gameweek, Player, TopcorerData
+from apps.kpl.models import Gameweek, TopcorerData
 from apps.kpl.tasks.fixtures import find_player
 
 logger = logging.getLogger(__name__)

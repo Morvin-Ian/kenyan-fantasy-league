@@ -5,8 +5,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 
 from apps.fantasy.models import PlayerPerformance
-from apps.kpl.models import (Fixture, FixtureLineup, FixtureLineupPlayer,
-                             Player, Team)
+from apps.kpl.models import Fixture, FixtureLineup, FixtureLineupPlayer, Player, Team
 
 logger = logging.getLogger(__name__)
 
@@ -107,8 +106,9 @@ class LineupService:
             performance_count = 0
             if auto_update_performance:
                 try:
-                    from apps.fantasy.tasks.player_performance import \
-                        update_complete_player_performance
+                    from apps.fantasy.tasks.player_performance import (
+                        update_complete_player_performance,
+                    )
 
                     home_lineup_exists = fixture.lineups.filter(
                         team=fixture.home_team
@@ -244,7 +244,7 @@ class LineupService:
         """
         try:
             team = get_object_or_404(Team, id=team_id)
-            fixture = get_object_or_404(Fixture, id=fixture_id)
+            get_object_or_404(Fixture, id=fixture_id)  # 404s on a bad id
 
             players = Player.objects.filter(
                 team=team, team__is_relegated=False

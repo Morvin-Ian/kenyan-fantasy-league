@@ -1,19 +1,28 @@
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Q, Sum
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from apps.fantasy.models import (Chip, ChipType, FantasyPlayer, FantasyTeam,
-                                 PlayerPerformance, TeamSelection)
-from apps.kpl.models import Gameweek, Player
+from apps.fantasy.models import (
+    Chip,
+    ChipType,
+    FantasyPlayer,
+    FantasyTeam,
+    PlayerPerformance,
+    TeamSelection,
+)
+from apps.kpl.models import Gameweek
 
-from .serializers import (ChipSerializer, FantasyPlayerSerializer,
-                          FantasyTeamSerializer, PlayerPerformanceSerializer,
-                          TeamSelectionSerializer)
+from .serializers import (
+    ChipSerializer,
+    FantasyPlayerSerializer,
+    FantasyTeamSerializer,
+    PlayerPerformanceSerializer,
+    TeamSelectionSerializer,
+)
 from .services.fantasy import FantasyService
 from .services.gameweek_status import GameweekStatusService
 from .services.team_service import TeamOfTheWeekService

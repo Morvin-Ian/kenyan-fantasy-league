@@ -105,14 +105,6 @@ class GoogleAuthCallbackView(APIView):
             tokens = UserAuthService.generate_tokens(user)
             user_data = UserAuthService.prepare_user_response(user)
 
-            # Prepare response data
-            response_data = {
-                "access": tokens["access"],
-                "refresh": tokens["refresh"],
-                "user": user_data,
-                "is_new_user": is_new,
-            }
-
             # Encode data for URL
             encoded_tokens = urllib.parse.quote(
                 json.dumps(

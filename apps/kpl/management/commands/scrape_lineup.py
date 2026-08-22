@@ -1,5 +1,4 @@
 from django.core.management.base import BaseCommand, CommandError
-from django.utils import timezone
 
 from apps.kpl.models import Fixture
 from apps.kpl.tasks.lineups import fetch_lineup_for_fixture

@@ -6,4 +6,4 @@ class ProfilesConfig(AppConfig):
     name = "apps.profiles"
 
     def ready(self):
-        from apps.profiles import signals
+        from apps.profiles import signals  # noqa: F401  connect the receivers

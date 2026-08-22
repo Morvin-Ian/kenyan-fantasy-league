@@ -2,8 +2,15 @@ from django.contrib import admin
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import (Chip, FantasyLeague, FantasyPlayer, FantasyTeam,
-                     PlayerPerformance, PlayerTransfer, TeamSelection)
+from .models import (
+    Chip,
+    FantasyLeague,
+    FantasyPlayer,
+    FantasyTeam,
+    PlayerPerformance,
+    PlayerTransfer,
+    TeamSelection,
+)
 
 
 @admin.register(FantasyTeam)
@@ -439,10 +446,10 @@ class TeamSelectionAdmin(admin.ModelAdmin):
                     elif fp == obj.vice_captain:
                         captain_badge = '<span style="color: silver;">✦</span> '
 
-                    html += f'<div style="margin-left: 16px; padding: 4px 0;">'
+                    html += '<div style="margin-left: 16px; padding: 4px 0;">'
                     html += f"{captain_badge}{fp.player.name} "
                     html += f'<small style="color: #666;">({fp.player.team.name if fp.player.team else "N/A"})</small>'
-                    html += f"</div>"
+                    html += "</div>"
 
         html += "</div>"
         return format_html(html)
@@ -466,10 +473,10 @@ class TeamSelectionAdmin(admin.ModelAdmin):
         html += '<p style="margin: 8px 0; font-weight: bold; color: #666;">🪑 Bench Players</p>'
 
         for fp in bench:
-            html += f'<div style="margin-left: 16px; padding: 4px 0;">'
+            html += '<div style="margin-left: 16px; padding: 4px 0;">'
             html += f"{fp.player.name} ({fp.player.position}) "
             html += f'<small style="color: #666;">- {fp.player.team.name if fp.player.team else "N/A"}</small>'
-            html += f"</div>"
+            html += "</div>"
 
         html += "</div>"
         return format_html(html)

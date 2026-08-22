@@ -6,7 +6,6 @@ from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 from celery import shared_task
-from django.core.cache import cache
 
 from apps.kpl.models import Standing, Team
 from config.settings import base
@@ -183,7 +182,7 @@ def extract_table_standings_data(headers) -> str:
                         team.save()
 
                     try:
-                        standing = Standing.objects.create(
+                        Standing.objects.create(
                             position=position,
                             team=team,
                             played=int(cols[4].text.strip()),
@@ -222,7 +221,7 @@ def extract_table_standings_data(headers) -> str:
             active_teams = Team.objects.filter(is_relegated=False)
             relegated_teams = Team.objects.filter(is_relegated=True)
 
-            logger.info(f"Relegation status update complete:")
+            logger.info("Relegation status update complete:")
             logger.info(
                 f"  - Active teams: {active_teams.count()} ({', '.join(active_teams.values_list('name', flat=True))})"
             )
@@ -277,7 +276,6 @@ def edit_team_logo(headers) -> str:
                 team_obj = find_team(full_name)
                 if team_obj:
                     if logo:
-                        old_logo = team_obj.logo_url
                         team_obj.logo_url = logo
                         team_obj.save()
                         updated_count += 1
