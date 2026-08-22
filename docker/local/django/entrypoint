@@ -24,7 +24,9 @@ check_required_vars() {
 
 # Function to test PostgreSQL connection
 postgres_ready() {
-    python3 << END
+    POSTGRES_DB="$POSTGRES_DB" PG_USER="$PG_USER" PG_PASSWORD="$PG_PASSWORD" \
+    PG_HOST="$PG_HOST" PG_PORT="$PG_PORT" python3 - <<'END'
+import os
 import sys
 import psycopg2
 import time
@@ -32,11 +34,12 @@ import time
 start_time = time.time()
 try:
     conn = psycopg2.connect(
-        dbname="${POSTGRES_DB}",
-        user="${PG_USER}",
-        password="${PG_PASSWORD}",
-        host="${PG_HOST}",
-        port="${PG_PORT}",
+        dbname=os.environ["POSTGRES_DB"],
+        user=os.environ["PG_USER"],
+        password=os.environ["PG_PASSWORD"],
+        host=os.environ["PG_HOST"],
+        port=os.environ["PG_PORT"],
+        connect_timeout=5,
     )
     conn.close()
     print(f"Successfully connected to PostgreSQL (took {time.time() - start_time:.2f}s)")
