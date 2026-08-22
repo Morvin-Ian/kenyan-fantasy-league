@@ -75,7 +75,10 @@ jobs:
   auto-fix:
     name: Auto-fix formatting (black & isort)
     needs: [backend-checks, frontend-build]
-    if: failure()          # only runs when a check failed
+    # Pull requests only. On master its commit cannot green the build anyway —
+    # a push made with GITHUB_TOKEN does not trigger a new run — and it would
+    # rewrite master unreviewed. Locally: `make fmt`.
+    if: failure() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -113,6 +116,23 @@ jobs:
             set -e
             cd "${{ secrets.VPS_APP_DIR }}"
             git pull --ff-only origin master
-            docker compose -f docker-compose.prod.yml --env-file .env.prod up --build -d --remove-orphans
-            docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T api python3 manage.py migrate --no-input
-            docker compose -f docker-compose.prod.yml --env-file .env.prod exec -T api python3 manage.py collectstatic --no-input --clear
+            compose="docker compose -f docker-compose.prod.yml --env-file .env.prod"
+            $compose up --build -d --remove-orphans
+            # `up -d` returns before the api container can accept an exec, so
+            # the first migrate can lose the race. Migrations are idempotent,
+            # so retrying is safe and cheaper than guessing a sleep.
+            migrated=""
+            for attempt in 1 2 3 4 5 6; do
+              if $compose exec -T api python3 manage.py migrate --no-input; then
+                migrated="yes"
+                break
+              fi
+              echo "api not ready yet (attempt $attempt) — retrying in 5s"
+              sleep 5
+            done
+            if [ -z "$migrated" ]; then
+              echo "migrate never succeeded; last 50 lines from api:"
+              $compose logs --tail 50 api
+              exit 1
+            fi
+            $compose exec -T api python3 manage.py collectstatic --no-input --clear
