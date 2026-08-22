@@ -36,18 +36,13 @@ class UpdateProfileAPIView(APIView):
 
     def patch(self, request, uuid):
         try:
-            profile = Profile.objects.filter(id=uuid).first()
-            if not profile:
-                return Response(
-                    {"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND
-                )
+            profile = Profile.objects.get(user=self.request.user)
+        except Profile.DoesNotExist:
+            return Response(
+                {"detail": "Profile not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
-            if profile.id != uuid:
-                return Response(
-                    {"detail": "Invalid profile ID."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
+        try:
             data = request.data
             user = profile.user
             user_updated = False
