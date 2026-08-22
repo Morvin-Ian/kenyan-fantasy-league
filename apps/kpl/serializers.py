@@ -1,8 +1,14 @@
 from django.db import models
 from rest_framework import serializers
 
-from apps.kpl.models import (Fixture, FixtureLineup, FixtureLineupPlayer,
-                             Player, Standing, Team)
+from apps.kpl.models import (
+    Fixture,
+    FixtureLineup,
+    FixtureLineupPlayer,
+    Player,
+    Standing,
+    Team,
+)
 
 
 class TeamSerializer(serializers.ModelSerializer):

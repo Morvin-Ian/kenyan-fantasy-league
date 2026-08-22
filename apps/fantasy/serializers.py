@@ -4,8 +4,13 @@ from decimal import Decimal
 from django.db.models import Sum
 from rest_framework import serializers
 
-from apps.fantasy.models import (Chip, FantasyPlayer, FantasyTeam,
-                                 PlayerPerformance, TeamSelection)
+from apps.fantasy.models import (
+    Chip,
+    FantasyPlayer,
+    FantasyTeam,
+    PlayerPerformance,
+    TeamSelection,
+)
 from apps.kpl.models import Gameweek
 
 logger = logging.getLogger(__name__)

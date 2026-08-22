@@ -1,7 +1,12 @@
 from rest_framework.routers import DefaultRouter
 
-from .views import (FixtureViewSet, MatchEventsViewSet, PlayerViewSet,
-                    StandingViewSet, TeamViewSet)
+from .views import (
+    FixtureViewSet,
+    MatchEventsViewSet,
+    PlayerViewSet,
+    StandingViewSet,
+    TeamViewSet,
+)
 
 router = DefaultRouter()
 router.register(r"teams", TeamViewSet)

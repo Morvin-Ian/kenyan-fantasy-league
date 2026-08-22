@@ -1,7 +1,10 @@
 from django.urls import path
 
-from apps.accounts.views import (GoogleAuthCallbackView, GoogleAuthInitView,
-                                 GoogleAuthTokenView)
+from apps.accounts.views import (
+    GoogleAuthCallbackView,
+    GoogleAuthInitView,
+    GoogleAuthTokenView,
+)
 
 urlpatterns = [
     path("google/login/", GoogleAuthInitView.as_view(), name="google-auth-init"),

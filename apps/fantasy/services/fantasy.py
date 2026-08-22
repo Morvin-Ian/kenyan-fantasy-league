@@ -7,8 +7,15 @@ from django.utils import timezone
 from apps.accounts.models import User
 from apps.kpl.models import Player
 
-from ..models import (Chip, ChipType, FantasyPlayer, FantasyTeam, Gameweek,
-                      PlayerTransfer, TeamSelection)
+from ..models import (
+    Chip,
+    ChipType,
+    FantasyPlayer,
+    FantasyTeam,
+    Gameweek,
+    PlayerTransfer,
+    TeamSelection,
+)
 
 
 class FantasyService:
