@@ -101,3 +101,14 @@ shell-prod:
 
 manage-db-prod:
 	docker exec -it postgres-db psql -U ${PG_USER} -d ${POSTGRES_DB}
+
+# Formatting and lint, same tools and settings as CI. Run fmt before pushing —
+# the CI auto-fix job only runs on pull requests now.
+fmt:
+	black --exclude='migrations|venv|client' .
+	isort .
+
+lint:
+	flake8 .
+	black --check --exclude='migrations|venv|client' .
+	isort . --check-only

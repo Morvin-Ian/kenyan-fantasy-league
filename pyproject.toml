@@ -4,3 +4,10 @@ extend-exclude = '''
     | venv
 )/
 '''
+
+[tool.isort]
+# Without this, isort's default grid wrapping produces import blocks black
+# immediately rewrites — and since CI runs isort last, master could never be
+# clean for both at once.
+profile = "black"
+skip = ["migrations", "venv", ".venv", "env", "client", "node_modules"]
