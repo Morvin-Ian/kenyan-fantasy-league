@@ -44,7 +44,11 @@ SCRAPER_USER_AGENT = os.getenv(
     "SCRAPER_USER_AGENT", "kenyan-fantasy-league/lineups-scraper"
 )
 
-ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "*").split(" ") if h]
+ALLOWED_HOSTS = [
+    *[h for h in os.getenv("ALLOWED_HOSTS", "*").split(" ") if h],
+    "fantasykenya.com",
+    "www.fantasykenya.com",
+]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8080",
