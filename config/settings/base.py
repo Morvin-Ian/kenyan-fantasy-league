@@ -45,6 +45,12 @@ SCRAPER_USER_AGENT = os.getenv(
 )
 
 ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "*").split(" ") if h]
+# nginx forwards the real Host header (`proxy_set_header Host $host` in
+# docker/production/nginx/nginx.conf), so the production domains must be
+# accepted even when the deploy env pins ALLOWED_HOSTS to a value that
+# omits them.
+if "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS += ["fantasykenya.com", "www.fantasykenya.com"]
 
 CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:8080",
