@@ -28,6 +28,7 @@ load_dotenv()
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
+
 def env(name, default=None):
     """os.getenv, but tolerant of stray whitespace around values.
 
@@ -46,9 +47,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG", "false").lower() == "true"
 
 # Feature flags
-LINEUPS_SCRAPING_ENABLED = (
-    env("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
-)
+LINEUPS_SCRAPING_ENABLED = env("LINEUPS_SCRAPING_ENABLED", "false").lower() == "true"
 PRIMARY_LINEUP_SOURCE = env("PRIMARY_LINEUP_SOURCE", "fkf")
 SELENIUM_REMOTE_URL = os.getenv("SELENIUM_REMOTE_URL", "http://selenium:4444/wd/hub")
 LINEUP_SCRAPER_MAX_CONCURRENCY = int(env("LINEUP_SCRAPER_MAX_CONCURRENCY", "2"))
