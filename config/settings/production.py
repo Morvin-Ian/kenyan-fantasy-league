@@ -27,3 +27,21 @@ DATABASES = {
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_BACKEND")
 CELERY_TIMEZONE = "UTC"
+
+
+# --- Running behind the TLS-terminating nginx proxy ---
+# nginx forwards X-Forwarded-Proto; without this Django thinks every request is
+# plain HTTP and builds http:// redirects / drops secure cookies.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+USE_X_FORWARDED_HOST = True
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_HTTPONLY = True
+
+SECURE_SSL_REDIRECT = False  # nginx already 301s :80 -> :443
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
