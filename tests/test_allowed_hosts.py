@@ -20,11 +20,7 @@ password-reset links this app builds.
 import pathlib
 import re
 
-from config.settings.production import (
-    ALLOWED_HOSTS,
-    SERVED_DOMAINS,
-    pinned_hosts,
-)
+from config.settings.production import ALLOWED_HOSTS, SERVED_DOMAINS, pinned_hosts
 
 
 def test_production_never_serves_every_host():
@@ -43,7 +39,10 @@ def test_the_fallback_is_the_domains_nginx_actually_serves():
     than restated, so moving domains has to move both."""
     conf = (
         pathlib.Path(__file__).resolve().parents[1]
-        / "docker" / "production" / "nginx" / "nginx.conf"
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
     ).read_text()
     served = set()
     for match in re.finditer(r"^\s*server_name\s+([^;]+);", conf, re.MULTILINE):
@@ -71,7 +70,7 @@ def test_a_configured_value_is_used_as_given():
 
 
 def test_a_wildcard_mixed_with_real_hosts_loses_the_wildcard():
-    """"*, fantasykenya.com" is still a wildcard — the rest is decoration."""
+    """ "*, fantasykenya.com" is still a wildcard — the rest is decoration."""
     assert pinned_hosts(["*", "fantasykenya.com"], SERVED_DOMAINS) == [
         "fantasykenya.com"
     ]
