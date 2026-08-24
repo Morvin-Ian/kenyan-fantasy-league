@@ -278,9 +278,12 @@ def find_player(
 
 def extract_fixtures_data(headers) -> bool:
     url = os.getenv("TEAM_FIXTURES_URL")
+    if not url:
+        logger.error("TEAM_FIXTURES_URL environment variable not set")
+        return False
 
     try:
-        web_content = requests.get(url, headers=headers, verify=False)
+        web_content = requests.get(url, headers=headers, verify=False, timeout=30)
     except requests.RequestException as e:
         logger.error(f"Error fetching fixtures: {e}")
         return False
@@ -290,6 +293,7 @@ def extract_fixtures_data(headers) -> bool:
         table = soup.find("table", class_="sp-event-blocks")
         if not table:
             logger.error("No fixtures table found on the page.")
+            logger.error(f"HTML preview (first 1000 chars): {web_content.text[:1000]}")
             return False
 
         table_rows = table.find_all("tr")[1:]
