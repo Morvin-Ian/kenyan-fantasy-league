@@ -42,7 +42,13 @@ CELERY_TIMEZONE = "UTC"
 # repository — and getting it wrong is silent. With HSTS preloaded and
 # USE_X_FORWARDED_HOST trusting the proxy, a poisoned Host header reaches the
 # activation and password-reset links this app builds.
-SERVED_DOMAINS = ["fantasykenya.com", "www.fantasykenya.com"]
+#
+# nginx has a single server block per port, so it is the default server: any
+# *.fantasykenya.com Host header a client sends is proxied verbatim to Django
+# (proxy_set_header Host $host), and real subdomains — events., account. —
+# reach the app that way. The leading-dot form pins the whole family while
+# still refusing hosts outside the domain.
+SERVED_DOMAINS = ["fantasykenya.com", ".fantasykenya.com"]
 
 
 def pinned_hosts(hosts, fallback):
