@@ -1,11 +1,12 @@
 import logging
-import os
 from datetime import timedelta
 
 import requests
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
+
+from config.settings import base
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -39,8 +40,8 @@ class GoogleOAuthService:
             response = requests.post(
                 "https://oauth2.googleapis.com/token",
                 data={
-                    "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-                    "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+                    "client_id": base.GOOGLE_CLIENT_ID,
+                    "client_secret": base.GOOGLE_CLIENT_SECRET,
                     "code": code,
                     "grant_type": "authorization_code",
                     "redirect_uri": redirect_uri,
@@ -65,7 +66,7 @@ class GoogleOAuthService:
             response.raise_for_status()
             token_info = response.json()
 
-            if token_info.get("aud") != os.getenv("GOOGLE_CLIENT_ID"):
+            if token_info.get("aud") != base.GOOGLE_CLIENT_ID:
                 raise ValueError("Token audience mismatch")
 
             return token_info
