@@ -1,32 +1,78 @@
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *
+from .base import env
+
+# Every read below goes through base.env(), never os.getenv: docker-compose's
+# env_file keeps values verbatim, so a trailing space in .env.prod reaches the
+# process intact — and a space inside a password, broker URL, or link domain
+# fails far from the cause. base.py documents this and guards its own reads;
+# production used to bypass the guard entirely.
 
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_HOST = env("EMAIL_HOST")
 EMAIL_USE_TLS = True
-EMAIL_PORT = os.getenv("EMAIL_PORT")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_PORT = int(env("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = env("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
+# Sending as kpl-fantasy.com while SERVED_DOMAINS pins fantasykenya.com only
+# works if kpl-fantasy.com's DNS (SPF/DKIM/DMARC) authorises this host — that
+# lives outside the repository and cannot be checked from here.
 DEFAULT_FROM_EMAIL = "info@kpl-fantasy.com"
-DOMAIN = os.getenv("DOMAIN")
+DOMAIN = env("DOMAIN")
 SITE_NAME = "KPL Fantasy League"
 
 
 DATABASES = {
     "default": {
-        "ENGINE": os.getenv("PG_ENGINE"),
-        "NAME": os.getenv("POSTGRES_DB"),
-        "USER": os.getenv("PG_USER"),
-        "PASSWORD": os.getenv("PG_PASSWORD"),
-        "HOST": os.getenv("PG_HOST"),
-        "PORT": os.getenv("PG_PORT"),
+        "ENGINE": env("PG_ENGINE"),
+        "NAME": env("POSTGRES_DB"),
+        "USER": env("PG_USER"),
+        "PASSWORD": env("PG_PASSWORD"),
+        "HOST": env("PG_HOST"),
+        "PORT": env("PG_PORT"),
     }
 }
 
 
-CELERY_BROKER_URL = os.getenv("CELERY_BROKER")
-CELERY_RESULT_BACKEND = os.getenv("CELERY_BACKEND")
+CELERY_BROKER_URL = env("CELERY_BROKER")
+CELERY_RESULT_BACKEND = env("CELERY_BACKEND")
 CELERY_TIMEZONE = "UTC"
+
+# A missing variable would otherwise surface as None and let Django boot
+# cleanly, failing later on the first query or the first queued email —
+# possibly only under load. Refuse to start instead.
+#
+# The check fires only when this module is the active settings module — the
+# deployment path, where docker-compose.prod.yml sets DJANGO_SETTINGS_MODULE
+# for api, worker, and beat. Importing it directly (the regression tests do,
+# and CI sets no Celery variables) must stay possible, so the guard cannot
+# live at unconditional import time.
+_REQUIRED_ENV = [
+    "PG_ENGINE",
+    "POSTGRES_DB",
+    "PG_USER",
+    "PG_PASSWORD",
+    "PG_HOST",
+    "PG_PORT",
+    "CELERY_BROKER",
+    "CELERY_BACKEND",
+]
+
+
+def require_env(names):
+    """Raise unless every named variable is set to something non-blank."""
+    missing = [name for name in names if not env(name)]
+    if missing:
+        raise ImproperlyConfigured(
+            "production settings need env vars that are unset or blank: "
+            + ", ".join(missing)
+        )
+
+
+if os.environ.get("DJANGO_SETTINGS_MODULE", "").endswith("production"):
+    require_env(_REQUIRED_ENV)
 
 
 # --- Hosts this deployment serves ---
