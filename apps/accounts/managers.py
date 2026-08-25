@@ -35,9 +35,14 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault("is_staff", False)
         extra_fields.setdefault("is_superuser", False)
 
-        if extra_fields.get("is_staff") is True or extra_fields.get("is_superuser") is True:
+        if (
+            extra_fields.get("is_staff") is True
+            or extra_fields.get("is_superuser") is True
+        ):
             raise ValueError(
-                _("Regular users cannot be created with staff or superuser privileges. Use create_superuser.")
+                _(
+                    "Regular users cannot be created with staff or superuser privileges. Use create_superuser."
+                )
             )
 
         user = self.model(
