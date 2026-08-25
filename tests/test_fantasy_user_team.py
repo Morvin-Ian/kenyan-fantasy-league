@@ -44,3 +44,31 @@ def test_user_team_returns_empty_list_when_user_has_no_team():
 
     assert response.status_code == 200
     assert response.data == []
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+@pytest.mark.django_db
+def test_team_players_returns_empty_list_when_user_has_no_team():
+    """GET /fantasy/players/team-players must keep the same list contract.
+
+    ``FantasyPlayerViewSet.get_team_players`` answered a teamless user with
+    ``{"detail": "No fantasy team found for this user."}`` on HTTP 200 — the
+    same dict-on-200 shape that broke ``get_user_team`` and blanked the Team
+    page. Both endpoints are list endpoints (the non-empty branches return
+    ``many=True`` serializer data), so the empty branch must return ``[]``.
+    """
+    user = User.objects.create_user(
+        username="newcomer",
+        email="newcomer@example.com",
+        password="password",
+        first_name="New",
+        last_name="Comer",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.get("/api/v1/fantasy/players/team-players/")
+
+    assert response.status_code == 200
+    assert response.data == []

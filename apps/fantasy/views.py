@@ -140,10 +140,12 @@ class FantasyPlayerViewSet(ModelViewSet):
 
                 return Response(serializer.data, status=status.HTTP_200_OK)
             else:
-                return Response(
-                    {"detail": "No fantasy team found for this user."},
-                    status=status.HTTP_200_OK,
-                )
+                # Keep the list contract: the non-empty branch returns
+                # serializer.data (a list), so the empty branch must return
+                # [] rather than a {"detail": ...} dict. A dict on HTTP 200
+                # breaks the frontend's array-shape guards (.length checks
+                # in the Team page / store) and renders nothing.
+                return Response([], status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
                 {"detail": "An unexpected error occurred.", "error": str(e)},
