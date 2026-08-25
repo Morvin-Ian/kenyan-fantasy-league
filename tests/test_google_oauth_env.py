@@ -64,9 +64,7 @@ def test_settings_define_the_credentials_through_the_trimming_helper():
 
 def test_env_helper_strips_stray_whitespace(monkeypatch):
     """The property the whole incident turns on: env() trims, os.getenv does not."""
-    monkeypatch.setenv(
-        "GOOGLE_CLIENT_ID", " 1234-abcd.apps.googleusercontent.com "
-    )
+    monkeypatch.setenv("GOOGLE_CLIENT_ID", " 1234-abcd.apps.googleusercontent.com ")
     assert env("GOOGLE_CLIENT_ID") == "1234-abcd.apps.googleusercontent.com"
 
 
