@@ -232,7 +232,7 @@ SIMPLE_JWT = {
 #     "ACTIVATION_URL": "activate/{uid}/{token}",
 #     "SEND_ACTIVATION_EMAIL": True,
 #     "SERIALIZERS": {
-#         "user_create": "apps.accounts.serializers.CreateUserSerializer,",
+#         "user_create": "apps.accounts.serializers.UserCreateSerializer,",
 #         "user": "apps.accounts.serializers.UserSerializer",
 #         "current_user": "apps.accounts.serializers.UserSerializer",
 #         "user_delete": "djoser.serializers.UserDeleteSerializer",
@@ -246,7 +246,7 @@ DJOSER = {
     "SEND_ACTIVATION_EMAIL": False,
     "SEND_CONFIRMATION_EMAIL": False,
     "SERIALIZERS": {
-        "user_create": "apps.accounts.serializers.CreateUserSerializer",
+        "user_create": "apps.accounts.serializers.UserCreateSerializer",
         "user": "apps.accounts.serializers.UserSerializer",
         "current_user": "apps.accounts.serializers.UserSerializer",
     },
