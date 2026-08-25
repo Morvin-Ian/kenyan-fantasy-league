@@ -1,8 +1,10 @@
 import json
 import logging
+import secrets
 import urllib.parse
 
 from django.conf import settings
+from django.core.cache import cache
 from django.shortcuts import redirect
 from django.utils import timezone
 from rest_framework import status
@@ -13,6 +15,15 @@ from .serializers import GoogleAuthSerializer
 from .services import GoogleOAuthService, UserAuthService
 
 logger = logging.getLogger(__name__)
+
+# How long a one-time OAuth auth code stays redeemable. Long enough for the
+# browser to land on the callback page, short enough that a leaked code is
+# useless almost immediately. Codes are single-use regardless of this TTL.
+OAUTH_AUTH_CODE_TTL_SECONDS = 60
+
+
+def _cache_key_for_auth_code(auth_code: str) -> str:
+    return f"google_oauth_auth_code:{auth_code}"
 
 
 class GoogleAuthInitView(APIView):
@@ -105,19 +116,29 @@ class GoogleAuthCallbackView(APIView):
             tokens = UserAuthService.generate_tokens(user)
             user_data = UserAuthService.prepare_user_response(user)
 
-            # Encode data for URL
-            encoded_tokens = urllib.parse.quote(
-                json.dumps(
-                    {
-                        "access": tokens["access"],
-                        "refresh": tokens["refresh"],
-                    }
-                )
+            # Never put the tokens (or the user payload) in the redirect URL:
+            # the URL lands in browser history, server access logs, and
+            # Referer headers. Stash the payload under a short-lived,
+            # single-use code instead and let the frontend redeem it via
+            # POST /api/v1/auth/google/token/ (see GoogleAuthTokenView).
+            auth_code = secrets.token_urlsafe(32)
+            cache.set(
+                _cache_key_for_auth_code(auth_code),
+                {
+                    "access": tokens["access"],
+                    "refresh": tokens["refresh"],
+                    "user": user_data,
+                    "is_new_user": is_new,
+                    "expires_in": tokens["expires_in"],
+                },
+                timeout=OAUTH_AUTH_CODE_TTL_SECONDS,
             )
-            encoded_user = urllib.parse.quote(json.dumps(user_data))
 
-            # Redirect to frontend with tokens and user data
-            success_url = f"{redirect_to}?auth_success=true&auth_message=success&tokens={encoded_tokens}&user={encoded_user}&is_new_user={is_new}&origin={origin}"
+            # Redirect to frontend with only the one-time code
+            success_url = (
+                f"{redirect_to}?auth_success=true&auth_code={auth_code}"
+                f"&is_new_user={is_new}&origin={origin}"
+            )
             logger.info(
                 f"Google OAuth successful for user: {user.email}, redirecting to: {redirect_to}"
             )
@@ -143,6 +164,24 @@ class GoogleAuthTokenView(APIView):
     def post(self, request):
         serializer = GoogleAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # Redeem a one-time auth code issued by GoogleAuthCallbackView. This
+        # is the channel the frontend uses to collect its tokens — the tokens
+        # themselves never appear in the redirect URL. Codes are single-use
+        # and short-lived (see OAUTH_AUTH_CODE_TTL_SECONDS).
+        auth_code = serializer.validated_data.get("auth_code")
+        if auth_code:
+            cache_key = _cache_key_for_auth_code(auth_code)
+            payload = cache.get(cache_key)
+            if payload is None:
+                return Response(
+                    {"detail": "Invalid or expired authorization code."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            cache.delete(cache_key)  # single use — delete before returning
+            user_email = payload.get("user", {}).get("email", "unknown")
+            logger.info(f"Google auth code redeemed for user: {user_email}")
+            return Response(payload, status=status.HTTP_200_OK)
 
         try:
             # If code is provided, exchange it

@@ -23,6 +23,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import apiClient from "@/axios-interceptor";
 
 const router = useRouter();
 const route = useRoute();
@@ -41,25 +42,32 @@ const redirectToHome = () => {
 };
 
 onMounted(async () => {
+    // Snapshot the query first, then immediately scrub it from the address
+    // bar and browser history so the one-time auth code never lingers.
+    const query = { ...route.query };
+    history.replaceState({}, "", window.location.pathname);
+
     try {
-        const authSuccess = route.query.auth_success === "true";
-        const authMessage = route.query.auth_message as string;
-        const tokensParam = route.query.tokens as string;
-        const userParam = route.query.user as string;
+        const authSuccess = query.auth_success === "true";
+        const authMessage = query.auth_message as string;
+        const authCode = query.auth_code as string;
 
         if (!authSuccess) {
             throw new Error(authMessage || "Authentication failed");
         }
 
-        if (!tokensParam || !userParam) {
+        if (!authCode) {
             throw new Error("Missing authentication data");
         }
 
-        const tokens = JSON.parse(decodeURIComponent(tokensParam));
-        const userData = JSON.parse(decodeURIComponent(userParam));
+        // Exchange the one-time code for tokens over POST. The tokens come
+        // back in the response body — they are never carried in the URL.
+        const { data } = await apiClient.post("/auth/google/token/", {
+            auth_code: authCode,
+        });
 
-        authStore.setToken(tokens.access, tokens.refresh);
-        authStore.setUser(userData);
+        authStore.setToken(data.access, data.refresh);
+        authStore.setUser(data.user);
 
         await new Promise((resolve) => setTimeout(resolve, 1000));
 
