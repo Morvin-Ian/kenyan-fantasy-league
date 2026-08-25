@@ -77,10 +77,7 @@ class FantasyTeamViewSet(ModelViewSet):
             teams = FantasyTeam.objects.filter(user=request.user).select_related("user")
 
             if not teams.exists():
-                return Response(
-                    {"detail": "No fantasy team found for this user."},
-                    status=status.HTTP_200_OK,
-                )
+                return Response([], status=status.HTTP_200_OK)
 
             context = {"request": request}
 

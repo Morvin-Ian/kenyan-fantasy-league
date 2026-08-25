@@ -1,7 +1,10 @@
 <template>
     <div class="min-h-screen p-2 md:p-10">
         <div v-if="isLoading" class="flex justify-center items-center h-64">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            <div class="text-center">
+                <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-gray-900 mx-auto"></div>
+                <p class="mt-4 text-gray-600">Loading ...</p>
+            </div>
         </div>
         <div v-else class="max-w-7xl mx-auto">
             <div
