@@ -1,5 +1,4 @@
 import logging
-import os
 import re
 from datetime import datetime
 from difflib import get_close_matches
@@ -277,19 +276,33 @@ def find_player(
 
 
 def extract_fixtures_data(headers) -> bool:
-    url = os.getenv("TEAM_FIXTURES_URL")
+    url = base.TEAM_FIXTURES_URL
+
+    if not url:
+        logger.error(
+            "TEAM_FIXTURES_URL is not set (config.settings.base.TEAM_FIXTURES_URL is "
+            "empty). Add it to .env / .env.prod — the worker reads it via docker-compose "
+            "env_file — and restart the worker. Aborting fixtures scrape."
+        )
+        return False
 
     try:
         web_content = requests.get(url, headers=headers, verify=False)
     except requests.RequestException as e:
-        logger.error(f"Error fetching fixtures: {e}")
+        logger.error(f"Error fetching fixtures from {url}: {e}")
         return False
 
     if web_content.status_code == 200:
         soup = BeautifulSoup(web_content.text, "lxml")
         table = soup.find("table", class_="sp-event-blocks")
         if not table:
-            logger.error("No fixtures table found on the page.")
+            logger.error(
+                f"No fixtures table (table.sp-event-blocks) found on {url} "
+                f"(status {web_content.status_code}, {len(web_content.text)} bytes). "
+                "Check TEAM_FIXTURES_URL points at the KPL fixtures page, that the "
+                "SportPress markup on the source site has not changed, and that the "
+                "page did not return a login wall or error page."
+            )
             return False
 
         table_rows = table.find_all("tr")[1:]

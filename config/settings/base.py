@@ -404,5 +404,9 @@ CACHES = {
 
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
+# KPL fixtures scraping source (SportPress "sp-event-blocks" table). Read through
+# env() so stray whitespace in .env / .env.prod (passed verbatim by docker-compose
+# env_file) cannot corrupt the URL; the celery worker must use this, not raw os.getenv.
+TEAM_FIXTURES_URL = env("TEAM_FIXTURES_URL")
 BASE_BACKEND_URL = env("BASE_BACKEND_URL", "http://localhost:8080")
 FRONTEND_URL = env("FRONTEND_URL", "http://localhost:8080")
