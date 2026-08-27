@@ -15,9 +15,11 @@ class CustomUserManager(BaseUserManager):
     def generate_missing_field_error(self, field) -> str:
         return f"{field} must be provided."
 
-    def create_user(
+    def _create_user(
         self, username, email, password, first_name=None, last_name=None, **extra_fields
     ):
+        """Shared construction path. Applies no privilege policy of its own -- the
+        caller (``create_user`` or ``create_superuser``) owns that decision."""
         if not username:
             raise ValueError(_(self.generate_missing_field_error("Username")))
 
@@ -30,6 +32,21 @@ class CustomUserManager(BaseUserManager):
         else:
             raise ValueError(_(self.generate_missing_field_error("Email")))
 
+        user = self.model(
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            **extra_fields,
+        )
+
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(
+        self, username, email, password, first_name=None, last_name=None, **extra_fields
+    ):
         # Defaults must be applied to extra_fields BEFORE self.model(**extra_fields)
         # consumes the dict; setdefault() after construction cannot reach the instance.
         extra_fields.setdefault("is_staff", False)
@@ -45,17 +62,9 @@ class CustomUserManager(BaseUserManager):
                 )
             )
 
-        user = self.model(
-            username=username,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            **extra_fields,
+        return self._create_user(
+            username, email, password, first_name, last_name, **extra_fields
         )
-
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
 
     def create_superuser(
         self, username, email, password, first_name=None, last_name=None, **extra_fields
@@ -79,6 +88,6 @@ class CustomUserManager(BaseUserManager):
         else:
             raise ValueError(_("Admin Account: An email address is required"))
 
-        return self.create_user(
+        return self._create_user(
             username, email, password, first_name, last_name, **extra_fields
         )
