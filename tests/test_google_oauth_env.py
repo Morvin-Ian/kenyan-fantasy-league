@@ -18,8 +18,6 @@ These tests fail on the pre-fix code (``os.getenv("GOOGLE_CLIENT_ID")`` in
 
 from pathlib import Path
 
-import pytest
-
 from config.settings.base import env
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
