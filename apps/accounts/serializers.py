@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
     city = serializers.CharField(source="profile.city")
     first_name = serializers.SerializerMethodField(required=False)
     last_name = serializers.SerializerMethodField(required=False)
-    full_name = serializers.SerializerMethodField(source="get_fullname")
+    full_name = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -38,6 +38,9 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_last_name(self, obj) -> str:
         return obj.last_name.title()
+
+    def get_full_name(self, obj) -> str:
+        return obj.get_fullname
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
