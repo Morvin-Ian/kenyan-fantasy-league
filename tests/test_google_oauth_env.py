@@ -16,8 +16,9 @@ These tests fail on the pre-fix code (``os.getenv("GOOGLE_CLIENT_ID")`` in
 ``base.GOOGLE_CLIENT_ID`` / ``base.GOOGLE_CLIENT_SECRET``.
 """
 
-from config.settings.base import env
 from pathlib import Path
+
+from config.settings.base import env
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SERVICES = REPO_ROOT / "apps" / "accounts" / "services.py"
