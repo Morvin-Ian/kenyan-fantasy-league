@@ -52,6 +52,12 @@ onMounted(async () => {
         const authMessage = query.auth_message as string;
         const authCode = query.auth_code as string;
 
+        // The Google callback redirects with ?tokens=...&user=... in the URL.
+        // Both JWTs must not persist in the address bar, history, access logs
+        // or Referer headers — scrub the query string immediately, before any
+        // async work or navigation. See docs/incidents/785cd6ee6d3241ee.md.
+        history.replaceState({}, "", window.location.pathname);
+
         if (!authSuccess) {
             throw new Error(authMessage || "Authentication failed");
         }
