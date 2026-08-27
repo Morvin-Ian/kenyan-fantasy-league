@@ -30,6 +30,21 @@ class CustomUserManager(BaseUserManager):
         else:
             raise ValueError(_(self.generate_missing_field_error("Email")))
 
+        # Defaults must be applied to extra_fields BEFORE self.model(**extra_fields)
+        # consumes the dict; setdefault() after construction cannot reach the instance.
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+
+        if (
+            extra_fields.get("is_staff") is True
+            or extra_fields.get("is_superuser") is True
+        ):
+            raise ValueError(
+                _(
+                    "Regular users cannot be created with staff or superuser privileges. Use create_superuser."
+                )
+            )
+
         user = self.model(
             username=username,
             first_name=first_name,
@@ -39,8 +54,6 @@ class CustomUserManager(BaseUserManager):
         )
 
         user.set_password(password)
-        extra_fields.setdefault("is_staff", False)
-        extra_fields.setdefault("is_superuser", False)
         user.save(using=self._db)
         return user
 
@@ -66,8 +79,6 @@ class CustomUserManager(BaseUserManager):
         else:
             raise ValueError(_("Admin Account: An email address is required"))
 
-        user = self.create_user(
+        return self.create_user(
             username, email, password, first_name, last_name, **extra_fields
         )
-        user.save(using=self._db)
-        return user
