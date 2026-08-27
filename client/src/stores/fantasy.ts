@@ -61,10 +61,15 @@ export const useFantasyStore = defineStore("fantasy", {
         }
 
         const response = await apiClient.get(`/fantasy/teams/user-team`, { params });
-        this.userTeam = response.data;
+        // The endpoint is a list endpoint. Guard the typed `userTeam:
+        // FantasyTeam[]` state against a non-array body so TeamView's
+        // `.length` guards never see a dict (regression: a 200
+        // {"detail": ...} response blanked the whole Team page).
+        const data = Array.isArray(response.data) ? response.data : [];
+        this.userTeam = data;
 
-        if (response.data.length > 0) {
-          const teamData = response.data[0];
+        if (data.length > 0) {
+          const teamData = data[0];
           this.currentGameweek = teamData.requested_gameweek;
           this.gameweekData = {
             gameweek_name: teamData.requested_gameweek_name,
@@ -76,7 +81,7 @@ export const useFantasyStore = defineStore("fantasy", {
           };
         }
 
-        return response.data;
+        return data;
       } catch (error) {
         this.error = error instanceof Error ? error.message : String(error);
         return null;
