@@ -56,13 +56,19 @@ class GoogleAuthSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     id_token = serializers.CharField(required=False)
     access_token = serializers.CharField(required=False)
+    auth_code = serializers.CharField(required=False)
 
     def validate(self, attrs):
         if not any(
-            [attrs.get("code"), attrs.get("id_token"), attrs.get("access_token")]
+            [
+                attrs.get("code"),
+                attrs.get("id_token"),
+                attrs.get("access_token"),
+                attrs.get("auth_code"),
+            ]
         ):
             raise serializers.ValidationError(
-                "At least one of: code, id_token, or access_token is required"
+                "At least one of: code, id_token, access_token, or auth_code is required"
             )
         return attrs
 
