@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-
 VIEWS = Path(__file__).resolve().parents[1] / "apps" / "accounts" / "views.py"
 
 
