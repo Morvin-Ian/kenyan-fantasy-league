@@ -51,3 +51,11 @@ def test_postgres_ready_passes_credentials_via_environment(entrypoint):
     # No braced shell expansion of the credentials may remain anywhere.
     for var in INTERPOLATED:
         assert var not in body
+
+
+def test_production_postgres_restarts_after_an_unexpected_shutdown():
+    """A transient database exit must not leave the production service stopped."""
+    compose = (REPO_ROOT / "docker-compose.prod.yml").read_text()
+    postgres_service = compose.split("  postgres-db:\n", 1)[1].split("\n  redis:", 1)[0]
+
+    assert "restart: unless-stopped" in postgres_service

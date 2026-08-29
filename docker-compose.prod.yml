@@ -21,6 +21,7 @@ services:
 
   postgres-db:
     image: postgres:12.0-alpine
+    restart: unless-stopped
     # Bound to loopback only: the app reaches this over the fpl-vue network.
     # For psql from your laptop, tunnel it: ssh -L 5432:localhost:5432 <host>
     ports:
