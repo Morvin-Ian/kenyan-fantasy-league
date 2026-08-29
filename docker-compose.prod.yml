@@ -52,6 +52,10 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
       - ./docker/production/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      # Serves mogul.fantasykenya.com from the mogul.manager stack. Loads
+      # after default.conf alphabetically, so fantasykenya.com stays the
+      # default server for unmatched hostnames.
+      - ./docker/production/nginx/mogul.conf:/etc/nginx/conf.d/mogul.conf
 
     build:
       context: ./client
