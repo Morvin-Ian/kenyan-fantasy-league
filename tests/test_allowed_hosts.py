@@ -100,3 +100,17 @@ def test_the_fallback_cannot_be_mutated_through_the_result():
     result = pinned_hosts([], SERVED_DOMAINS)
     result.append("evil.example")
     assert "evil.example" not in SERVED_DOMAINS
+
+
+def test_default_tls_server_rejects_unknown_hosts_before_django():
+    """Host-header probes must not create Django DisallowedHost log entries."""
+    conf = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
+    ).read_text()
+
+    assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
+    assert "return 444;" in conf
