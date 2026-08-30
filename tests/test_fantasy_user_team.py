@@ -72,3 +72,23 @@ def test_team_players_returns_empty_list_when_user_has_no_team():
 
     assert response.status_code == 200
     assert response.data == []
+
+
+@pytest.mark.django_db
+def test_gameweek_players_returns_not_found_when_no_gameweek_is_available():
+    """GET /fantasy/players/gameweek-players must not dereference a missing gameweek."""
+    user = User.objects.create_user(
+        username="team-owner",
+        email="team-owner@example.com",
+        password="password",
+        first_name="Team",
+        last_name="Owner",
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.get("/api/v1/fantasy/players/gameweek-players/")
+
+    assert response.status_code == 404
+    assert response.data == {"detail": "No active gameweek found."}

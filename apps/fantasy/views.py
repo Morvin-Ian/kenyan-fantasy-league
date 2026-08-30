@@ -172,6 +172,12 @@ class FantasyPlayerViewSet(ModelViewSet):
                 if not gameweek:
                     gameweek = Gameweek.objects.filter(is_active=True).first()
 
+            if not gameweek:
+                return Response(
+                    {"detail": "No active gameweek found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
             try:
                 # Optimize: prefetch related data to avoid N+1 queries
                 team_selection = (
