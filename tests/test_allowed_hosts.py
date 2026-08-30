@@ -46,10 +46,31 @@ def test_the_fallback_is_the_domains_nginx_actually_serves():
     ).read_text()
     served = set()
     for match in re.finditer(r"^\s*server_name\s+([^;]+);", conf, re.MULTILINE):
-        served.update(match.group(1).split())
+        names = set(match.group(1).split())
+        if names != {"_"}:
+            served.update(names)
 
-    assert served, "no server_name in nginx.conf — has the file moved?"
+    assert served, "no application server_name in nginx.conf — has the file moved?"
     assert set(SERVED_DOMAINS) == served
+
+
+def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
+    """A default server must not proxy scanner Host headers to the API."""
+    conf = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
+    ).read_text()
+
+    assert re.search(
+        r"listen 80 default_server;\s+server_name _;\s+return 444;", conf
+    )
+    assert re.search(
+        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?return 444;",
+        conf,
+    )
 
 
 def test_an_unset_variable_falls_back_to_the_real_domains():
