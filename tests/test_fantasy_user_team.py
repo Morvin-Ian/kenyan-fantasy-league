@@ -10,11 +10,14 @@ comparisons that are false, so neither branch rendered and the page was blank.
 The endpoint must keep its list contract so the frontend's guards work.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 from django.test.utils import override_settings
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
+from apps.fantasy.models import FantasyTeam
 
 # The view reads/writes the default cache (Redis) directly; swap it for a
 # locmem cache so the test does not need a running Redis.
@@ -74,9 +77,16 @@ def test_team_players_returns_empty_list_when_user_has_no_team():
     assert response.data == []
 
 
+@override_settings(CACHES=LOCMEM_CACHE)
 @pytest.mark.django_db
-def test_gameweek_players_returns_not_found_when_no_gameweek_is_available():
+def test_gameweek_players_returns_not_found_when_no_gameweek_is_available(monkeypatch):
     """GET /fantasy/players/gameweek-players must not dereference a missing gameweek."""
+    # The FantasyTeam post_save signal reaches past the cache for a raw Redis
+    # client, which the locmem backend cannot hand out.
+    monkeypatch.setattr(
+        "apps.fantasy.signals.get_redis_connection", lambda alias: MagicMock()
+    )
+
     user = User.objects.create_user(
         username="team-owner",
         email="team-owner@example.com",
@@ -84,6 +94,10 @@ def test_gameweek_players_returns_not_found_when_no_gameweek_is_available():
         first_name="Team",
         last_name="Owner",
     )
+
+    # The 404 under test is the no-active-gameweek branch, which is only
+    # reached once the user has a team.
+    FantasyTeam.objects.create(user=user, name="Owner XI")
 
     client = APIClient()
     client.force_authenticate(user=user)
