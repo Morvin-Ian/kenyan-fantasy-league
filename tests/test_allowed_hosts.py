@@ -64,9 +64,7 @@ def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
         / "nginx.conf"
     ).read_text()
 
-    assert re.search(
-        r"listen 80 default_server;\s+server_name _;\s+return 444;", conf
-    )
+    assert re.search(r"listen 80 default_server;\s+server_name _;\s+return 444;", conf)
     assert re.search(
         r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?return 444;",
         conf,
