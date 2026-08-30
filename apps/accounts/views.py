@@ -92,7 +92,7 @@ class GoogleAuthCallbackView(APIView):
 
         # Check for authorization code
         if not code:
-            logger.error("No authorization code received from Google")
+            logger.warning("No authorization code received from Google")
             error_url = (
                 f"{redirect_to}?auth_success=false&auth_message=no_code&origin={origin}"
             )
