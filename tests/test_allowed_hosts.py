@@ -114,3 +114,12 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 
     assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
+
+
+def test_nginx_reloads_edge_configuration_promptly():
+    """A bind-mounted Host rejection must not wait hours to be active."""
+    compose = (
+        pathlib.Path(__file__).resolve().parents[1] / "docker-compose.prod.yml"
+    ).read_text()
+
+    assert "sleep 5m" in compose

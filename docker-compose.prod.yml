@@ -63,8 +63,8 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    # Reload every 6h so renewed certs get picked up without a manual restart.
-    command: /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
+    # Reload every 5m so mounted edge-config changes take effect promptly; this also picks up renewed certs.
+    command: /bin/sh -c 'while :; do sleep 5m & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
     networks:
       - fpl-vue
 
