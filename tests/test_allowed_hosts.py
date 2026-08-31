@@ -114,3 +114,22 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 
     assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
+
+
+def test_api_proxy_uses_its_configured_server_name_not_the_request_host():
+    """Django must only receive a host this virtual server is configured for."""
+    conf = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
+    ).read_text()
+
+    for location in ("/api/v1", "/guardian"):
+        block = re.search(
+            rf"location {re.escape(location)} \{{(.*?)\n    \}}", conf, re.DOTALL
+        )
+        assert block, f"missing {location} proxy block"
+        assert "proxy_set_header Host $server_name;" in block.group(1)
+        assert "proxy_set_header Host $host;" not in block.group(1)
