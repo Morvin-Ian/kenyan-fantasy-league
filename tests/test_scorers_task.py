@@ -2,7 +2,9 @@
 
 from pathlib import Path
 
-SCORERS_TASK = Path(__file__).resolve().parents[1] / "apps" / "kpl" / "tasks" / "scorers.py"
+SCORERS_TASK = (
+    Path(__file__).resolve().parents[1] / "apps" / "kpl" / "tasks" / "scorers.py"
+)
 
 
 def test_missing_active_gameweek_is_logged_as_a_warning():
