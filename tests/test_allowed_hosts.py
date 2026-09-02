@@ -114,3 +114,21 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 
     assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
+
+
+def test_django_only_trusts_the_host_nginx_validated():
+    """A client X-Forwarded-Host must not bypass the Host-header guard."""
+    conf = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
+    ).read_text()
+
+    for route in ("/api/v1", "/guardian"):
+        location = re.search(
+            rf"location {re.escape(route)} \{{(.*?)\n    \}}", conf, re.DOTALL
+        )
+        assert location, f"missing {route} proxy location"
+        assert "proxy_set_header X-Forwarded-Host $host;" in location.group(1)
