@@ -42,13 +42,17 @@ CELERY_TIMEZONE = "UTC"
 # repository — and getting it wrong is silent. With HSTS preloaded and
 # USE_X_FORWARDED_HOST trusting the proxy, a poisoned Host header reaches the
 # activation and password-reset links this app builds.
-SERVED_DOMAINS = ["fantasykenya.com", "www.fantasykenya.com"]
+SERVED_DOMAINS = [
+    "fantasykenya.com",
+    "www.fantasykenya.com",
+    "manager.fantasykenya.com",
+]
 
 
 def pinned_hosts(hosts, fallback):
-    """`hosts` without the wildcard, or `fallback` when nothing is left."""
+    """Configured hosts plus each served domain, without a wildcard."""
     named = [host for host in hosts if host != "*"]
-    return named or list(fallback)
+    return named + [host for host in fallback if host not in named]
 
 
 ALLOWED_HOSTS = pinned_hosts(ALLOWED_HOSTS, SERVED_DOMAINS)

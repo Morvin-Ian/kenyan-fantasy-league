@@ -81,18 +81,17 @@ def test_a_blank_variable_falls_back_rather_than_locking_everyone_out():
     assert pinned_hosts([], SERVED_DOMAINS) == SERVED_DOMAINS
 
 
-def test_a_configured_value_is_used_as_given():
-    """Pinning is a floor, not an override: staging can name its own host."""
+def test_a_configured_value_keeps_the_served_domains():
+    """Pinning is a floor, not an override: staging can add a host."""
     assert pinned_hosts(["staging.fantasykenya.com"], SERVED_DOMAINS) == [
-        "staging.fantasykenya.com"
+        "staging.fantasykenya.com",
+        *SERVED_DOMAINS,
     ]
 
 
 def test_a_wildcard_mixed_with_real_hosts_loses_the_wildcard():
-    """ "*, fantasykenya.com" is still a wildcard — the rest is decoration."""
-    assert pinned_hosts(["*", "fantasykenya.com"], SERVED_DOMAINS) == [
-        "fantasykenya.com"
-    ]
+    """A named value remains alongside every required served domain."""
+    assert pinned_hosts(["*", "fantasykenya.com"], SERVED_DOMAINS) == SERVED_DOMAINS
 
 
 def test_the_fallback_cannot_be_mutated_through_the_result():
@@ -112,5 +111,14 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
         / "nginx.conf"
     ).read_text()
 
-    assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
+    assert (
+        "if ($host !~ "
+        "^(fantasykenya\\.com|www\\.fantasykenya\\.com|manager\\.fantasykenya\\.com)$) {"
+        in conf
+    )
     assert "return 444;" in conf
+
+
+def test_manager_host_is_explicitly_allowed_in_production():
+    """The production manager hostname must not fail Django host validation."""
+    assert "manager.fantasykenya.com" in ALLOWED_HOSTS
