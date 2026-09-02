@@ -95,6 +95,13 @@ def test_a_wildcard_mixed_with_real_hosts_loses_the_wildcard():
     ]
 
 
+def test_production_uses_nginx_validated_host_not_forwarded_host():
+    """Clients can send X-Forwarded-Host; nginx only validates Host."""
+    from config.settings.production import USE_X_FORWARDED_HOST
+
+    assert USE_X_FORWARDED_HOST is False
+
+
 def test_the_fallback_cannot_be_mutated_through_the_result():
     """A caller editing its ALLOWED_HOSTS must not rewrite SERVED_DOMAINS."""
     result = pinned_hosts([], SERVED_DOMAINS)
