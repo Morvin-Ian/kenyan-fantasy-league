@@ -63,8 +63,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    # Reload every 6h so renewed certs get picked up without a manual restart.
-    command: /bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
+    # Reload every minute so mounted nginx configuration and renewed certs take
+    # effect without leaving an old virtual-host table serving requests.
+    command: /bin/sh -c 'while :; do sleep 1m & wait $${!}; nginx -s reload; done & nginx -g "daemon off;"'
     networks:
       - fpl-vue
 
