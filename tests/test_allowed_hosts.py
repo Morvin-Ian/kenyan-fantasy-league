@@ -71,6 +71,25 @@ def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
     )
 
 
+def test_plesk_hostname_is_rejected_even_if_the_default_server_changes():
+    """Plesk probes must not reach Django through another included vhost."""
+    conf = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
+    ).read_text()
+
+    assert re.search(
+        r"listen 80;\s+server_name plesk\.fantasykenya\.com;\s+return 444;", conf
+    )
+    assert re.search(
+        r"listen 443 ssl;[\s\S]*?server_name plesk\.fantasykenya\.com;[\s\S]*?return 444;",
+        conf,
+    )
+
+
 def test_an_unset_variable_falls_back_to_the_real_domains():
     """Unset reaches production.py as base.py's ["*"]."""
     assert pinned_hosts(["*"], SERVED_DOMAINS) == SERVED_DOMAINS
