@@ -114,3 +114,13 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 
     assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
+
+
+def test_production_reloads_mounted_nginx_host_guards_promptly():
+    """A mounted host-rejection fix must not remain inactive for six hours."""
+    compose = (
+        pathlib.Path(__file__).resolve().parents[1] / "docker-compose.prod.yml"
+    ).read_text()
+
+    assert "sleep 5m" in compose
+    assert "nginx -s reload" in compose
