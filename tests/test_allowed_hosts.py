@@ -119,10 +119,7 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 def test_production_deploy_reloads_the_bind_mounted_nginx_configuration():
     """The unknown-host guard cannot protect the live edge until nginx reloads."""
     workflow = (
-        pathlib.Path(__file__).resolve().parents[1]
-        / ".github"
-        / "workflows"
-        / "ci.yml"
+        pathlib.Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
     ).read_text()
 
     assert "$compose exec -T nginx nginx -s reload" in workflow
