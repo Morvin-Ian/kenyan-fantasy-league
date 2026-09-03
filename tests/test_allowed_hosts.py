@@ -114,3 +114,21 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 
     assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
+
+
+def test_kfl_proxy_does_not_forward_a_host_from_an_upstream_proxy():
+    """Django must validate the public nginx host, not X-Forwarded-Host."""
+    conf = (
+        pathlib.Path(__file__).resolve().parents[1]
+        / "docker"
+        / "production"
+        / "nginx"
+        / "nginx.conf"
+    ).read_text()
+
+    for location in ("/api/v1", "/guardian"):
+        block = re.search(
+            rf"location {re.escape(location)} \{{(?P<body>[\s\S]*?)\n    \}}", conf
+        )
+        assert block, f"missing {location} proxy location"
+        assert 'proxy_set_header X-Forwarded-Host "";' in block.group("body")
