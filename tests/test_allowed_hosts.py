@@ -47,7 +47,7 @@ def test_the_fallback_is_the_domains_nginx_actually_serves():
     served = set()
     for match in re.finditer(r"^\s*server_name\s+([^;]+);", conf, re.MULTILINE):
         names = set(match.group(1).split())
-        if names != {"_"}:
+        if "_" not in names:
             served.update(names)
 
     assert served, "no application server_name in nginx.conf — has the file moved?"
@@ -64,9 +64,12 @@ def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
         / "nginx.conf"
     ).read_text()
 
-    assert re.search(r"listen 80 default_server;\s+server_name _;\s+return 444;", conf)
     assert re.search(
-        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?return 444;",
+        r"listen 80 default_server;[\s\S]*?server_name _ plesk\.fantasykenya\.com;[\s\S]*?return 444;",
+        conf,
+    )
+    assert re.search(
+        r"listen 443 ssl default_server;[\s\S]*?server_name _ plesk\.fantasykenya\.com;[\s\S]*?return 444;",
         conf,
     )
 
