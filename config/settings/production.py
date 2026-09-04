@@ -56,9 +56,11 @@ ALLOWED_HOSTS = pinned_hosts(ALLOWED_HOSTS, SERVED_DOMAINS)
 
 # --- Running behind the TLS-terminating nginx proxy ---
 # nginx forwards X-Forwarded-Proto; without this Django thinks every request is
-# plain HTTP and builds http:// redirects / drops secure cookies.
+# plain HTTP and builds http:// redirects / drops secure cookies. nginx does
+# not overwrite a client-supplied X-Forwarded-Host, so use its trusted Host
+# header (set to $host in the API proxy locations) instead.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_HOST = False
 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
