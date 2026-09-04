@@ -102,6 +102,16 @@ def test_the_fallback_cannot_be_mutated_through_the_result():
     assert "evil.example" not in SERVED_DOMAINS
 
 
+def test_production_nginx_reloads_mounted_configuration_promptly():
+    """Host-rejection changes must not leave Django exposed for six hours."""
+    compose = (
+        pathlib.Path(__file__).resolve().parents[1] / "docker-compose.prod.yml"
+    ).read_text()
+
+    assert "sleep 5m" in compose
+    assert "nginx -s reload" in compose
+
+
 def test_default_tls_server_rejects_unknown_hosts_before_django():
     """Host-header probes must not create Django DisallowedHost log entries."""
     conf = (
