@@ -68,6 +68,7 @@ CSRF_TRUSTED_ORIGINS = [
     "http://[::1]:8080",
     "https://fantasykenya.com",
     "https://www.fantasykenya.com",
+    "https://painel.fantasykenya.com",
 ]
 
 

@@ -33,6 +33,11 @@ def test_production_serves_something():
     assert ALLOWED_HOSTS
 
 
+def test_panel_host_is_allowed_in_production():
+    """The public panel hostname must not be rejected by Django."""
+    assert "painel.fantasykenya.com" in ALLOWED_HOSTS
+
+
 def test_the_fallback_is_the_domains_nginx_actually_serves():
     """If the two drift apart, the fallback silently stops being a fallback:
     Django would refuse the hosts nginx forwards. Read from nginx.conf rather
@@ -112,5 +117,5 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
         / "nginx.conf"
     ).read_text()
 
-    assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
+    assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com|painel\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
