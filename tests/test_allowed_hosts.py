@@ -66,9 +66,10 @@ def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
 
     assert re.search(r"listen 80 default_server;\s+server_name _;\s+return 444;", conf)
     assert re.search(
-        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?return 444;",
+        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?ssl_reject_handshake on;",
         conf,
     )
+    assert not re.search(r"listen 443 ssl default_server;[\s\S]*?ssl_certificate", conf)
 
 
 def test_an_unset_variable_falls_back_to_the_real_domains():
@@ -102,6 +103,16 @@ def test_the_fallback_cannot_be_mutated_through_the_result():
     assert "evil.example" not in SERVED_DOMAINS
 
 
+def test_production_nginx_reloads_mounted_configuration_promptly():
+    """Host-rejection changes must not leave Django exposed for six hours."""
+    compose = (
+        pathlib.Path(__file__).resolve().parents[1] / "docker-compose.prod.yml"
+    ).read_text()
+
+    assert "sleep 5m" in compose
+    assert "nginx -s reload" in compose
+
+
 def test_default_tls_server_rejects_unknown_hosts_before_django():
     """Host-header probes must not create Django DisallowedHost log entries."""
     conf = (
@@ -114,3 +125,12 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
 
     assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
     assert "return 444;" in conf
+
+
+def test_production_deploy_reloads_the_bind_mounted_nginx_configuration():
+    """The unknown-host guard cannot protect the live edge until nginx reloads."""
+    workflow = (
+        pathlib.Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+    ).read_text()
+
+    assert "$compose exec -T nginx nginx -s reload" in workflow

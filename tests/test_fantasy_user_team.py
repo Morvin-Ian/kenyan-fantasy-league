@@ -106,3 +106,33 @@ def test_gameweek_players_returns_not_found_when_no_gameweek_is_available(monkey
 
     assert response.status_code == 404
     assert response.data == {"detail": "No active gameweek found."}
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+@pytest.mark.django_db
+@pytest.mark.parametrize("gameweek", ["invalid", "0", "-1"])
+def test_gameweek_players_rejects_non_positive_or_non_numeric_gameweek(
+    monkeypatch, gameweek
+):
+    """The optional gameweek query parameter must not reach an integer ORM field raw."""
+    monkeypatch.setattr(
+        "apps.fantasy.signals.get_redis_connection", lambda alias: MagicMock()
+    )
+    user = User.objects.create_user(
+        username="team-owner",
+        email="team-owner@example.com",
+        password="password",
+        first_name="Team",
+        last_name="Owner",
+    )
+    FantasyTeam.objects.create(user=user, name="Owner XI")
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+
+    response = client.get(
+        "/api/v1/fantasy/players/gameweek-players/", {"gameweek": gameweek}
+    )
+
+    assert response.status_code == 400
+    assert response.data == {"detail": "Gameweek must be a positive integer."}
