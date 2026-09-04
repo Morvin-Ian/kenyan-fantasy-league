@@ -117,5 +117,8 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
         / "nginx.conf"
     ).read_text()
 
-    assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com|painel\\.fantasykenya\\.com)$) {" in conf
+    assert (
+        "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com|painel\\.fantasykenya\\.com)$) {"
+        in conf
+    )
     assert "return 444;" in conf
