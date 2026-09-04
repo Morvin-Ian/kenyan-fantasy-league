@@ -37,7 +37,6 @@ def test_production_allows_the_live_admin_host():
     """The live admin hostname must survive production host validation."""
     assert "beheer.fantasykenya.com" in ALLOWED_HOSTS
 
-
     """If the two drift apart, the fallback silently stops being a fallback:
     Django would refuse the hosts nginx forwards. Read from nginx.conf rather
     than restated, so moving domains has to move both."""
