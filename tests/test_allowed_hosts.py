@@ -33,6 +33,11 @@ def test_production_serves_something():
     assert ALLOWED_HOSTS
 
 
+def test_production_serves_the_sso_host():
+    """The SSO host must pass Django's host validation."""
+    assert "sso.fantasykenya.com" in ALLOWED_HOSTS
+
+
 def test_the_fallback_is_the_domains_nginx_actually_serves():
     """If the two drift apart, the fallback silently stops being a fallback:
     Django would refuse the hosts nginx forwards. Read from nginx.conf rather
