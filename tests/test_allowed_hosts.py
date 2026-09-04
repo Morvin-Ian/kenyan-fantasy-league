@@ -66,9 +66,10 @@ def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
 
     assert re.search(r"listen 80 default_server;\s+server_name _;\s+return 444;", conf)
     assert re.search(
-        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?return 444;",
+        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?ssl_reject_handshake on;",
         conf,
     )
+    assert not re.search(r"listen 443 ssl default_server;[\s\S]*?ssl_certificate", conf)
 
 
 def test_an_unset_variable_falls_back_to_the_real_domains():
