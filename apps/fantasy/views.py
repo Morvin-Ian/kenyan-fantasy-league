@@ -159,6 +159,20 @@ class FantasyPlayerViewSet(ModelViewSet):
             gameweek_number = request.query_params.get("gameweek")
 
             if gameweek_number:
+                try:
+                    gameweek_number = int(gameweek_number)
+                except (TypeError, ValueError):
+                    return Response(
+                        {"detail": "Gameweek must be a positive integer."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                if gameweek_number < 1:
+                    return Response(
+                        {"detail": "Gameweek must be a positive integer."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 gameweek = Gameweek.objects.get(number=gameweek_number)
             else:
                 last_selection = (
