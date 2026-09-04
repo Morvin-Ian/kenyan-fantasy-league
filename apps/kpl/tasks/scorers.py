@@ -191,7 +191,7 @@ def scrape_top_scorers(gameweek_id=None):
             gameweek = Gameweek.objects.filter(is_active=True).first()
 
         if not gameweek:
-            logger.error("No active gameweek found for scraping scorers")
+            logger.warning("No active gameweek found for scraping scorers")
             return {"success": False, "error": "No active gameweek found"}
 
         logger.info(f"Scraping top scorers for Gameweek {gameweek.number}")
