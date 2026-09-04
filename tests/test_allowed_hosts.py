@@ -33,7 +33,11 @@ def test_production_serves_something():
     assert ALLOWED_HOSTS
 
 
-def test_the_fallback_is_the_domains_nginx_actually_serves():
+def test_production_allows_the_live_admin_host():
+    """The live admin hostname must survive production host validation."""
+    assert "beheer.fantasykenya.com" in ALLOWED_HOSTS
+
+
     """If the two drift apart, the fallback silently stops being a fallback:
     Django would refuse the hosts nginx forwards. Read from nginx.conf rather
     than restated, so moving domains has to move both."""
@@ -112,5 +116,8 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
         / "nginx.conf"
     ).read_text()
 
-    assert "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com)$) {" in conf
+    assert (
+        "if ($host !~ ^(fantasykenya\\.com|www\\.fantasykenya\\.com|beheer\\.fantasykenya\\.com)$) {"
+        in conf
+    )
     assert "return 444;" in conf
