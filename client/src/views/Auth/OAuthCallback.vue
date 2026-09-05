@@ -47,6 +47,14 @@ onMounted(async () => {
     const query = { ...route.query };
     history.replaceState({}, "", window.location.pathname);
 
+    // A reload after the exchange has persisted the tokens returns to this
+    // scrubbed URL without its one-time auth code. Do not report that completed
+    // login as a failed callback.
+    if (authStore.isAuthenticated && !query.auth_code) {
+        redirectToHome();
+        return;
+    }
+
     try {
         const authSuccess = query.auth_success === "true";
         const authMessage = query.auth_message as string;
