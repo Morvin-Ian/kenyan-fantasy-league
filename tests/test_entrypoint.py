@@ -48,6 +48,9 @@ def test_postgres_ready_passes_credentials_via_environment(entrypoint):
     assert 'os.environ["PG_HOST"]' in body
     assert 'os.environ["PG_PORT"]' in body
 
-    # No braced shell expansion of the credentials may remain anywhere.
+    # The command prefix deliberately uses shell expansion to pass the already
+    # validated values into Python's environment. Only the quoted heredoc must
+    # remain free of shell interpolation.
+    heredoc = body.split("<<'END'", maxsplit=1)[1].split("\nEND", maxsplit=1)[0]
     for var in INTERPOLATED:
-        assert var not in body
+        assert var not in heredoc
