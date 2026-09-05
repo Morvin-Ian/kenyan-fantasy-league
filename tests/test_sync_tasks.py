@@ -100,6 +100,22 @@ def test_standings_snapshot_replaces_the_table(monkeypatch, clubs):
 
 
 @pytest.mark.django_db
+def test_standings_snapshot_invalidates_the_cached_list(monkeypatch, clubs):
+    from django.core.cache import cache
+
+    cache.set("standings_list_page_1", {"results": []}, timeout=86400)
+    monkeypatch.setattr(
+        primary,
+        "fetch_standings",
+        lambda tid: [standing_row(1, "clb00036", "Gor Mahia FC", 0)],
+    )
+
+    sync.sync_standings.run()
+
+    assert cache.get("standings_list_page_1") is None
+
+
+@pytest.mark.django_db
 def test_a_source_outage_leaves_the_existing_table_intact(monkeypatch, clubs):
     """Regression: the old task deleted the table before it fetched anything."""
     Standing.objects.create(
