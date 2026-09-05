@@ -124,6 +124,31 @@ def _validator_cache_key(url: str) -> str:
     return f"kpl:scrape:validators:{url}"
 
 
+# Conditional GETs only save bandwidth. If the cache is unreachable the fetch
+# must still happen, so both sides swallow backend errors.
+def _cached_validators(url: str):
+    try:
+        return cache.get(_validator_cache_key(url))
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("validator cache unavailable for %s: %s", url, exc)
+        return None
+
+
+def _remember_validators(url: str, headers) -> None:
+    etag = headers.get("ETag")
+    last_modified = headers.get("Last-Modified")
+    if not (etag or last_modified):
+        return
+    try:
+        cache.set(
+            _validator_cache_key(url),
+            {"etag": etag, "last_modified": last_modified},
+            timeout=60 * 60 * 24 * 7,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("could not cache validators for %s: %s", url, exc)
+
+
 def fetch(
     url: str,
     *,
@@ -152,7 +177,7 @@ def fetch(
     if extra_headers:
         headers.update(extra_headers)
 
-    validators = cache.get(_validator_cache_key(url)) if use_conditional else None
+    validators = _cached_validators(url) if use_conditional else None
     if validators:
         if validators.get("etag"):
             headers["If-None-Match"] = validators["etag"]
@@ -187,14 +212,7 @@ def fetch(
         )
 
     if use_conditional:
-        etag = response.headers.get("ETag")
-        last_modified = response.headers.get("Last-Modified")
-        if etag or last_modified:
-            cache.set(
-                _validator_cache_key(url),
-                {"etag": etag, "last_modified": last_modified},
-                timeout=60 * 60 * 24 * 7,
-            )
+        _remember_validators(url, response.headers)
 
     logger.info(
         "GET %s -> %s, %s bytes (%.2fs)",

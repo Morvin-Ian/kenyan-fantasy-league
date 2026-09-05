@@ -74,12 +74,19 @@ BENCH_ORDER_OFFSET = 100
 def current_season(*, refresh: bool = False) -> primary.Season:
     """Return the active KPL season, cached so every task does not re-discover."""
     if not refresh:
-        cached = cache.get(SEASON_CACHE_KEY)
+        try:
+            cached = cache.get(SEASON_CACHE_KEY)
+        except Exception as exc:  # noqa: BLE001 - fall back to rediscovering
+            logger.warning("season cache unavailable (%s); rediscovering", exc)
+            cached = None
         if cached:
             return primary.Season(**cached)
 
     season = primary.discover_current_season()
-    cache.set(SEASON_CACHE_KEY, season.__dict__, SEASON_CACHE_TTL)
+    try:
+        cache.set(SEASON_CACHE_KEY, season.__dict__, SEASON_CACHE_TTL)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("could not cache the discovered season: %s", exc)
     return season
 
 
