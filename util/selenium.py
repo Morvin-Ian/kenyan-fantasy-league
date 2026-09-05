@@ -320,5 +320,7 @@ def selenium_session(
     finally:
         try:
             manager.close()
-        except Exception as exc:  # noqa: BLE001 - teardown must never mask the real error
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001 - teardown must never mask the real error
             logger.warning("failed to close selenium session cleanly: %s", exc)

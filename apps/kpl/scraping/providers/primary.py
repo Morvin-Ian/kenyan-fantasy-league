@@ -117,7 +117,9 @@ def _season_label_pattern() -> re.Pattern:
 # by any id prefix — that keeps the source's naming scheme out of this file.
 _COMPETITION_ID = re.compile(r"[?&]t=([A-Za-z0-9_-]+)")
 _TEAM_ID = re.compile(r"(?:^|/)team[a-z_]*\.[a-z]+\?(?:[^&]*&)*t=([A-Za-z0-9_-]+)")
-_PLAYER_ID = re.compile(r"(?:^|/)player[a-z_]*\.[a-z]+\?(?:[^&]*&)*[pd]=([A-Za-z0-9_-]+)")
+_PLAYER_ID = re.compile(
+    r"(?:^|/)player[a-z_]*\.[a-z]+\?(?:[^&]*&)*[pd]=([A-Za-z0-9_-]+)"
+)
 _FIXTURE_ID = re.compile(r"(?:^|/)fixture[a-z_]*\.[a-z]+\?(?:[^&]*&)*f=(\d+)")
 _MATCH_ID = re.compile(r"(?:^|/)score[a-z_]*\.[a-z]+\?(?:[^&]*&)*s=(\d+)")
 _TEAM_LINK = re.compile(r"(?:^|/)team[a-z_]*\.[a-z]+\?")
@@ -134,10 +136,26 @@ _SCORELINE = re.compile(r"^(\d{1,2})\s*[-–]\s*(\d{1,2})$")
 _MINUTE = re.compile(r"(\d{1,3})\s*'")
 
 _WORD_NUMBERS = {
-    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
-    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
-    "thirteen": 13, "fourteen": 14, "fifteen": 15, "sixteen": 16,
-    "seventeen": 17, "eighteen": 18, "nineteen": 19, "twenty": 20,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "thirteen": 13,
+    "fourteen": 14,
+    "fifteen": 15,
+    "sixteen": 16,
+    "seventeen": 17,
+    "eighteen": 18,
+    "nineteen": 19,
+    "twenty": 20,
 }
 
 
@@ -297,7 +315,9 @@ def _int(value: str, *, field_name: str) -> int:
     try:
         return int(text)
     except ValueError as exc:
-        raise ParseError(f"expected an integer for {field_name}, got {value!r}") from exc
+        raise ParseError(
+            f"expected an integer for {field_name}, got {value!r}"
+        ) from exc
 
 
 def _matchday_number(caption: str) -> Optional[int]:
@@ -322,7 +342,9 @@ def _parse_heading_date(text: str) -> Optional[date]:
         year_value += 2000
     for fmt in ("%b", "%B"):
         try:
-            month = datetime.strptime(month_name[:3] if fmt == "%b" else month_name, fmt).month
+            month = datetime.strptime(
+                month_name[:3] if fmt == "%b" else month_name, fmt
+            ).month
         except ValueError:
             continue
         return date(year_value, month, int(day))
@@ -349,7 +371,7 @@ def _parse_venue_cell(text: str) -> tuple[Optional[time], str]:
                 hour = 0
         if 0 <= hour <= 23 and 0 <= minute <= 59:
             kickoff = time(hour, minute)
-        raw = raw[time_match.end():]
+        raw = raw[time_match.end() :]
 
     venue = raw.lstrip(" ,").strip()
     venue = re.sub(r"^Derby\b\s*", "", venue, flags=re.IGNORECASE).strip()
@@ -584,7 +606,9 @@ def _parse_match_tables(html: str, *, with_scores: bool) -> List[FixtureRow]:
                 venue = ""
 
             if current_date is None:
-                logger.debug("match row before any date heading; skipping: %s", text[:80])
+                logger.debug(
+                    "match row before any date heading; skipping: %s", text[:80]
+                )
                 continue
 
             has_time = kickoff_time is not None
@@ -596,13 +620,21 @@ def _parse_match_tables(html: str, *, with_scores: bool) -> List[FixtureRow]:
 
             fixtures.append(
                 FixtureRow(
-                    provider_fixture_id=fixture_match.group(1) if fixture_match else None,
-                    provider_score_id=score_id_match.group(1) if score_id_match else None,
+                    provider_fixture_id=(
+                        fixture_match.group(1) if fixture_match else None
+                    ),
+                    provider_score_id=(
+                        score_id_match.group(1) if score_id_match else None
+                    ),
                     matchday=matchday,
                     kickoff=kickoff,
                     has_kickoff_time=has_time,
-                    home_team=clean_team_display_name(home_anchor.get_text(" ", strip=True)),
-                    away_team=clean_team_display_name(away_anchor.get_text(" ", strip=True)),
+                    home_team=clean_team_display_name(
+                        home_anchor.get_text(" ", strip=True)
+                    ),
+                    away_team=clean_team_display_name(
+                        away_anchor.get_text(" ", strip=True)
+                    ),
                     home_provider_id=(
                         _TEAM_ID.search(home_anchor["href"]).group(1)
                         if _TEAM_ID.search(home_anchor["href"])
@@ -638,7 +670,9 @@ def _dedupe(fixtures: List[FixtureRow]) -> List[FixtureRow]:
             unkeyed.append(fixture)
             continue
         existing = best.get(key)
-        if existing is None or (existing.matchday is None and fixture.matchday is not None):
+        if existing is None or (
+            existing.matchday is None and fixture.matchday is not None
+        ):
             best[key] = fixture
 
     return sorted(
@@ -668,7 +702,9 @@ def fetch_results(tournament_id: str) -> List[FixtureRow]:
 # --------------------------------------------------------------------------- #
 
 
-def fetch_scorers(tournament_id: str, *, limit: Optional[int] = None) -> List[ScorerRow]:
+def fetch_scorers(
+    tournament_id: str, *, limit: Optional[int] = None
+) -> List[ScorerRow]:
     """Top scorers, highest first.
 
     The page carries two tables: goals scored, then own goals. Only the first is
@@ -758,7 +794,9 @@ def fetch_squads(tournament_id: str) -> List[Squad]:
                 continue
             players.append(
                 SquadPlayer(
-                    provider_player_id=_PLAYER_ID.search(player_anchor["href"]).group(1),
+                    provider_player_id=_PLAYER_ID.search(player_anchor["href"]).group(
+                        1
+                    ),
                     name=name,
                     shirt_role=cells[1].get_text(strip=True),
                 )
@@ -798,7 +836,9 @@ def fetch_match_detail(score_id: str) -> MatchDetail:
     is published after the final whistle rather than live, so it is a settlement
     source, not an in-play one.
     """
-    response = fetch(_page("match", match=score_id), use_conditional=False, min_bytes=800)
+    response = fetch(
+        _page("match", match=score_id), use_conditional=False, min_bytes=800
+    )
     soup = _soup(response.text)
 
     title = soup.title.get_text(" ", strip=True) if soup.title else ""
@@ -837,7 +877,9 @@ def fetch_match_detail(score_id: str) -> MatchDetail:
             elif match_date is not None:
                 kickoff = datetime.combine(match_date, time(15, 0))
 
-    home_starters, away_starters = _parse_lineup_table(tables[1] if len(tables) > 1 else None)
+    home_starters, away_starters = _parse_lineup_table(
+        tables[1] if len(tables) > 1 else None
+    )
     home_bench, away_bench = _parse_lineup_table(tables[2] if len(tables) > 2 else None)
 
     return MatchDetail(
@@ -880,7 +922,9 @@ def _parse_goal_cell(cell, side: str) -> List[MatchGoal]:
         if not name:
             continue
         goals.append(
-            MatchGoal(team_side=side, player_name=name, minute=int(minute_match.group(1)))
+            MatchGoal(
+                team_side=side, player_name=name, minute=int(minute_match.group(1))
+            )
         )
     return goals
 

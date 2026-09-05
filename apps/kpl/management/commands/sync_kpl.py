@@ -32,7 +32,15 @@ STEPS = {
 }
 
 # Everything the nightly pipeline runs; "match-details" is opt-in.
-DEFAULT_STEPS = ["teams", "logos", "fixtures", "players", "results", "standings", "scorers"]
+DEFAULT_STEPS = [
+    "teams",
+    "logos",
+    "fixtures",
+    "players",
+    "results",
+    "standings",
+    "scorers",
+]
 
 
 class Command(BaseCommand):
@@ -97,7 +105,9 @@ class Command(BaseCommand):
 
             elapsed = time.monotonic() - started
             self.stdout.write(
-                self.style.SUCCESS(f"  {name} ok in {elapsed:.1f}s: {json.dumps(result, default=str)}")
+                self.style.SUCCESS(
+                    f"  {name} ok in {elapsed:.1f}s: {json.dumps(result, default=str)}"
+                )
             )
 
         if failures:

@@ -103,8 +103,17 @@ def test_standings_snapshot_replaces_the_table(monkeypatch, clubs):
 def test_a_source_outage_leaves_the_existing_table_intact(monkeypatch, clubs):
     """Regression: the old task deleted the table before it fetched anything."""
     Standing.objects.create(
-        team=clubs["clb00036"], position=1, played=10, wins=8, draws=0, losses=2,
-        goals_for=20, goals_against=5, goal_differential=15, points=24, period="2026-2027",
+        team=clubs["clb00036"],
+        position=1,
+        played=10,
+        wins=8,
+        draws=0,
+        losses=2,
+        goals_for=20,
+        goals_against=5,
+        goal_differential=15,
+        points=24,
+        period="2026-2027",
     )
 
     def unavailable(_tid):
@@ -202,7 +211,14 @@ def test_a_deadline_that_has_already_passed_is_never_moved(monkeypatch, clubs):
     )
 
     sync._upsert_gameweeks(
-        [(1, fixture_row(29, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "10"))]
+        [
+            (
+                1,
+                fixture_row(
+                    29, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "10"
+                ),
+            )
+        ]
     )
 
     gameweek.refresh_from_db()
@@ -212,7 +228,14 @@ def test_a_deadline_that_has_already_passed_is_never_moved(monkeypatch, clubs):
 @pytest.mark.django_db
 def test_a_future_deadline_tracks_the_first_kick_off(monkeypatch, clubs):
     sync._upsert_gameweeks(
-        [(1, fixture_row(29, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "10"))]
+        [
+            (
+                1,
+                fixture_row(
+                    29, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "10"
+                ),
+            )
+        ]
     )
 
     gameweek = Gameweek.objects.get(number=1)
@@ -230,7 +253,9 @@ def test_fixtures_are_keyed_on_the_provider_id_so_a_re_run_is_idempotent(
     monkeypatch, clubs
 ):
     rows = [
-        fixture_row(29, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "12614"),
+        fixture_row(
+            29, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "12614"
+        ),
     ]
     monkeypatch.setattr(primary, "fetch_fixtures", lambda tid: rows)
 
@@ -240,9 +265,12 @@ def test_fixtures_are_keyed_on_the_provider_id_so_a_re_run_is_idempotent(
     assert first["created"] == 1
     assert second["created"] == 0
     assert Fixture.objects.count() == 1
-    assert ExternalFixtureMapping.objects.filter(
-        provider=primary.PROVIDER, provider_fixture_id="12614"
-    ).count() == 1
+    assert (
+        ExternalFixtureMapping.objects.filter(
+            provider=primary.PROVIDER, provider_fixture_id="12614"
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db
@@ -259,7 +287,9 @@ def test_a_completed_fixture_does_not_get_its_kick_off_rewritten(monkeypatch, cl
         provider=primary.PROVIDER, provider_fixture_id="12614", fixture=fixture
     )
 
-    moved = fixture_row(30, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "12614")
+    moved = fixture_row(
+        30, "Gor Mahia FC", "AFC Leopards", "clb00036", "clb00038", "12614"
+    )
     monkeypatch.setattr(primary, "fetch_fixtures", lambda tid: [moved])
 
     sync.sync_fixtures.run()

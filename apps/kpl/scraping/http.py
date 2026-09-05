@@ -221,7 +221,9 @@ def fetch_json(url: str, **kwargs):
         raise SourceUnavailable(f"GET {url} returned non-JSON body: {exc}") from exc
 
 
-def fetch_bytes(url: str, *, timeout: tuple = DEFAULT_TIMEOUT, max_bytes: int = 5_000_000):
+def fetch_bytes(
+    url: str, *, timeout: tuple = DEFAULT_TIMEOUT, max_bytes: int = 5_000_000
+):
     """Download a binary asset (used for team logos), capped at ``max_bytes``."""
     host = urlparse(url).netloc.lower()
     _throttle(host, DEFAULT_HOST_DELAY)

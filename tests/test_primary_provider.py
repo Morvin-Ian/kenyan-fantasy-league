@@ -166,7 +166,9 @@ def test_fixtures_carry_date_time_venue_and_a_stable_id(served):
 
     assert fixtures, "no fixtures parsed"
     opener = next(
-        f for f in fixtures if f.home_team == "Gor Mahia FC" and f.away_team == "Muranga SEAL"
+        f
+        for f in fixtures
+        if f.home_team == "Gor Mahia FC" and f.away_team == "Muranga SEAL"
     )
     assert opener.kickoff.date() == date(2026, 8, 29)
     assert opener.kickoff.hour == 15
@@ -232,7 +234,9 @@ def test_scorers_are_ranked_by_goals_and_keep_their_provider_id(served):
     assert scorers[0].goals == 19
     assert scorers[0].provider_player_id == "plr0000955"
     assert scorers[0].team_name == "Muranga SEAL"
-    assert [s.goals for s in scorers] == sorted((s.goals for s in scorers), reverse=True)
+    assert [s.goals for s in scorers] == sorted(
+        (s.goals for s in scorers), reverse=True
+    )
 
 
 # --------------------------------------------------------------------------- #

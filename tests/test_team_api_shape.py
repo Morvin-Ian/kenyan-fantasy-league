@@ -69,8 +69,16 @@ def test_the_serializer_lists_its_fields_so_new_columns_cannot_leak(team):
 def test_nested_team_payloads_are_covered_too(team):
     """Standings, fixtures and lineups all embed TeamSerializer."""
     Standing.objects.create(
-        team=team, position=1, played=1, wins=1, draws=0, losses=0,
-        goals_for=2, goals_against=0, goal_differential=2, points=3,
+        team=team,
+        position=1,
+        played=1,
+        wins=1,
+        draws=0,
+        losses=0,
+        goals_for=2,
+        goals_against=0,
+        goal_differential=2,
+        points=3,
         period="2026-2027",
     )
 

@@ -62,7 +62,9 @@ def build_lineup_url(provider: str, fixture: Fixture) -> Optional[str]:
     return value if value.startswith(("http://", "https://")) else None
 
 
-def parse_lineup_from_source(provider: str, url: str, *, side: str) -> Optional[ParsedLineup]:
+def parse_lineup_from_source(
+    provider: str, url: str, *, side: str
+) -> Optional[ParsedLineup]:
     try:
         result = scrape_lineups_for_url(None, url)
     except Exception as exc:  # noqa: BLE001 - one bad provider must not stop the rest
@@ -101,7 +103,10 @@ def fetch_lineup_for_fixture(fixture: Fixture) -> Tuple[bool, str]:
             continue
 
         for attempt, sleep_seconds in _with_backoff_attempts(3):
-            for side, team in (("home", fixture.home_team), ("away", fixture.away_team)):
+            for side, team in (
+                ("home", fixture.home_team),
+                ("away", fixture.away_team),
+            ):
                 result = parse_lineup_from_source(provider, url, side=side)
                 if result is None:
                     continue

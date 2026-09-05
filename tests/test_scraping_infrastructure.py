@@ -68,7 +68,9 @@ def test_every_task_module_is_imported_by_the_registry():
     }
 
     missing = {name for name in modules if name not in registry}
-    assert not missing, f"task modules not imported in tasks/__init__.py: {sorted(missing)}"
+    assert (
+        not missing
+    ), f"task modules not imported in tasks/__init__.py: {sorted(missing)}"
 
 
 def test_scraping_tasks_are_registered_with_celery():
@@ -90,13 +92,15 @@ def test_scraping_tasks_are_registered_with_celery():
 
 def test_every_scheduled_task_exists():
     """A beat entry naming a task no worker knows about fails as NotRegistered."""
-    import apps.kpl.tasks  # noqa: F401
     from django.conf import settings
 
+    import apps.kpl.tasks  # noqa: F401
     from config.celery import app
 
     for entry, config in settings.CELERY_BEAT_SCHEDULE.items():
-        assert config["task"] in app.tasks, f"beat entry '{entry}' names an unknown task"
+        assert (
+            config["task"] in app.tasks
+        ), f"beat entry '{entry}' names an unknown task"
 
 
 # --------------------------------------------------------------------------- #
@@ -183,7 +187,9 @@ def test_a_parked_or_error_page_is_not_treated_as_data(monkeypatch):
         headers = {"Content-Type": "text/html"}
         text = "<html><body>nothing here</body></html>"
 
-    monkeypatch.setattr(http, "get_session", lambda: type("S", (), {"get": lambda *a, **k: Stub()})())
+    monkeypatch.setattr(
+        http, "get_session", lambda: type("S", (), {"get": lambda *a, **k: Stub()})()
+    )
     monkeypatch.setattr(http, "_throttle", lambda *a, **k: None)
 
     with pytest.raises(SourceUnavailable):
@@ -199,7 +205,9 @@ def test_transient_network_failure_becomes_a_retryable_error(monkeypatch):
     def boom(*args, **kwargs):
         raise requests.ConnectionError("connection reset")
 
-    monkeypatch.setattr(http, "get_session", lambda: type("S", (), {"get": staticmethod(boom)})())
+    monkeypatch.setattr(
+        http, "get_session", lambda: type("S", (), {"get": staticmethod(boom)})()
+    )
     monkeypatch.setattr(http, "_throttle", lambda *a, **k: None)
 
     with pytest.raises(SourceUnavailable):
@@ -250,9 +258,13 @@ def test_no_source_hostname_is_committed_to_the_repository():
         if "__pycache__" in path.parts:
             continue
         lowered = path.read_text().lower()
-        offenders += [f"{path.relative_to(REPO_ROOT)}: {h}" for h in hosts if h in lowered]
+        offenders += [
+            f"{path.relative_to(REPO_ROOT)}: {h}" for h in hosts if h in lowered
+        ]
 
-    assert not offenders, "source hostnames must live in .env only: " + ", ".join(offenders)
+    assert not offenders, "source hostnames must live in .env only: " + ", ".join(
+        offenders
+    )
 
 
 def test_provider_refuses_to_run_unconfigured():

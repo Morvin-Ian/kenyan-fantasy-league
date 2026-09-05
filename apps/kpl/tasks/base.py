@@ -59,7 +59,9 @@ class ScrapingTask(Task):
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
 
-def scraping_task(*, name: str, lock: str | None = None, lock_ttl: int = 30 * 60, **options):
+def scraping_task(
+    *, name: str, lock: str | None = None, lock_ttl: int = 30 * 60, **options
+):
     """Register a locked, retrying scraping task.
 
     ``lock`` defaults to the task name. A run that finds the lock held returns

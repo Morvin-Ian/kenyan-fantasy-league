@@ -101,7 +101,9 @@ def _team_index() -> Tuple[Dict[str, Team], Dict[str, Team]]:
             provider=primary.PROVIDER
         ).select_related("team")
     }
-    by_name: Dict[str, Team] = {team_key(team.name): team for team in Team.objects.all()}
+    by_name: Dict[str, Team] = {
+        team_key(team.name): team for team in Team.objects.all()
+    }
     return by_provider, by_name
 
 
@@ -248,7 +250,10 @@ def sync_standings():
 
     for row in rows:
         team = resolve_team(
-            row.team_name, row.provider_team_id, by_provider=by_provider, by_name=by_name
+            row.team_name,
+            row.provider_team_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         if team is None:
             unmatched.append(row.team_name)
@@ -281,7 +286,9 @@ def sync_standings():
         Standing.objects.all().delete()
         Standing.objects.bulk_create(snapshot)
 
-    logger.info("league table for %s replaced with %d rows", season.label, len(snapshot))
+    logger.info(
+        "league table for %s replaced with %d rows", season.label, len(snapshot)
+    )
     return {"season": season.label, "rows": len(snapshot), "period": period}
 
 
@@ -320,7 +327,9 @@ def _assign_matchdays(
     return assigned
 
 
-def _upsert_gameweeks(assigned: List[Tuple[int, primary.FixtureRow]]) -> Dict[int, Gameweek]:
+def _upsert_gameweeks(
+    assigned: List[Tuple[int, primary.FixtureRow]]
+) -> Dict[int, Gameweek]:
     """Create or move the Gameweek rows implied by the fixture calendar."""
     windows: Dict[int, List[datetime]] = {}
     for matchday, fixture in assigned:
@@ -341,7 +350,9 @@ def _upsert_gameweeks(assigned: List[Tuple[int, primary.FixtureRow]]) -> Dict[in
                 end_date=last.date(),
                 transfer_deadline=deadline,
             )
-            logger.info("created gameweek %d (%s to %s)", matchday, first.date(), last.date())
+            logger.info(
+                "created gameweek %d (%s to %s)", matchday, first.date(), last.date()
+            )
         else:
             changed = False
             for field, value in (
@@ -353,7 +364,10 @@ def _upsert_gameweeks(assigned: List[Tuple[int, primary.FixtureRow]]) -> Dict[in
                     changed = True
             # Never move a deadline that has already passed — managers have
             # already made decisions against it.
-            if not gameweek.is_deadline_passed and gameweek.transfer_deadline != deadline:
+            if (
+                not gameweek.is_deadline_passed
+                and gameweek.transfer_deadline != deadline
+            ):
                 gameweek.transfer_deadline = deadline
                 changed = True
             if changed:
@@ -372,7 +386,9 @@ def sync_fixtures():
         raise StructureChanged(f"no fixtures parsed for {season.label}")
 
     by_provider, by_name = _team_index()
-    club_count = max(DEFAULT_CLUB_COUNT, Team.objects.filter(is_relegated=False).count())
+    club_count = max(
+        DEFAULT_CLUB_COUNT, Team.objects.filter(is_relegated=False).count()
+    )
     assigned = _assign_matchdays(scraped, club_count=club_count)
     gameweeks = _upsert_gameweeks(assigned)
 
@@ -388,10 +404,16 @@ def sync_fixtures():
 
     for matchday, row in assigned:
         home = resolve_team(
-            row.home_team, row.home_provider_id, by_provider=by_provider, by_name=by_name
+            row.home_team,
+            row.home_provider_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         away = resolve_team(
-            row.away_team, row.away_provider_id, by_provider=by_provider, by_name=by_name
+            row.away_team,
+            row.away_provider_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         if home is None or away is None:
             logger.warning(
@@ -406,7 +428,9 @@ def sync_fixtures():
         if timezone.is_naive(kickoff):
             kickoff = timezone.make_aware(kickoff)
 
-        fixture = existing.get(row.provider_fixture_id) if row.provider_fixture_id else None
+        fixture = (
+            existing.get(row.provider_fixture_id) if row.provider_fixture_id else None
+        )
         if fixture is None:
             # Fall back to the natural key so a fixture added before mappings
             # existed is adopted rather than duplicated.
@@ -430,7 +454,10 @@ def sync_fixtures():
             changed_fields = []
             # A finished match keeps its recorded kick-off; only the schedule
             # ahead of us is allowed to move.
-            if fixture.status in {"upcoming", "postponed"} and fixture.match_date != kickoff:
+            if (
+                fixture.status in {"upcoming", "postponed"}
+                and fixture.match_date != kickoff
+            ):
                 fixture.match_date = kickoff
                 changed_fields.append("match_date")
             if row.venue and fixture.venue != row.venue:
@@ -481,10 +508,16 @@ def sync_results():
 
     for row in results:
         home = resolve_team(
-            row.home_team, row.home_provider_id, by_provider=by_provider, by_name=by_name
+            row.home_team,
+            row.home_provider_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         away = resolve_team(
-            row.away_team, row.away_provider_id, by_provider=by_provider, by_name=by_name
+            row.away_team,
+            row.away_provider_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         if home is None or away is None:
             unmatched += 1
@@ -535,7 +568,9 @@ def sync_results():
     }
 
 
-def _create_fixture_from_result(row: primary.FixtureRow, home: Team, away: Team) -> Fixture:
+def _create_fixture_from_result(
+    row: primary.FixtureRow, home: Team, away: Team
+) -> Fixture:
     """Back-fill a fixture for a result that has no scheduled row.
 
     Used when a match was played before this installation first scraped the
@@ -546,7 +581,9 @@ def _create_fixture_from_result(row: primary.FixtureRow, home: Team, away: Team)
     if timezone.is_naive(kickoff):
         kickoff = timezone.make_aware(kickoff)
 
-    gameweek = Gameweek.objects.filter(number=row.matchday).first() if row.matchday else None
+    gameweek = (
+        Gameweek.objects.filter(number=row.matchday).first() if row.matchday else None
+    )
     if gameweek is None and row.matchday:
         gameweek = Gameweek.objects.create(
             number=row.matchday,
@@ -585,10 +622,14 @@ def _find_fixture_for_result(
     nearest date within a fortnight.
     """
     if row.provider_score_id:
-        mapping = ExternalFixtureMapping.objects.filter(
-            provider=primary.MATCH_PROVIDER,
-            provider_fixture_id=row.provider_score_id,
-        ).select_related("fixture").first()
+        mapping = (
+            ExternalFixtureMapping.objects.filter(
+                provider=primary.MATCH_PROVIDER,
+                provider_fixture_id=row.provider_score_id,
+            )
+            .select_related("fixture")
+            .first()
+        )
         if mapping:
             return mapping.fixture
 
@@ -600,7 +641,10 @@ def _find_fixture_for_result(
         Fixture.objects.filter(
             home_team=home,
             away_team=away,
-            match_date__range=(kickoff - timedelta(days=14), kickoff + timedelta(days=14)),
+            match_date__range=(
+                kickoff - timedelta(days=14),
+                kickoff + timedelta(days=14),
+            ),
         )
     )
     if not candidates:
@@ -728,7 +772,9 @@ def sync_top_scorers(gameweek_id: Optional[str] = None, limit: int = 20):
         mapping.provider_player_id: mapping.player
         for mapping in ExternalPlayerMapping.objects.filter(
             provider=primary.PROVIDER,
-            provider_player_id__in=[s.provider_player_id for s in scorers if s.provider_player_id],
+            provider_player_id__in=[
+                s.provider_player_id for s in scorers if s.provider_player_id
+            ],
         ).select_related("player")
     }
 
@@ -770,7 +816,9 @@ def sync_match_details(limit: int = 20):
     from apps.kpl.services.match_events import MatchEventService
 
     season = current_season()
-    results = [row for row in primary.fetch_results(season.tournament_id) if row.is_played]
+    results = [
+        row for row in primary.fetch_results(season.tournament_id) if row.is_played
+    ]
     if not results:
         return {"season": season.label, "processed": 0}
 
@@ -782,10 +830,16 @@ def sync_match_details(limit: int = 20):
             continue
 
         home = resolve_team(
-            row.home_team, row.home_provider_id, by_provider=by_provider, by_name=by_name
+            row.home_team,
+            row.home_provider_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         away = resolve_team(
-            row.away_team, row.away_provider_id, by_provider=by_provider, by_name=by_name
+            row.away_team,
+            row.away_provider_id,
+            by_provider=by_provider,
+            by_name=by_name,
         )
         if home is None or away is None:
             continue
@@ -797,7 +851,9 @@ def sync_match_details(limit: int = 20):
         try:
             detail = primary.fetch_match_detail(row.provider_score_id)
         except ScrapeError as exc:
-            logger.warning("could not read match report %s: %s", row.provider_score_id, exc)
+            logger.warning(
+                "could not read match report %s: %s", row.provider_score_id, exc
+            )
             failed += 1
             continue
 
