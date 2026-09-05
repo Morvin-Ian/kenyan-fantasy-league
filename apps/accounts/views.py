@@ -1,9 +1,9 @@
-import json
 import logging
 import secrets
 import urllib.parse
 
 from django.conf import settings
+from django.core import signing
 from django.core.cache import cache
 from django.shortcuts import redirect
 from django.utils import timezone
@@ -30,7 +30,7 @@ class GoogleAuthInitView(APIView):
     """Initialize Google OAuth flow by redirecting to Google's authorization page"""
 
     def get(self, request):
-        redirect_to = request.GET.get("redirect_to", settings.FRONTEND_URL)
+        redirect_to = settings.FRONTEND_URL
         origin = request.GET.get("origin", "learner")
 
         logger.info(
@@ -42,7 +42,9 @@ class GoogleAuthInitView(APIView):
             "origin": origin,
             "timestamp": timezone.now().isoformat(),
         }
-        state = json.dumps(state_data)
+        # State crosses the browser and an external provider. Sign it so the
+        # callback only trusts the redirect target and origin we issued.
+        state = signing.dumps(state_data)
 
         # Google OAuth parameters
         params = {
@@ -71,17 +73,24 @@ class GoogleAuthCallbackView(APIView):
         redirect_to = f"{settings.FRONTEND_URL}/auth/callback"
         origin = "learner"
 
-        # Parse state to get original redirect_to and origin
+        # Parse the signed state to get the original redirect target and origin.
+        # An unsigned value is client-controlled and must never choose the
+        # destination of an authentication redirect.
         if state:
             try:
-                state_data = json.loads(state)
+                state_data = signing.loads(state)
                 redirect_to = state_data.get("redirect_to", settings.FRONTEND_URL)
                 origin = state_data.get("origin", "learner")
                 logger.info(
                     f"Parsed state - redirect_to: {redirect_to}, origin: {origin}"
                 )
-            except (json.JSONDecodeError, AttributeError) as e:
-                logger.warning(f"Failed to parse state '{state}': {e}")
+            except signing.BadSignature as e:
+                logger.warning(f"Failed to verify OAuth state: {e}")
+                error_url = (
+                    f"{redirect_to}?auth_success=false&auth_message=invalid_state"
+                    f"&origin={origin}"
+                )
+                return redirect(error_url)
 
         # Handle Google error response
         if error:
