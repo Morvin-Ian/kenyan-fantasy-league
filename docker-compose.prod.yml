@@ -75,8 +75,32 @@ services:
       dockerfile: ./docker/production/django/Dockerfile
     command: /start-celeryworker
     container_name: worker
+    restart: unless-stopped
     volumes:
       - .:/app
+      - media_volume:/app/mediafiles
+    env_file:
+      - .env.prod
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+    depends_on:
+      - redis
+      - postgres-db
+    networks:
+      - fpl-vue
+
+  # Scraping runs in its own worker on its own queue: a wedged scrape must not
+  # take worker slots away from user-facing work.
+  celery_scraping_worker:
+    build:
+      context: .
+      dockerfile: ./docker/production/django/Dockerfile
+    command: /start-celeryscraping
+    container_name: scraping-worker
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - media_volume:/app/mediafiles
     env_file:
       - .env.prod
     environment:

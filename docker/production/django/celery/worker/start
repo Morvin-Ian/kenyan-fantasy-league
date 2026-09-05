@@ -2,4 +2,11 @@
 set -o errexit
 set -o nounset
 
-exec celery -A config worker --loglevel=info
+# Interactive queue: emails, fantasy points, anything a user waits on.
+exec celery -A config worker \
+  --loglevel=info \
+  --hostname="default@%h" \
+  --queues=celery \
+  --concurrency="${CELERY_WORKER_CONCURRENCY:-4}" \
+  --max-tasks-per-child=100 \
+  --without-gossip --without-mingle

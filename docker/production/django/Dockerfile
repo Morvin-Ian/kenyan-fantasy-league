@@ -37,6 +37,10 @@ COPY ./docker/production/django/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
+COPY ./docker/production/django/celery/worker/start-scraping /start-celeryscraping
+RUN sed -i 's/\r$//g' /start-celeryscraping
+RUN chmod +x /start-celeryscraping
+
 COPY ./docker/production/django/celery/beat/start /start-celerybeat
 RUN sed -i 's/\r$//g' /start-celerybeat
 RUN chmod +x /start-celerybeat

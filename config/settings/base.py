@@ -371,22 +371,90 @@ DEFAULT_LOGGING = {
 
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
+# ---------------------------------------------------------------------------
+# Celery worker hardening
+#
+# The scraping tasks are long, network-bound and hit small third-party hosts.
+# These settings stop one slow scrape from taking a worker down with it.
+# ---------------------------------------------------------------------------
+
+# Schedules below are written in Kenyan local time, which is also how the
+# upstream sources publish kick-off times.
+CELERY_TIMEZONE = "Africa/Nairobi"
+CELERY_ENABLE_UTC = True
+
+# Fetch one task at a time. With the default prefetch a worker grabs a batch of
+# jobs up front, so a slow scrape leaves its queued siblings idle behind it
+# while other workers sit empty.
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+# Acknowledge only after the task finishes, so a redeploy or an OOM kill
+# redelivers the job instead of dropping it.
+CELERY_TASK_ACKS_LATE = True
+CELERY_TASK_REJECT_ON_WORKER_LOST = True
+
+# Chrome and lxml both leak across long-lived processes; recycling the child
+# after a fixed number of tasks keeps worker memory flat.
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 40
+CELERY_WORKER_MAX_MEMORY_PER_CHILD = 400_000  # KiB
+
+# Global ceiling. Individual tasks set their own tighter limits.
+CELERY_TASK_SOFT_TIME_LIMIT = 10 * 60
+CELERY_TASK_TIME_LIMIT = 12 * 60
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_TRANSPORT_OPTIONS = {"visibility_timeout": 15 * 60}
+CELERY_RESULT_EXPIRES = 60 * 60 * 24 * 3
+CELERY_TASK_TRACK_STARTED = True
+CELERY_WORKER_SEND_TASK_EVENTS = True
+
+# Scraping runs on its own queue so a stuck scrape cannot starve interactive
+# work (emails, fantasy point recalculation) of worker slots.
+CELERY_TASK_DEFAULT_QUEUE = "celery"
+# CELERY_TASK_ROUTES is set further down, behind CELERY_SCRAPING_QUEUE_ENABLED.
+
+
 CELERY_BEAT_SCHEDULE = {
-    "update-kpl-standings": {
-        "task": "apps.kpl.tasks.standings.get_kpl_table",
-        "schedule": timedelta(days=1).total_seconds(),
+    # --- squad and club metadata: changes rarely, checked weekly ---
+    "sync-teams": {
+        "task": "apps.kpl.tasks.sync.sync_teams",
+        "schedule": crontab(day_of_week=1, hour=2, minute=0),
     },
-    "update-kpl-fixtures": {
-        "task": "apps.kpl.tasks.fixtures.get_kpl_fixtures",
-        "schedule": timedelta(days=2).total_seconds(),
+    "sync-team-logos": {
+        "task": "apps.kpl.tasks.sync.sync_team_logos",
+        "schedule": crontab(day_of_week=1, hour=2, minute=20),
     },
+    # --- calendar and squads: transfers and rescheduling, checked nightly ---
+    "sync-fixtures": {
+        "task": "apps.kpl.tasks.sync.sync_fixtures",
+        "schedule": crontab(hour=3, minute=0),
+    },
+    "sync-players": {
+        "task": "apps.kpl.tasks.sync.sync_players",
+        "schedule": crontab(hour=3, minute=30),
+    },
+    # --- match data: matches kick off Fri-Sun afternoons, so poll through the
+    #     evening rather than round the clock ---
+    "sync-results": {
+        "task": "apps.kpl.tasks.sync.sync_results",
+        "schedule": crontab(hour="15-23/2", minute=10),
+    },
+    "sync-match-details": {
+        "task": "apps.kpl.tasks.sync.sync_match_details",
+        "schedule": crontab(hour="16-23/2", minute=40),
+    },
+    "sync-standings": {
+        "task": "apps.kpl.tasks.sync.sync_standings",
+        "schedule": crontab(hour="*/6", minute=15),
+    },
+    "sync-top-scorers": {
+        "task": "apps.kpl.tasks.sync.sync_top_scorers",
+        "schedule": crontab(hour=23, minute=30),
+    },
+    # --- gameweek bookkeeping ---
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
-        "schedule": crontab(day_of_week=4, hour=0, minute=0),  # Thursday at midnight
-    },
-    "update-top-scorers": {
-        "task": "apps.kpl.tasks.scorers.scrape_top_scorers",
-        "schedule": crontab(day_of_week=1, hour=23, minute=0),  # Monday at 11 PM
+        "schedule": crontab(hour=4, minute=0),
     },
 }
 
@@ -407,6 +475,44 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 # KPL fixtures scraping source (SportPress "sp-event-blocks" table). Read through
 # env() so stray whitespace in .env / .env.prod (passed verbatim by docker-compose
 # env_file) cannot corrupt the URL; the celery worker must use this, not raw os.getenv.
-TEAM_FIXTURES_URL = env("TEAM_FIXTURES_URL")
+# ---------------------------------------------------------------------------
+# Data sources
+#
+# The scrapers take their hosts from the environment rather than embedding them
+# in the source tree, so the repository never names where the data comes from
+# and a source can be swapped without a code change. All of these live in the
+# gitignored .env / .env.prod; .env.example carries placeholders only.
+# ---------------------------------------------------------------------------
+
+# Primary source: server-rendered pages covering the whole competition.
+SCRAPER_PRIMARY_BASE_URL = env("SCRAPER_PRIMARY_BASE_URL", "")
+# The competition label as the primary source writes it, used to pick the
+# current season out of its index (e.g. "<Competition Name>").
+SCRAPER_PRIMARY_COMPETITION = env("SCRAPER_PRIMARY_COMPETITION", "")
+
+# Hostnames the lineup adapter recognises, as "provider=host,host" pairs.
+SCRAPER_PROVIDER_HOSTS = env("SCRAPER_PROVIDER_HOSTS", "")
+
+# Page paths on the primary source, as "role=path" pairs. See .env.example.
+SCRAPER_PRIMARY_PATHS = env("SCRAPER_PRIMARY_PATHS", "")
+
+# Lineup providers to try, in order.
+SCRAPER_LINEUP_PROVIDERS = env("SCRAPER_LINEUP_PROVIDERS", "")
+
+# Route scraping onto its own Celery queue. Leave false until the images have
+# been rebuilt with the queue-aware start scripts, otherwise the routed tasks
+# have no worker listening for them.
+CELERY_SCRAPING_QUEUE_ENABLED = (
+    env("CELERY_SCRAPING_QUEUE_ENABLED", "false").lower() == "true"
+)
+if CELERY_SCRAPING_QUEUE_ENABLED:
+    CELERY_TASK_ROUTES = {
+        "apps.kpl.tasks.sync.*": {"queue": "scraping"},
+        "apps.kpl.tasks.lineups.*": {"queue": "scraping"},
+        "apps.kpl.tasks.live_games.*": {"queue": "scraping"},
+    }
+else:
+    CELERY_TASK_ROUTES = {}
+
 BASE_BACKEND_URL = env("BASE_BACKEND_URL", "http://localhost:8080")
 FRONTEND_URL = env("FRONTEND_URL", "http://localhost:8080")

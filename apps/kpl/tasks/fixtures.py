@@ -1,17 +1,23 @@
+"""Team and player name matching, and active-gameweek bookkeeping.
+
+The fixtures scraper that used to live here has been replaced by
+``apps.kpl.tasks.sync.sync_fixtures``. What remains are the fuzzy lookups the
+rest of the app resolves scraped names through — ``find_team`` and
+``find_player`` are used by the live-match monitor, the match-event service and
+fantasy point scoring.
+"""
+
 import logging
+import logging.config
 import re
-from datetime import datetime
 from difflib import get_close_matches
 from typing import Optional
 
-import requests
-from bs4 import BeautifulSoup
 from celery import shared_task
 from django.utils import timezone
 
-from apps.kpl.models import Fixture, Gameweek, Player, Team
+from apps.kpl.models import Gameweek, Player, Team
 from config.settings import base
-from util.views import headers
 
 from .gameweeks import (
     check_current_active_gameweek,
@@ -275,155 +281,6 @@ def find_player(
     return None
 
 
-def extract_fixtures_data(headers) -> bool:
-    url = base.TEAM_FIXTURES_URL
-
-    if not url:
-        logger.error(
-            "TEAM_FIXTURES_URL is not set (config.settings.base.TEAM_FIXTURES_URL is "
-            "empty). Add it to .env / .env.prod — the worker reads it via docker-compose "
-            "env_file — and restart the worker. Aborting fixtures scrape."
-        )
-        return False
-
-    try:
-        web_content = requests.get(url, headers=headers, verify=False)
-    except requests.RequestException as e:
-        logger.error(f"Error fetching fixtures from {url}: {e}")
-        return False
-
-    if web_content.status_code == 200:
-        soup = BeautifulSoup(web_content.text, "lxml")
-        table = soup.find("table", class_="sp-event-blocks")
-        if not table:
-            logger.error(
-                f"No fixtures table (table.sp-event-blocks) found on {url} "
-                f"(status {web_content.status_code}, {len(web_content.text)} bytes). "
-                "Check TEAM_FIXTURES_URL points at the KPL fixtures page, that the "
-                "SportPress markup on the source site has not changed, and that the "
-                "page did not return a login wall or error page."
-            )
-            return False
-
-        table_rows = table.find_all("tr")[1:]
-
-        fixtures_updated = 0
-        fixtures_created = 0
-
-        for row in table_rows:
-            table_data = row.find("td")
-            links = table_data.find_all("a")
-            if len(links) < 3:
-                logger.error("Insufficient match data in row; skipping")
-                continue
-
-            date = links[0].text
-            time = links[1].text
-            match_text = links[2].text
-
-            match_datetime_str = f"{date} {time}"
-            try:
-                match_datetime = datetime.strptime(
-                    match_datetime_str, "%B %d, %Y %H:%M"
-                )
-            except ValueError:
-                try:
-                    match_datetime = datetime.strptime(
-                        match_datetime_str, "%b %d, %Y %H:%M"
-                    )
-                except ValueError:
-                    logger.error(f"Date parsing failed for: {match_datetime_str}")
-                    continue
-
-            try:
-                home_team_name, away_team_name = match_text.split("vs")
-            except ValueError:
-                logger.error(
-                    f"Could not split team names from match text: '{match_text}'"
-                )
-                continue
-
-            home_team = find_team(home_team_name.strip())
-            away_team = find_team(away_team_name.strip())
-            if not home_team or not away_team:
-                logger.error(
-                    f"Skipping fixture: No team found for home='{home_team_name}' or away='{away_team_name}'"
-                )
-                continue
-
-            venue_div = table_data.find("div", class_="sp-event-venue")
-            venue = venue_div.text.strip() if venue_div else "Unknown"
-
-            try:
-                match_datetime = datetime.strptime(
-                    match_datetime_str, "%B %d, %Y %H:%M"
-                )
-            except ValueError:
-                try:
-                    match_datetime = datetime.strptime(
-                        match_datetime_str, "%b %d, %Y %H:%M"
-                    )
-                except ValueError:
-                    logger.error(f"Date parsing failed for: {match_datetime_str}")
-                    continue
-
-            if timezone.is_naive(match_datetime):
-                match_datetime = timezone.make_aware(match_datetime)
-
-            try:
-                existing_fixture = Fixture.objects.filter(
-                    home_team=home_team, away_team=away_team, venue=venue
-                ).first()
-
-                if existing_fixture:
-                    updated = False
-                    if match_datetime == "Postponed":
-                        existing_fixture.status = "postponed"
-                        updated = True
-
-                    if (
-                        match_datetime != "Postponed"
-                        and existing_fixture.match_date != match_datetime
-                    ):
-                        existing_fixture.match_date = match_datetime
-                        updated = True
-
-                    if updated:
-                        existing_fixture.save()
-                        fixtures_updated += 1
-                        logger.info(
-                            f"Updated fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
-                        )
-                else:
-                    status = (
-                        "upcoming" if match_datetime >= timezone.now() else "completed"
-                    )
-
-                    Fixture.objects.create(
-                        home_team=home_team,
-                        away_team=away_team,
-                        match_date=match_datetime,
-                        venue=venue,
-                        status=status,
-                    )
-                    fixtures_created += 1
-                    logger.info(
-                        f"Created new fixture: {home_team_name} vs {away_team_name} on {match_datetime}"
-                    )
-
-            except Exception as e:
-                logger.error(f"Error creating or updating fixture: {e}")
-        logger.info(
-            f"Successfully processed KPL fixtures: {fixtures_created} created, {fixtures_updated} updated"
-        )
-        return True
-    else:
-        logger.error(
-            f"Failed to retrieve the web page. Status code: {web_content.status_code}"
-        )
-        return False
-
-
 @shared_task
 def update_active_gameweek():
     try:
@@ -451,9 +308,3 @@ def update_active_gameweek():
     except Exception as e:
         logger.error(f"Error updating active gameweek: {e}")
         return False
-
-
-@shared_task
-def get_kpl_fixtures():
-    response = extract_fixtures_data(headers)
-    return response

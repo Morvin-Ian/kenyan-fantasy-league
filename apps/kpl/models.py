@@ -21,6 +21,10 @@ POSITION_CHOICES = [
 class Team(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
     logo_url = models.URLField()
+    # Locally cached copy of logo_url. The upstream source is a single small
+    # host; mirroring the file means the badge keeps rendering when that host is
+    # down or rearranges its media paths.
+    logo_image = models.ImageField(upload_to="team_logos/", null=True, blank=True)
     jersey_image = models.ImageField(upload_to="team_jerseys/", null=True, blank=True)
     is_relegated = models.BooleanField(
         default=False,
@@ -165,6 +169,31 @@ class ExternalFixtureMapping(TimeStampedUUIDModel):
 
     def __str__(self):
         return f"{self.provider}:{self.provider_fixture_id} -> {self.fixture}"
+
+
+class ExternalPlayerMapping(TimeStampedUUIDModel):
+    """Links a provider's own player id to our Player row.
+
+    Matching squads on names alone is fragile — the sources shout surnames,
+    reorder given names, and fix spellings mid-season. The provider's stable id
+    makes the player sync idempotent
+    regardless of how the displayed name changes.
+    """
+
+    provider = models.CharField(max_length=50)
+    provider_player_id = models.CharField(max_length=100)
+    player = models.ForeignKey(
+        Player, on_delete=models.CASCADE, related_name="external_ids"
+    )
+
+    class Meta:
+        unique_together = ("provider", "provider_player_id")
+        indexes = [models.Index(fields=["provider", "provider_player_id"])]
+        verbose_name = "External Player Mapping"
+        verbose_name_plural = "External Player Mappings"
+
+    def __str__(self):
+        return f"{self.provider}:{self.provider_player_id} -> {self.player.name}"
 
 
 SIDE_CHOICES = [

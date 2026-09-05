@@ -2,4 +2,14 @@
 set -o errexit
 set -o nounset
 
-watchmedo auto-restart -d config/ -p "*.py" -- celery -A config worker --loglevel=info
+# Both queues are served here in development. `scraping` carries the long
+# network-bound tasks, `celery` everything interactive; see CELERY_TASK_ROUTES.
+# --max-tasks-per-child recycles the process so lxml/Chrome memory cannot grow
+# without bound across a long-running worker.
+exec watchmedo auto-restart -d config/ -d apps/ -p "*.py" -- \
+  celery -A config worker \
+    --loglevel=info \
+    --queues=celery,scraping \
+    --concurrency="${CELERY_WORKER_CONCURRENCY:-4}" \
+    --max-tasks-per-child=40 \
+    --without-gossip --without-mingle
