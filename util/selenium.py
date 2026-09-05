@@ -1,5 +1,6 @@
 import logging
 import time
+from contextlib import contextmanager
 
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
@@ -16,12 +17,13 @@ class SeleniumManager:
         self.timeout = timeout
         self.driver = None
 
-    def get_driver(self):
+    def get_driver(self, command_executor=None, headless=True, user_agent=None):
         if self.driver:
             return self.driver
 
         options = Options()
-        options.add_argument("--headless")
+        if headless:
+            options.add_argument("--headless")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
@@ -38,8 +40,12 @@ class SeleniumManager:
         options.add_argument("--max_old_space_size=512")
 
         options.add_argument(
-            "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "user-agent="
+            + (
+                user_agent
+                or "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            )
         )
 
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
@@ -48,7 +54,8 @@ class SeleniumManager:
 
         try:
             self.driver = webdriver.Remote(
-                command_executor="http://selenium:4444/wd/hub", options=options
+                command_executor=command_executor or "http://selenium:4444/wd/hub",
+                options=options,
             )
             logger.info("Remote driver created successfully")
         except Exception as e:
@@ -279,3 +286,41 @@ class SeleniumManager:
                 logger.warning(f"Error closing driver: {e}")
             finally:
                 self.driver = None
+
+
+@contextmanager
+def selenium_session(
+    *,
+    command_executor: str | None = None,
+    headless: bool = True,
+    user_agent: str | None = None,
+    page_load_timeout_seconds: int = 30,
+):
+    """Yield a WebDriver and always tear it down.
+
+    Every browser-backed scrape must run inside this. A driver leaked by an
+    exception keeps a Chrome process and its session slot alive on the Selenium
+    node; a handful of those exhaust ``SE_NODE_MAX_SESSIONS`` and every later
+    scrape then fails to get a session at all.
+
+    Yields ``None`` when no driver could be created, so callers degrade instead
+    of raising deep inside a task.
+    """
+    manager = SeleniumManager(timeout=page_load_timeout_seconds)
+    driver = None
+    try:
+        driver = manager.get_driver(
+            command_executor=command_executor,
+            headless=headless,
+            user_agent=user_agent,
+        )
+        if driver is not None:
+            driver.set_page_load_timeout(page_load_timeout_seconds)
+        yield driver
+    finally:
+        try:
+            manager.close()
+        except (
+            Exception
+        ) as exc:  # noqa: BLE001 - teardown must never mask the real error
+            logger.warning("failed to close selenium session cleanly: %s", exc)

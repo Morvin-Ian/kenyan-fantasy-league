@@ -179,8 +179,8 @@ const emit = defineEmits<{
 }>();
 
 // Team logo composables with fallback to standings
-const homeTeamLogo = useTeamLogo(props.match.home_team.id, props.match.home_team.logo_url);
-const awayTeamLogo = useTeamLogo(props.match.away_team.id, props.match.away_team.logo_url);
+const homeTeamLogo = useTeamLogo(props.match.home_team.id, props.match.home_team.logo);
+const awayTeamLogo = useTeamLogo(props.match.away_team.id, props.match.away_team.logo);
 
 const isAdmin = computed(() => {
   return useAuthStore().user?.is_admin;

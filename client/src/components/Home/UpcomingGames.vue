@@ -57,7 +57,7 @@
             <div class="flex items-center gap-2 sm:gap-3">
               <div
                 class="w-8 h-8 sm:w-10 sm:h-10 bg-gray-50 rounded-full p-2 group-hover:scale-110 transition-transform duration-300">
-                <img :src="getTeamLogoUrl(game.home_team.id) || game.home_team?.logo_url || defaultLogo"
+                <img :src="game.home_team?.logo || getTeamLogoUrl(game.home_team.id) || defaultLogo"
                   :alt="`${game.home_team.name} logo`" loading="lazy" class="w-full h-full object-contain"
                   @error="(e) => handleLogoError(e, game.home_team.id)" />
               </div>
@@ -296,7 +296,7 @@ const getTeamLogoUrl = (teamId: string): string => {
   }
 
   const standing = props.standings.find(s => s.team.id === teamId);
-  const logoUrl = standing?.team.logo_url || '';
+  const logoUrl = standing?.team.logo || '';
   if (logoUrl) {
     logoCache.value.set(teamId, logoUrl);
   }

@@ -28,8 +28,8 @@
             <!-- Team Header -->
             <div class="flex items-center justify-between mb-6">
               <div class="flex items-center space-x-3">
-                <img v-if="lineup.team.logo_url || getTeamLogoUrl(lineup.team.id)"
-                  :src="getTeamLogoUrl(lineup.team.id) || lineup.team.logo_url" :alt="lineup.team.name"
+                <img v-if="lineup.team.logo || getTeamLogoUrl(lineup.team.id)"
+                  :src="lineup.team.logo || getTeamLogoUrl(lineup.team.id)" :alt="lineup.team.name"
                   class="w-10 h-10 rounded-full border border-gray-200"
                   @error="(e) => handleLogoError(e, lineup.team.id)" />
                 <div>
@@ -185,7 +185,7 @@ const getTeamLogoUrl = (teamId: string): string => {
   }
 
   const standing = kplStore.standings.find(s => s.team.id === teamId);
-  const logoUrl = standing?.team.logo_url || '';
+  const logoUrl = standing?.team.logo || '';
   logoCache.value.set(teamId, logoUrl);
   return logoUrl;
 };

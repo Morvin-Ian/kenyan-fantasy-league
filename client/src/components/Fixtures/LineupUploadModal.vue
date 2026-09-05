@@ -240,9 +240,8 @@ const homeTeamPlayers = computed(() => kplStore.players.filter(p => p.team.id ==
 const awayTeamPlayers = computed(() => kplStore.players.filter(p => p.team.id === props.fixture.away_team.id))
 const availablePlayers = computed(() => selectedTeam.value === 'home' ? homeTeamPlayers.value : awayTeamPlayers.value)
 
-// Team logos with fallback to standings
-const homeTeamLogoUrl = ref(props.fixture.home_team.logo_url || '')
-const awayTeamLogoUrl = ref(props.fixture.away_team.logo_url || '')
+const homeTeamLogoUrl = ref(props.fixture.home_team.logo || '')
+const awayTeamLogoUrl = ref(props.fixture.away_team.logo || '')
 
 // Logo error handler with fallback to standings
 const handleLogoError = (event: Event, teamId: string, side: 'home' | 'away') => {

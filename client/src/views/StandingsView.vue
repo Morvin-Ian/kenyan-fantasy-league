@@ -84,7 +84,7 @@
                                         </td>
 
                                         <td class="sticky left-10 bg-white z-10 p-1 text-center border-r border-gray-100">
-                                            <img v-if="team.team.logo_url" :src="team.team.logo_url"
+                                            <img v-if="team.team.logo" :src="team.team.logo"
                                                 :alt="`${team.team.name} logo`"
                                                 class="w-6 h-6 md:w-8 md:h-8 mx-auto object-contain transition-transform rounded-full hover:scale-110" />
                                         </td>

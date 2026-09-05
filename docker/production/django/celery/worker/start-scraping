@@ -1,0 +1,18 @@
+#!/bin/bash
+set -o errexit
+set -o nounset
+
+# Dedicated scraping worker.
+#
+# Low concurrency on purpose: both upstream sources are single small hosts, and
+# the point of a separate worker is that a slow or wedged scrape cannot take
+# slots away from the interactive queue. The per-child task cap keeps memory
+# flat across a season of long-running scrapes.
+exec celery -A config worker \
+  --loglevel=info \
+  --hostname="scraping@%h" \
+  --queues=scraping \
+  --concurrency="${CELERY_SCRAPING_CONCURRENCY:-2}" \
+  --max-tasks-per-child=25 \
+  --prefetch-multiplier=1 \
+  --without-gossip --without-mingle

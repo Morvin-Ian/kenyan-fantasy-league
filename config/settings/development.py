@@ -26,4 +26,5 @@ DATABASES = {
 
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_BACKEND")
-CELERY_TIMEZONE = "UTC"
+# Beat crontabs in config.settings.base are written in Kenyan local time.
+CELERY_TIMEZONE = "Africa/Nairobi"

@@ -67,8 +67,9 @@ export interface TeamData {
 export interface Team {
   id: string;
   name: string;
-  logo_url?: string;
-  jersey_image?: string;
+  /** Locally served badge, or null when it has not been cached yet. */
+  logo?: string | null;
+  jersey_image?: string | null;
 }
 
 export interface Player {
