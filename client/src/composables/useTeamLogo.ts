@@ -1,62 +1,11 @@
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useKplStore } from '@/stores/kpl';
 
-
-export function useTeamLogo(teamId: string, initialLogoUrl?: string) {
-    const kplStore = useKplStore();
-    const currentLogoUrl = ref(initialLogoUrl || '');
-    const hasError = ref(false);
-
-    const standingsLogo = computed(() => {
-        const standing = kplStore.standings.find(s => s.team.id === teamId);
-        return standing?.team.logo_url || '';
-    });
-
-    const logoUrl = computed(() => {
-        if (!hasError.value && currentLogoUrl.value) {
-            return currentLogoUrl.value;
-        }
-        return standingsLogo.value || currentLogoUrl.value || '';
-    });
-
-    const handleError = () => {
-        if (!hasError.value && standingsLogo.value && standingsLogo.value !== currentLogoUrl.value) {
-            hasError.value = true;
-            currentLogoUrl.value = standingsLogo.value;
-        }
-    };
-
-    const resetError = () => {
-        hasError.value = false;
-    };
-
-    return {
-        logoUrl,
-        handleError,
-        resetError,
-        hasError
-    };
-}
-
-
-export function getTeamLogoFromStandings(teamIdOrName: string, standings: any[]): string {
-    const standing = standings.find(
-        s => s.team.id === teamIdOrName || s.team.name === teamIdOrName
-    );
-    return standing?.team.logo_url || '';
-}
-
-export function getFallbackLogoUrl(teamId: string): string {
-    const kplStore = useKplStore();
-    const standingsLogo = kplStore.standings.find(s => s.team.id === teamId)?.team.logo_url;
-
-    if (standingsLogo) {
-        return standingsLogo;
-    }
-
-    return createPlaceholderLogo();
-}
-
+/**
+ * Club badges are served from our own media, not from the upstream source the
+ * scraper downloads them from. The API field is `logo`; a club that has not had
+ * its badge cached yet returns null, and callers fall back to the placeholder.
+ */
 
 function createPlaceholderLogo(): string {
     const svg = `
@@ -66,4 +15,43 @@ function createPlaceholderLogo(): string {
     </svg>
   `;
     return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
+export const PLACEHOLDER_LOGO = createPlaceholderLogo();
+
+/** Badge for a club id, from whichever loaded collection knows about it. */
+export function getTeamLogo(teamId: string): string {
+    const kplStore = useKplStore();
+    const standing = kplStore.standings.find(s => s.team.id === teamId);
+    return standing?.team.logo || PLACEHOLDER_LOGO;
+}
+
+export function getTeamLogoFromStandings(teamIdOrName: string, standings: any[]): string {
+    const standing = standings.find(
+        s => s.team.id === teamIdOrName || s.team.name === teamIdOrName
+    );
+    return standing?.team.logo || PLACEHOLDER_LOGO;
+}
+
+export function useTeamLogo(teamId: string, initialLogo?: string | null) {
+    const hasError = ref(false);
+
+    const logoUrl = computed(() => {
+        if (hasError.value) {
+            return PLACEHOLDER_LOGO;
+        }
+        return initialLogo || getTeamLogo(teamId);
+    });
+
+    // Our own media 404s only if the badge was never cached; there is no second
+    // URL worth retrying, so drop straight to the placeholder.
+    const handleError = () => {
+        hasError.value = true;
+    };
+
+    const resetError = () => {
+        hasError.value = false;
+    };
+
+    return { logoUrl, handleError, resetError, hasError };
 }

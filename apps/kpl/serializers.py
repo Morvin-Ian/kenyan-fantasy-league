@@ -12,16 +12,31 @@ from apps.kpl.models import (
 
 
 class TeamSerializer(serializers.ModelSerializer):
+    """Public shape of a club.
+
+    ``logo`` is the locally cached badge, never the upstream URL the scraper
+    downloaded it from. Serving the upstream URL would publish the name of a
+    third-party source to every visitor and make the badges break whenever that
+    host moves its media paths or goes down.
+
+    Fields are listed explicitly rather than excluded, so a new model field
+    cannot leak into the API just by being added.
+    """
+
+    logo = serializers.SerializerMethodField()
     jersey_image = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        exclude = ("pkid", "created_at", "updated_at")
+        fields = ("id", "name", "logo", "jersey_image", "is_relegated")
+
+    def get_logo(self, obj):
+        # Relative on purpose: same-origin behind nginx, and immune to a proxy
+        # rewriting the host into an absolute URL that does not resolve.
+        return obj.logo_image.url if obj.logo_image else None
 
     def get_jersey_image(self, obj):
-        if obj.jersey_image:
-            return obj.jersey_image.url
-        return None
+        return obj.jersey_image.url if obj.jersey_image else None
 
 
 class StandingSerializer(serializers.ModelSerializer):
