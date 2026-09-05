@@ -134,10 +134,11 @@ def test_default_tls_server_rejects_unknown_hosts_before_django():
     assert "return 444;" in conf
 
 
-def test_production_deploy_reloads_the_bind_mounted_nginx_configuration():
-    """The unknown-host guard cannot protect the live edge until nginx reloads."""
+def test_production_deploy_recreates_the_bind_mounted_nginx_configuration():
+    """The unknown-host guard must load even if nginx has stale worker config."""
     workflow = (
         pathlib.Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
     ).read_text()
 
+    assert "$compose up -d --force-recreate --no-deps nginx" in workflow
     assert "$compose exec -T nginx nginx -s reload" in workflow
