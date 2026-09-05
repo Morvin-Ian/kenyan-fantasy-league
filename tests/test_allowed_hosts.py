@@ -65,11 +65,21 @@ def test_unrecognised_hosts_are_rejected_by_nginx_before_django():
     ).read_text()
 
     assert re.search(r"listen 80 default_server;\s+server_name _;\s+return 444;", conf)
-    assert re.search(
-        r"listen 443 ssl default_server;[\s\S]*?server_name _;[\s\S]*?ssl_reject_handshake on;",
-        conf,
-    )
-    assert not re.search(r"listen 443 ssl default_server;[\s\S]*?ssl_certificate", conf)
+
+    # Scope every check below to the default TLS server's own body. `[\s\S]*?`
+    # runs past the closing brace into the real HTTPS server, whose
+    # ssl_certificate then satisfies the search — so the negative assertion
+    # could never fail, however the default server was written. That block
+    # nests no others, so "up to the next brace" is exactly the block.
+    default_tls = re.search(r"listen 443 ssl default_server;[^{}]*", conf)
+    assert default_tls, "no default TLS server in nginx.conf — has the file moved?"
+    block = default_tls.group(0)
+
+    assert re.search(r"server_name _;", block)
+    assert re.search(r"ssl_reject_handshake on;", block)
+    # A certificate here would complete the handshake for unknown SNI rather
+    # than refusing it, putting the request back in front of a proxying host.
+    assert "ssl_certificate" not in block
 
 
 def test_an_unset_variable_falls_back_to_the_real_domains():
