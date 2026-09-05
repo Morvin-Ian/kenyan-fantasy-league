@@ -118,8 +118,9 @@ jobs:
             git pull --ff-only origin master
             compose="docker compose -f docker-compose.prod.yml --env-file .env.prod"
             $compose up --build -d --remove-orphans
-            # nginx.conf is bind-mounted, so explicitly reload it after every
-            # deploy rather than waiting for its six-hour reload loop.
+            # nginx.conf is bind-mounted. Recreate nginx so it starts with the
+            # current edge rules even when the existing process has stale config.
+            $compose up -d --force-recreate --no-deps nginx
             $compose exec -T nginx nginx -s reload
             # `up -d` returns before the api container can accept an exec, so
             # the first migrate can lose the race. Migrations are idempotent,
