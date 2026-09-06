@@ -85,9 +85,16 @@ class PlayerService:
                         if existing_player.team != team:
                             existing_player.team = team
                             updated_fields.append("team")
-                        if existing_player.position != position:
+                        # A CSV upload is a human decision, so it outranks the
+                        # scraper and is marked as such — sync_players skips
+                        # anything tagged "manual".
+                        if (
+                            existing_player.position != position
+                            or existing_player.position_source != "manual"
+                        ):
                             existing_player.position = position
-                            updated_fields.append("position")
+                            existing_player.position_source = "manual"
+                            updated_fields += ["position", "position_source"]
                         if existing_player.jersey_number != jersey_number:
                             existing_player.jersey_number = jersey_number
                             updated_fields.append("jersey_number")
@@ -108,6 +115,7 @@ class PlayerService:
                             name=name,
                             team=team,
                             position=position,
+                            position_source="manual",
                             jersey_number=jersey_number,
                             age=age,
                             current_value=current_value,

@@ -15,7 +15,7 @@ hostname ever appears under `apps/`.
 | --- | --- |
 | `SCRAPER_PRIMARY_BASE_URL` | primary source root |
 | `SCRAPER_PRIMARY_COMPETITION` | competition label, minus the season |
-| `SCRAPER_PRIMARY_PATHS` | `role=path` pairs for the eight pages used |
+| `SCRAPER_PRIMARY_PATHS` | `role=path` pairs for the nine pages used |
 | `SCRAPER_PROVIDER_HOSTS` | `provider=host` pairs for the lineup adapters |
 | `SCRAPER_LINEUP_PROVIDERS` | which lineup adapters to try, in order |
 
@@ -27,7 +27,7 @@ apps/kpl/scraping/
   locks.py                 Redis locks so beat runs cannot overlap
   normalize.py             club/player name matching across sources
   exceptions.py            transient vs. structural failure
-  providers/primary.py     source of record — parses eight pages
+  providers/primary.py     source of record — parses nine pages
 apps/kpl/tasks/
   base.py                  retry, timeout and locking policy for every sync task
   sync.py                  the tasks themselves
@@ -110,9 +110,39 @@ on it.
   whistle, so this is settlement, not live scoring.
 * Substitutions are not published as events; the bench is a list, so exact
   minutes played cannot be derived.
-* Player positions and ages are not published. `sync_players` therefore never
-  overwrites an existing position, and creates new players as `MID` for a human
-  to correct.
+* Ages are not published anywhere.
+* **Positions are published, but only on a club's own roster page**
+  (`squad` role), never on the combined squads page the importer used to read
+  alone. That is why every player in the database was a midfielder: the page
+  being read has no position column at all, so `sync_players` wrote the `MID`
+  placeholder for all of them.
+
+  `sync_players` now reads both — the combined page for who is registered, the
+  club page for position and shirt number. Note two things about the club page:
+
+  * It carries **one table per competition** the club is entered in (league,
+    domestic cups, friendlies). The table is selected by the current season's
+    competition id; taking the first one on the page reads a cup squad.
+  * The source opens a new season's competition before clubs register squads
+    for it, so for the first weeks of a season that table is empty. The parser
+    then falls back to the club's most recent published roster, preferring this
+    competition's own past seasons over a cup — a position is a property of the
+    player, not of the season.
+
+* Coverage is partial: the source leaves the position blank for a little under
+  half the league. Those players keep the `MID` placeholder, because the fantasy
+  scoring rules branch on a position and cannot take a blank — but they are
+  tagged `position_source="default"`, which is what makes them findable:
+
+  | `position_source` | meaning | overwritten by `sync_players`? |
+  | --- | --- | --- |
+  | `default` | nobody has ever verified this; it is the `MID` placeholder | yes |
+  | `provider` | the source published it | yes |
+  | `manual` | set by hand (admin, CSV upload, or API) | **never** |
+
+  Filter Players on "Unverified default" in the admin to get exactly the list
+  that still needs a human. The admin action *Confirm position* flips a row to
+  `manual` so the nightly sync stops touching it.
 
 ## Live scoring
 

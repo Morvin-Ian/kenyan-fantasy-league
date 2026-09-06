@@ -20,12 +20,14 @@ Page roles, named by the keys of ``SCRAPER_PRIMARY_PATHS``:
 ``results``     played matches with final scores, grouped by matchday
 ``scorers``     the scoring charts
 ``squads``      every registered squad, on one page
+``squad``       one club's own roster: shirt numbers and positions, split
+                into one table per competition the club is entered in
 ``match``       one played match: goals with minutes, both lineups and
                 benches, and cards
 ==============  ==========================================================
 
 ``index``/``teams``/… take a ``{season}`` placeholder, ``match`` takes
-``{match}``. The source's own opaque ids for competitions, clubs, players and
+``{match}`` and ``squad`` takes ``{team}``. The source's own opaque ids for competitions, clubs, players and
 matches are carried through untouched and reused as ``External*Mapping`` keys,
 which is what makes every sync idempotent.
 """
@@ -36,7 +38,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, time
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -44,7 +46,7 @@ from django.conf import settings
 
 from ..exceptions import ParseError, SeasonNotFound, StructureChanged
 from ..http import fetch
-from ..normalize import clean_player_name, clean_team_display_name
+from ..normalize import clean_player_name, clean_team_display_name, position_code
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +126,10 @@ _FIXTURE_ID = re.compile(r"(?:^|/)fixture[a-z_]*\.[a-z]+\?(?:[^&]*&)*f=(\d+)")
 _MATCH_ID = re.compile(r"(?:^|/)score[a-z_]*\.[a-z]+\?(?:[^&]*&)*s=(\d+)")
 _TEAM_LINK = re.compile(r"(?:^|/)team[a-z_]*\.[a-z]+\?")
 _SQUAD_LINK = re.compile(r"(?:^|/)team_players\.[a-z]+\?")
+# A club's roster page carries one table per competition it is entered in, each
+# introduced by a link back to that competition's squad page. This is what tells
+# the league squad apart from the cup ones.
+_SEASON_SQUAD_LINK = re.compile(r"(?:^|/)tournament_players\.[a-z]+\?")
 _COMPETITION_LINK = re.compile(r"(?:^|/)tournament\.[a-z]+\?")
 _MATCH_LINK = re.compile(r"(?:^|/)(?:fixture|score)[a-z_]*\.[a-z]+\?")
 
@@ -239,6 +245,26 @@ class Squad:
     team_name: str
     logo_url: Optional[str]
     players: List[SquadPlayer] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class TeamSquadPlayer:
+    """One row of a club's own roster page.
+
+    ``position_label`` is the source's free text ("Goal Keeper", "Winger") and is
+    blank for roughly half the league; ``position`` is that text reduced to a
+    ``POSITION_CHOICES`` code, or ``None`` when the source published nothing.
+    """
+
+    provider_player_id: Optional[str]
+    name: str
+    shirt_number: Optional[int] = None
+    position_label: str = ""
+    appearances: Optional[int] = None
+
+    @property
+    def position(self) -> Optional[str]:
+        return position_code(self.position_label)
 
 
 @dataclass(frozen=True)
@@ -822,6 +848,167 @@ def fetch_squads(tournament_id: str) -> List[Squad]:
         tournament_id,
     )
     return squads
+
+
+def _header_index(table) -> Dict[str, int]:
+    """Map lower-cased column headings to their column number.
+
+    The combined squads page and a club's own roster page carry different columns
+    in a different order, and the source has added columns before now. Reading the
+    heading row rather than counting cells means a new column shifts nothing.
+    """
+    head = table.find("thead") or table
+    row = head.find("tr")
+    if row is None:
+        return {}
+    return {
+        cell.get_text(" ", strip=True).lower().rstrip("#").strip(): index
+        for index, cell in enumerate(row.find_all(["th", "td"]))
+        if cell.get_text(strip=True)
+    }
+
+
+def _cell(cells, index: Optional[int]) -> str:
+    if index is None or index >= len(cells):
+        return ""
+    return cells[index].get_text(" ", strip=True)
+
+
+def _as_int(value: str) -> Optional[int]:
+    digits = re.sub(r"[^0-9]", "", value or "")
+    return int(digits) if digits else None
+
+
+def fetch_team_squad(
+    provider_team_id: str, tournament_id: str, *, allow_other_seasons: bool = True
+) -> List[TeamSquadPlayer]:
+    """One club's roster: a shirt number and a position per player.
+
+    The combined squads page (:func:`fetch_squads`) lists everyone registered for
+    the season but carries neither shirt numbers nor positions. A club's own
+    roster page carries both, and is the only page on this source that publishes
+    a position at all — worth eighteen requests instead of one.
+
+    A club page holds one table per competition the club is entered in (league,
+    domestic cups), each introduced by a link naming that competition.
+    ``tournament_id`` selects the league one; taking the first table on the page
+    would silently read a cup squad instead.
+
+    The source creates a new season's competition before clubs register squads
+    for it, so for the first weeks of a season that table is empty for most of
+    the league. ``allow_other_seasons`` then falls back to the club's most recent
+    published roster, because a player's position does not change with the
+    season. Pass ``allow_other_seasons=False`` to require an exact match.
+
+    Coverage is partial either way: the source leaves the position blank for a
+    little under half the league. Those rows come back with
+    ``position_label == ""`` and ``position is None`` rather than a guess.
+    """
+    response = fetch(_page("squad", team=provider_team_id), use_conditional=False)
+    soup = _soup(response.text)
+
+    all_tables = soup.find_all("table")
+    if not all_tables:
+        raise StructureChanged(
+            f"the roster page for club {provider_team_id} has no table"
+        )
+
+    # (competition id, label, table) for every block on the page.
+    blocks: List[Tuple[str, str, object]] = []
+    for candidate in all_tables:
+        link = candidate.find_previous("a", href=_SEASON_SQUAD_LINK)
+        if link is None:
+            continue
+        id_match = _COMPETITION_ID.search(link["href"])
+        if id_match:
+            blocks.append(
+                (id_match.group(1), link.get_text(" ", strip=True), candidate)
+            )
+
+    if not blocks:
+        raise StructureChanged(
+            f"the roster page for club {provider_team_id} labels none of its "
+            f"{len(all_tables)} tables with a competition"
+        )
+
+    table = None
+    used_label = tournament_id
+    for block_id, label, candidate in blocks:
+        if block_id == tournament_id:
+            table, used_label = candidate, label
+            break
+
+    if table is None and allow_other_seasons:
+        # Rank this competition's own past seasons first (newest first), then
+        # anything else in page order, so a cup squad is only ever a last resort.
+        label_pattern = _season_label_pattern()
+        ranked = []
+        for index, (_, label, candidate) in enumerate(blocks):
+            match = label_pattern.match(label)
+            rank = (0, -int(match.group(1))) if match else (1, index)
+            ranked.append((rank, label, candidate))
+        ranked.sort(key=lambda item: item[0])
+        _, used_label, table = ranked[0]
+        logger.info(
+            "club %s has no squad registered for %s; taking positions from %r",
+            provider_team_id,
+            tournament_id,
+            used_label,
+        )
+
+    if table is None:
+        logger.info(
+            "club %s has no squad for competition %s (has: %s)",
+            provider_team_id,
+            tournament_id,
+            ", ".join(block_id for block_id, _, _ in blocks),
+        )
+        return []
+
+    columns = _header_index(table)
+    name_column = columns.get("name", 2)
+    shirt_column = columns.get("shirt")
+    position_column = columns.get("position")
+    appearances_column = columns.get("app")
+
+    if position_column is None:
+        raise StructureChanged(
+            f"the roster page for club {provider_team_id} has no Position column; "
+            f"columns seen: {sorted(columns)}"
+        )
+
+    players: List[TeamSquadPlayer] = []
+    for row in table.find_all("tr"):
+        cells = row.find_all("td")
+        if len(cells) <= max(position_column, name_column):
+            continue
+
+        anchor = cells[name_column].find("a", href=_PLAYER_ID)
+        if not anchor:
+            continue
+        name = clean_player_name(anchor.get_text(" ", strip=True))
+        if not name:
+            continue
+
+        id_match = _PLAYER_ID.search(anchor["href"])
+        players.append(
+            TeamSquadPlayer(
+                provider_player_id=id_match.group(1) if id_match else None,
+                name=name,
+                shirt_number=_as_int(_cell(cells, shirt_column)),
+                position_label=_cell(cells, position_column),
+                appearances=_as_int(_cell(cells, appearances_column)),
+            )
+        )
+
+    logger.info(
+        "club %s roster (%s): %d players, %d with a published position",
+        provider_team_id,
+        used_label,
+        len(players),
+        sum(1 for player in players if player.position),
+    )
+    return players
 
 
 # --------------------------------------------------------------------------- #

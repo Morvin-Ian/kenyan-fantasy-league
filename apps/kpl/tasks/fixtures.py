@@ -130,10 +130,19 @@ def clean_player_name(name: str) -> Optional[str]:
 
 
 def create_missing_player(player_name: str, team: Team) -> Player:
+    """Create a player seen in match data but missing from the squad import.
+
+    Nothing here knows the position — this path is reached from a goal or a card,
+    which name a player and nothing else. MID is a placeholder, and
+    ``position_source="default"`` is what says so: the next ``sync_players`` run
+    will replace it if the club's roster page publishes a real position, and the
+    admin can list every player still on the placeholder.
+    """
     player = Player.objects.create(
         name=player_name,
         team=team,
         position="MID",
+        position_source="default",
         current_value=5.5,
         jersey_number=None,
         age=None,
@@ -141,7 +150,8 @@ def create_missing_player(player_name: str, team: Team) -> Player:
 
     logger.warning(
         f"AUTO-CREATED PLAYER: '{player_name}' for team '{team.name}' "
-        f"(position=MID, value=5.5). Please verify and update position if needed."
+        f"(position=MID unverified, value=5.5). It will pick up a real position "
+        f"from the next sync_players run if the source publishes one."
     )
 
     return player

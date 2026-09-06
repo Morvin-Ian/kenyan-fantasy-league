@@ -155,3 +155,61 @@ def best_team_match(name: str, candidates: Iterable[str]) -> Optional[str]:
         if teams_match(name, candidate):
             return candidate
     return None
+
+
+# --------------------------------------------------------------------------- #
+# Positions
+# --------------------------------------------------------------------------- #
+
+# The source writes roles as free text ("Goal Keeper", "Winger", "Defensive
+# Midfielder") and different pages spell them differently, so every caller
+# funnels through :func:`position_code` rather than comparing strings.
+#
+# Order matters. "Defensive Midfielder" contains both "def" and "mid", and a
+# midfielder is what it is, so MID is tested before DEF. For the same reason
+# "winger" is claimed by MID and only "wing back" falls through to DEF.
+_POSITION_RULES = (
+    (
+        "GKP",
+        r"\b(gk|gkp|goalie|keeper|goal\s*-?\s*keeper|goal\s*-?\s*tender|shot\s*stopper)\b",
+    ),
+    (
+        "MID",
+        r"\b(mid|mids|midfield|midfielder|midfielders|cm|cam|cdm|am|dm|winger|wingers"
+        r"|playmaker|no\.?\s*10|number\s*10)\b",
+    ),
+    (
+        "DEF",
+        r"\b(def|defs|defence|defense|defender|defenders|defensive|cb|rb|lb|rwb|lwb"
+        r"|full\s*-?\s*back|centre\s*-?\s*back|center\s*-?\s*back|wing\s*-?\s*back"
+        r"|sweeper|back|backs)\b",
+    ),
+    (
+        "FWD",
+        r"\b(fwd|fw|st|cf|forward|forwards|striker|strikers|attacker|attackers"
+        r"|attacking|attack|no\.?\s*9|number\s*9)\b",
+    ),
+)
+
+_POSITION_MATCHERS = tuple(
+    (code, re.compile(pattern, re.IGNORECASE)) for code, pattern in _POSITION_RULES
+)
+
+
+def position_code(*labels: Optional[str]) -> Optional[str]:
+    """Map free-text role labels to ``GKP``/``DEF``/``MID``/``FWD``.
+
+    Every label given is considered together, so a caller with two weak hints
+    ("11" and "Goal Keeper") can pass both. Returns ``None`` when nothing in the
+    text names a position — an unknown position is never guessed at, because a
+    wrong guess is indistinguishable from a real one once it is in the database.
+    """
+    text = " ".join(label for label in labels if label)
+    if not text:
+        return None
+    # Punctuation would otherwise hide a token behind a word boundary.
+    text = re.sub(r"[/_,\-]+", " ", text)
+    for code, matcher in _POSITION_MATCHERS:
+        if matcher.search(text):
+            return code
+    return None

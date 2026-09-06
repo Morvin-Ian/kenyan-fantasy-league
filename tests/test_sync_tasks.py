@@ -17,6 +17,7 @@ from apps.kpl.models import (
     ExternalTeamMapping,
     Fixture,
     Gameweek,
+    Player,
     Standing,
     Team,
 )
@@ -342,3 +343,166 @@ def test_a_second_run_skips_instead_of_stampeding_the_source(monkeypatch, clubs)
         result = sync.sync_standings.run()
 
     assert result == {"skipped": "locked", "task": "apps.kpl.tasks.sync.sync_standings"}
+
+
+# --------------------------------------------------------------------------- #
+# Players: a position the source published, and an honest label when it did not
+# --------------------------------------------------------------------------- #
+
+
+def squad(provider_team_id, team_name, players):
+    return primary.Squad(
+        provider_team_id=provider_team_id,
+        team_name=team_name,
+        logo_url=None,
+        players=[
+            primary.SquadPlayer(provider_player_id=pid, name=name)
+            for pid, name in players
+        ],
+    )
+
+
+def roster(rows):
+    return [
+        primary.TeamSquadPlayer(
+            provider_player_id=pid,
+            name=name,
+            shirt_number=shirt,
+            position_label=label,
+        )
+        for pid, name, shirt, label in rows
+    ]
+
+
+@pytest.fixture
+def one_club_squad(monkeypatch):
+    """Serve one club's squad page and let each test set its roster page."""
+
+    def _serve(rows):
+        monkeypatch.setattr(
+            primary,
+            "fetch_squads",
+            lambda tournament_id: [
+                squad(
+                    "clb00038",
+                    "AFC Leopards",
+                    [("plr01", "Aziz Okaka"), ("plr02", "Brian Yakhama")],
+                )
+            ],
+        )
+        monkeypatch.setattr(
+            primary,
+            "fetch_team_squad",
+            lambda provider_team_id, tournament_id, **kwargs: roster(rows),
+        )
+
+    return _serve
+
+
+@pytest.mark.django_db
+def test_a_published_position_is_used_instead_of_the_midfielder_placeholder(
+    monkeypatch, clubs, one_club_squad
+):
+    one_club_squad(
+        [
+            ("plr01", "Aziz Okaka", 1, "Goal Keeper"),
+            ("plr02", "Brian Yakhama", 9, "Striker"),
+        ]
+    )
+    result = sync.sync_players()
+
+    keeper = Player.objects.get(name="Aziz Okaka")
+    striker = Player.objects.get(name="Brian Yakhama")
+
+    assert (keeper.position, keeper.position_source, keeper.jersey_number) == (
+        "GKP",
+        "provider",
+        1,
+    )
+    assert (striker.position, striker.position_source, striker.jersey_number) == (
+        "FWD",
+        "provider",
+        9,
+    )
+    assert result["positions_set"] == 2
+
+
+@pytest.mark.django_db
+def test_a_player_the_source_says_nothing_about_is_flagged_not_silently_a_midfielder(
+    monkeypatch, clubs, one_club_squad
+):
+    """MID stays as the placeholder — the scoring rules need *a* position — but
+    position_source is what makes the unverified ones findable."""
+    one_club_squad([("plr01", "Aziz Okaka", 1, "Goal Keeper")])
+    sync.sync_players()
+
+    unknown = Player.objects.get(name="Brian Yakhama")
+    assert unknown.position == "MID"
+    assert unknown.position_source == "default"
+    assert Player.objects.filter(position_source="default").count() == 1
+
+
+@pytest.mark.django_db
+def test_a_hand_set_position_is_never_overwritten_by_the_source(
+    monkeypatch, clubs, one_club_squad
+):
+    """Someone corrected this by hand; the source must not undo it next night."""
+    Player.objects.create(
+        name="Aziz Okaka",
+        team=clubs["clb00038"],
+        position="DEF",
+        position_source="manual",
+    )
+    one_club_squad([("plr01", "Aziz Okaka", 1, "Goal Keeper")])
+    sync.sync_players()
+
+    corrected = Player.objects.get(name="Aziz Okaka")
+    assert corrected.position == "DEF"
+    assert corrected.position_source == "manual"
+    # The shirt number is not a human judgement, so it still tracks the source.
+    assert corrected.jersey_number == 1
+
+
+@pytest.mark.django_db
+def test_a_position_the_source_stops_publishing_is_kept_not_cleared(
+    monkeypatch, clubs, one_club_squad
+):
+    """A blank cell upstream means "unknown", not "no longer a goalkeeper"."""
+    one_club_squad([("plr01", "Aziz Okaka", 1, "Goal Keeper")])
+    sync.sync_players()
+    assert Player.objects.get(name="Aziz Okaka").position == "GKP"
+
+    one_club_squad([("plr01", "Aziz Okaka", 1, "")])
+    sync.sync_players()
+
+    kept = Player.objects.get(name="Aziz Okaka")
+    assert kept.position == "GKP"
+    assert kept.position_source == "provider"
+
+
+@pytest.mark.django_db
+def test_a_club_roster_page_that_fails_does_not_fail_the_squad_import(
+    monkeypatch, clubs
+):
+    """The roster page is one extra request per club, and it is optional data.
+
+    Losing it should cost positions, not the squad list.
+    """
+    monkeypatch.setattr(
+        primary,
+        "fetch_squads",
+        lambda tournament_id: [
+            squad("clb00038", "AFC Leopards", [("plr01", "Aziz Okaka")])
+        ],
+    )
+
+    def boom(provider_team_id, tournament_id, **kwargs):
+        raise StructureChanged("the roster page moved")
+
+    monkeypatch.setattr(primary, "fetch_team_squad", boom)
+
+    result = sync.sync_players()
+
+    assert result["players_created"] == 1
+    assert result["positions_set"] == 0
+    assert Player.objects.get(name="Aziz Okaka").position_source == "default"

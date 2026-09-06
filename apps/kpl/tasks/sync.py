@@ -664,13 +664,53 @@ def _find_fixture_for_result(
 # --------------------------------------------------------------------------- #
 
 
+def _roster_attributes(
+    provider_team_id: str, tournament_id: str
+) -> Dict[str, Tuple[Optional[str], Optional[int]]]:
+    """``{provider_player_id: (position, shirt_number)}`` for one club.
+
+    The combined squads page says who is registered but carries no position and
+    no shirt number; the club's own roster page carries both. It is a separate
+    request per club, so a club whose page is missing or has been restructured
+    is logged and skipped rather than being allowed to fail the whole import.
+
+    Rows the source left blank are omitted entirely, so a player already carrying
+    a verified position never has it cleared by a gap upstream.
+    """
+    try:
+        roster = primary.fetch_team_squad(provider_team_id, tournament_id)
+    except (ScrapeError, primary.SourceNotConfigured) as exc:
+        logger.warning(
+            "no roster attributes for club %s: %s: %s",
+            provider_team_id,
+            type(exc).__name__,
+            exc,
+        )
+        return {}
+
+    attributes: Dict[str, Tuple[Optional[str], Optional[int]]] = {}
+    for row in roster:
+        if not row.provider_player_id:
+            continue
+        if row.position is None and row.shirt_number is None:
+            continue
+        attributes[row.provider_player_id] = (row.position, row.shirt_number)
+    return attributes
+
+
 @scraping_task(name="apps.kpl.tasks.sync.sync_players", lock_ttl=45 * 60)
 def sync_players():
     """Import every registered squad for the current season.
 
-    The source publishes names and its own player ids but no positions or ages,
-    so an existing player's position is never overwritten here; newly discovered
-    players are created as midfielders for a human to correct.
+    Two pages per club feed this. The combined squads page is the roster of
+    record — it decides who exists and which club they play for. The club's own
+    roster page is then read for the two attributes the combined page omits,
+    position and shirt number.
+
+    The source publishes a position for a little under half the league. A player
+    it says nothing about keeps the ``MID`` placeholder, but is tagged
+    ``position_source="default"`` so the unverified ones can actually be listed
+    and fixed. A position set by hand (``"manual"``) is never overwritten.
     """
     season = current_season()
     squads = primary.fetch_squads(season.tournament_id)
@@ -684,6 +724,7 @@ def sync_players():
     }
 
     created = moved = linked = 0
+    positions_set = shirts_set = 0
     unmatched_clubs: List[str] = []
 
     for squad in squads:
@@ -701,6 +742,7 @@ def sync_players():
         existing_by_key = {
             player_key(p.name): p for p in Player.objects.filter(team=team)
         }
+        roster = _roster_attributes(squad.provider_team_id, season.tournament_id)
 
         with transaction.atomic():
             for entry in squad.players:
@@ -708,23 +750,67 @@ def sync_players():
                 if player is None:
                     player = existing_by_key.get(player_key(entry.name))
 
+                position, shirt_number = roster.get(
+                    entry.provider_player_id, (None, None)
+                )
+
                 if player is None:
                     player = Player.objects.create(
-                        name=entry.name, team=team, position="MID"
+                        name=entry.name,
+                        team=team,
+                        # Still MID when the source is silent: the fantasy
+                        # scoring rules branch on a position and cannot take a
+                        # blank. position_source is what marks it as a guess.
+                        position=position or "MID",
+                        position_source="provider" if position else "default",
+                        jersey_number=shirt_number,
                     )
                     created += 1
-                elif player.team_id != team.pkid:
-                    # A transfer: the squad page is authoritative on who plays
-                    # where, so follow it rather than duplicating the player.
-                    logger.info(
-                        "moving %s from %s to %s",
-                        player.name,
-                        player.team.name,
-                        team.name,
-                    )
-                    player.team = team
-                    player.save(update_fields=["team", "updated_at"])
-                    moved += 1
+                    positions_set += int(bool(position))
+                    shirts_set += int(shirt_number is not None)
+                else:
+                    if player.team_id != team.pkid:
+                        # A transfer: the squad page is authoritative on who
+                        # plays where, so follow it rather than duplicating the
+                        # player.
+                        logger.info(
+                            "moving %s from %s to %s",
+                            player.name,
+                            player.team.name,
+                            team.name,
+                        )
+                        player.team = team
+                        player.save(update_fields=["team", "updated_at"])
+                        moved += 1
+
+                    changed: List[str] = []
+                    # A hand-set position is a human decision and outranks the
+                    # source, which is blank about half the time. A blank is
+                    # absent from `roster` entirely, so a position already held
+                    # is never cleared by a gap upstream.
+                    if (
+                        position
+                        and player.position_source != "manual"
+                        and (
+                            player.position != position
+                            or player.position_source != "provider"
+                        )
+                    ):
+                        player.position = position
+                        player.position_source = "provider"
+                        changed += ["position", "position_source"]
+                        positions_set += 1
+                    # A shirt number is not a judgement call, so it tracks the
+                    # source even for a player whose position was set by hand.
+                    if (
+                        shirt_number is not None
+                        and player.jersey_number != shirt_number
+                    ):
+                        player.jersey_number = shirt_number
+                        changed.append("jersey_number")
+                        shirts_set += 1
+                    if changed:
+                        player.save(update_fields=changed + ["updated_at"])
 
                 if entry.provider_player_id:
                     _, was_created = ExternalPlayerMapping.objects.update_or_create(
@@ -739,12 +825,23 @@ def sync_players():
     if unmatched_clubs:
         logger.warning("squads with no matching club: %s", unmatched_clubs)
 
+    unverified = Player.objects.filter(position_source="default").count()
+    if unverified:
+        logger.info(
+            "%d players still carry the unverified MID placeholder; "
+            "filter on position_source=default in the admin to fix them",
+            unverified,
+        )
+
     return {
         "season": season.label,
         "squads": len(squads),
         "players_created": created,
         "players_moved": moved,
         "ids_linked": linked,
+        "positions_set": positions_set,
+        "shirt_numbers_set": shirts_set,
+        "positions_unverified": unverified,
         "unmatched_clubs": unmatched_clubs,
     }
 

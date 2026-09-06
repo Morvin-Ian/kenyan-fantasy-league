@@ -17,6 +17,16 @@ POSITION_CHOICES = [
     ("FWD", "Forward"),
 ]
 
+# Where a player's position came from. The upstream source publishes a position
+# for only about half the league, so without this every unknown player looked
+# exactly like a confirmed midfielder and there was no way to list the ones a
+# human still needs to check.
+POSITION_SOURCE_CHOICES = [
+    ("default", "Unverified default"),
+    ("provider", "Published by the source"),
+    ("manual", "Set by hand"),
+]
+
 
 class Team(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
@@ -44,6 +54,12 @@ class Player(TimeStampedUUIDModel):
     name = models.CharField(max_length=100)
     team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="players")
     position = models.CharField(max_length=50, choices=POSITION_CHOICES)
+    # "default" means nobody has ever verified this position — it is the MID
+    # placeholder a newly discovered player is created with. The scrapers may
+    # overwrite "default" and "provider" but never "manual".
+    position_source = models.CharField(
+        max_length=10, choices=POSITION_SOURCE_CHOICES, default="default"
+    )
     jersey_number = models.PositiveIntegerField(null=True, blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)
     current_value = models.DecimalField(max_digits=6, decimal_places=2, default=4.00)
@@ -52,6 +68,13 @@ class Player(TimeStampedUUIDModel):
         ordering = ["team"]
         verbose_name = "Player"
         verbose_name_plural = "Players"
+        indexes = [
+            models.Index(fields=["position_source"]),
+        ]
+
+    @property
+    def position_is_verified(self) -> bool:
+        return self.position_source != "default"
 
     def __str__(self) -> str:
         return f"{self.name} ({self.team.name}) - {self.get_position_display()}"  # type: ignore[attr-defined]
