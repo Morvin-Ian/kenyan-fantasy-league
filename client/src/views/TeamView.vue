@@ -161,8 +161,25 @@
       </div>
     </div>
 
+    <!-- Load failure: say so, rather than falling through to "create a team". -->
+    <div v-if="fantasyStore.error && (!fantasyStore.userTeam || fantasyStore.userTeam.length === 0)"
+      class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">We could not load your team</h2>
+      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">{{ fantasyStore.error }}</p>
+      <button @click="reloadTeam"
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">
+        Try again
+      </button>
+    </div>
+
     <!-- No Team State -->
-    <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
+    <!--
+      Only offered when the team list actually came back empty. A failed load
+      leaves fantasyStore.error set, and inviting someone to create a team they
+      already have is how "you already have a fantasy team" appeared under a
+      Create button.
+    -->
+    <div v-if="!fantasyStore.error && (!fantasyStore.userTeam || fantasyStore.userTeam.length === 0)"
       class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
       <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
       <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
@@ -620,6 +637,15 @@ const handlePlayerClick = (player: Player) => {
     performSwitch(player);
   } else {
     openPlayerModal(player);
+  }
+};
+
+const reloadTeam = async () => {
+  fantasyStore.error = null;
+  await fantasyStore.fetchUserFantasyTeam();
+  if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
+    await fantasyStore.fetchFantasyTeamPlayers();
+    initializeTeamState();
   }
 };
 

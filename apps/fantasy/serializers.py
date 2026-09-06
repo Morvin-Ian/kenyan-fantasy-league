@@ -321,9 +321,10 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
         apps.fantasy.scoring, the same rules that produced the number.
         """
         try:
-            gameweek = self.context.get("requested_gameweek") or Gameweek.objects.filter(
-                is_active=True
-            ).first()
+            gameweek = (
+                self.context.get("requested_gameweek")
+                or Gameweek.objects.filter(is_active=True).first()
+            )
             if not gameweek:
                 return []
             performance = obj.player.performances.filter(gameweek=gameweek).first()
