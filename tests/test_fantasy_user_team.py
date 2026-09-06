@@ -10,8 +10,6 @@ comparisons that are false, so neither branch rendered and the page was blank.
 The endpoint must keep its list contract so the frontend's guards work.
 """
 
-from unittest.mock import MagicMock
-
 import pytest
 from django.test.utils import override_settings
 from rest_framework.test import APIClient
@@ -83,9 +81,8 @@ def test_gameweek_players_returns_not_found_when_no_gameweek_is_available(monkey
     """GET /fantasy/players/gameweek-players must not dereference a missing gameweek."""
     # The FantasyTeam post_save signal reaches past the cache for a raw Redis
     # client, which the locmem backend cannot hand out.
-    monkeypatch.setattr(
-        "apps.fantasy.signals.get_redis_connection", lambda alias: MagicMock()
-    )
+    # apps.fantasy.signals.drop() swallows its own cache failures now, so the
+    # receivers no longer need a stand-in Redis connection to survive.
 
     user = User.objects.create_user(
         username="team-owner",
@@ -115,9 +112,8 @@ def test_gameweek_players_rejects_non_positive_or_non_numeric_gameweek(
     monkeypatch, gameweek
 ):
     """The optional gameweek query parameter must not reach an integer ORM field raw."""
-    monkeypatch.setattr(
-        "apps.fantasy.signals.get_redis_connection", lambda alias: MagicMock()
-    )
+    # apps.fantasy.signals.drop() swallows its own cache failures now, so the
+    # receivers no longer need a stand-in Redis connection to survive.
     user = User.objects.create_user(
         username="team-owner",
         email="team-owner@example.com",

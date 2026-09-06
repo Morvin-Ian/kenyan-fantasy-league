@@ -1,7 +1,9 @@
 import logging
+from dataclasses import replace
 
 from django.db import transaction
 
+from apps.fantasy import scoring
 from apps.fantasy.models import PlayerPerformance
 from apps.kpl.models import Player
 from config.settings import base
@@ -69,9 +71,12 @@ def update_complete_player_performance(
                 "red_cards": 0,
                 "minutes_played": 0,
                 "clean_sheets": 0,
+                "goals_conceded": 0,
                 "saves": 0,
                 "penalties_saved": 0,
                 "penalties_missed": 0,
+                "defensive_actions": 0,
+                "key_passes": 0,
             }
         return player_stats[player_obj.id]
 
@@ -109,69 +114,32 @@ def update_complete_player_performance(
                 stats = init_player_stats(player_obj)
                 stats["minutes_played"] = 90 if not lineup_player.is_bench else 0
 
-    def apply_clean_sheets(fixture):
-        home_goals = fixture.home_score or 0
-        away_goals = fixture.away_score or 0
+    def apply_clean_sheets_and_concessions(fixture):
+        """Record the clean sheet and the goals each player's side conceded.
 
-        if away_goals == 0:
-            for player_id, stats in player_stats.items():
-                player = stats["player"]
-                if (
-                    player.team == fixture.home_team
-                    and stats["minutes_played"] >= 60
-                    and player.position in ["DEF", "GKP"]
-                ):
-                    stats["clean_sheets"] = 1
+        Midfielders are included: they earn a smaller clean-sheet point, and the
+        previous version only ever set the flag for GKP and DEF, which made the
+        midfielder rule in the calculator unreachable. Goals conceded is
+        recorded for everyone so the rules layer — not this importer — decides
+        which positions are docked for it.
+        """
+        conceded_by_team = {
+            fixture.home_team: fixture.away_score or 0,
+            fixture.away_team: fixture.home_score or 0,
+        }
 
-        if home_goals == 0:
-            for player_id, stats in player_stats.items():
-                player = stats["player"]
-                if (
-                    player.team == fixture.away_team
-                    and stats["minutes_played"] >= 60
-                    and player.position in ["DEF", "GKP"]
-                ):
-                    stats["clean_sheets"] = 1
+        for stats in player_stats.values():
+            player = stats["player"]
+            conceded = conceded_by_team.get(player.team)
+            if conceded is None:
+                continue
 
-    def calculate_fantasy_points(stats, position):
-        points = 0
-
-        if stats["minutes_played"] > 0:
-            points += 1
-        if stats["minutes_played"] >= 60:
-            points += 1
-
-        if position == "GKP":
-            points += stats["goals_scored"] * 6
-        elif position == "DEF":
-            points += stats["goals_scored"] * 6
-        elif position == "MID":
-            points += stats["goals_scored"] * 5
-        else:
-            points += stats["goals_scored"] * 4
-
-        points += stats["assists"] * 3
-
-        if position in ["GKP", "DEF"]:
-            points += stats["clean_sheets"] * 4
-        elif position == "MID":
-            points += stats["clean_sheets"] * 1
-
-        # Saves (GKP only, every 3 saves = 1 point)
-        if position == "GKP":
-            points += stats["saves"] // 3
-
-        points += stats["penalties_saved"] * 5
-
-        points -= stats["penalties_missed"] * 2
-
-        points -= stats["own_goals"] * 2
-
-        points -= stats["yellow_cards"] * 1
-
-        points -= stats["red_cards"] * 3
-
-        return points
+            stats["goals_conceded"] = conceded
+            if (
+                conceded == 0
+                and stats["minutes_played"] >= scoring.CLEAN_SHEET_MIN_MINUTES
+            ):
+                stats["clean_sheets"] = 1
 
     with transaction.atomic():
         PlayerPerformance.objects.filter(fixture=fixture).delete()
@@ -246,12 +214,25 @@ def update_complete_player_performance(
                                 stats = init_player_stats(player_obj)
                                 stats[stat_type] += count
 
-        apply_clean_sheets(fixture)
+        apply_clean_sheets_and_concessions(fixture)
+
+        # Bonus is a ranking within the match, so every player has to be scored
+        # before any of them can be awarded it.
+        stat_lines = {
+            player_id: scoring.Stats.from_dict(stats, stats["player"].position)
+            for player_id, stats in player_stats.items()
+        }
+        bps_by_player = {
+            player_id: scoring.bps(line) for player_id, line in stat_lines.items()
+        }
+        bonus_by_player = scoring.award_bonus(bps_by_player)
 
         performance_count = 0
         for player_id, stats in player_stats.items():
             player_obj = stats["player"]
-            fantasy_points = calculate_fantasy_points(stats, player_obj.position)
+            bonus = bonus_by_player.get(player_id, 0)
+            line = replace(stat_lines[player_id], bonus=bonus)
+            fantasy_points = scoring.score(line)
 
             PlayerPerformance.objects.create(
                 player=player_obj,
@@ -264,9 +245,14 @@ def update_complete_player_performance(
                 red_cards=stats["red_cards"],
                 minutes_played=stats["minutes_played"],
                 clean_sheets=stats["clean_sheets"],
+                goals_conceded=stats["goals_conceded"],
                 saves=stats["saves"],
                 penalties_saved=stats["penalties_saved"],
                 penalties_missed=stats["penalties_missed"],
+                defensive_actions=stats["defensive_actions"],
+                key_passes=stats["key_passes"],
+                bps=bps_by_player[player_id],
+                bonus=bonus,
                 fantasy_points=fantasy_points,
             )
 
@@ -274,7 +260,7 @@ def update_complete_player_performance(
             logger.info(
                 f"Updated performance for {player_obj.name}: "
                 f"{stats['goals_scored']}G, {stats['assists']}A, "
-                f"{stats['minutes_played']}min, {fantasy_points} pts"
+                f"{stats['minutes_played']}min, +{bonus} bonus, {fantasy_points} pts"
             )
 
         logger.info(
