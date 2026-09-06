@@ -1,42 +1,35 @@
+"""Run the live-score update from the command line.
+
+    python manage.py scrape_fixtures
+
+Useful for checking the live source by hand — that the browser renders, that the
+competition filter matches, and that the rows resolve onto fixtures — without
+waiting for the schedule.
+
+This used to drive the per-fixture browser monitor in ``tasks/live_games.py``.
+That polled one match at a time from its own Celery periodic task; a single task
+now reads every match on the page in one pass, so there is nothing to point at a
+particular fixture or date any more.
+"""
+
+import json
+
 from django.core.management.base import BaseCommand
 
-from apps.kpl.tasks.live_games import monitor_fixture_score
+from apps.kpl.tasks.live import sync_live_scores
 
 
 class Command(BaseCommand):
-    help = "Scrape fixtures for a specific date"
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--date",
-            type=str,
-            help='Date to scrape (e.g., "25 OCT", "TODAY")',
-            default=None,
-        )
-        parser.add_argument(
-            "--fixture-id",
-            type=str,
-            help="Specific fixture ID to monitor",
-            default=None,
-        )
+    help = "Update in-play and just-finished fixtures from the live source."
 
     def handle(self, *args, **options):
-        target_date = options["date"]
-        fixture_id = options["fixture_id"]
+        self.stdout.write("→ reading the live scores page ...")
 
-        if target_date:
-            self.stdout.write(
-                self.style.WARNING(f"Starting fixture scraping for date: {target_date}")
-            )
-        else:
-            self.stdout.write(
-                self.style.WARNING("Starting fixture scraping for default date (TODAY)")
-            )
+        # .run() executes in-process rather than dispatching to a worker.
+        result = sync_live_scores.run()
 
-        # Call the task directly (not as a Celery task)
-        result = monitor_fixture_score(fixture_id=fixture_id, target_date=target_date)
+        if result.get("success") is False:
+            self.stdout.write(self.style.ERROR(f"  failed: {result.get('error')}"))
+            return
 
-        if result:
-            self.stdout.write(self.style.SUCCESS("Successfully scraped fixtures"))
-        else:
-            self.stdout.write(self.style.ERROR("Failed to scrape fixtures"))
+        self.stdout.write(self.style.SUCCESS(f"  {json.dumps(result, default=str)}"))

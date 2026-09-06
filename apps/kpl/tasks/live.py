@@ -87,15 +87,28 @@ def sync_live_scores():
                 fixture.away_team_score = match.away_score
                 changed.append("away_team_score")
 
+        just_completed = False
         if match.status != fixture.status:
             fixture.status = match.status
             changed.append("status")
             if match.status == "completed":
                 completed += 1
+                just_completed = True
 
         if changed:
             fixture.save(update_fields=changed + ["updated_at"])
             updated += 1
+
+            if just_completed:
+                # Settle the clean sheets and goals conceded as soon as the
+                # match ends, rather than waiting for the match report. The task
+                # recomputes rather than accumulates, so the settlement path
+                # running later over the same fixture is harmless.
+                from apps.fantasy.tasks.fixture_completion import (
+                    process_clean_sheets_on_completion,
+                )
+
+                process_clean_sheets_on_completion.delay(str(fixture.id))
             logger.info(
                 "GW%s %s %s-%s %s [%s]",
                 fixture.gameweek.number if fixture.gameweek else "?",

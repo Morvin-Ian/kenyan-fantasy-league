@@ -4,13 +4,11 @@ from typing import Dict
 from celery import shared_task
 from django.db import transaction
 
-from apps.fantasy.models import FantasyPlayer, PlayerPerformance, TeamSelection
+from apps.fantasy import scoring
+from apps.fantasy.models import PlayerPerformance
+from apps.fantasy.services import scoring_engine
 from apps.kpl.models import Fixture, Team
-from apps.kpl.services.match_events import (
-    FantasyPointsCalculator,
-    FixtureValidator,
-    MatchEventService,
-)
+from apps.kpl.services.match_events import FixtureValidator
 
 logger = logging.getLogger(__name__)
 
@@ -84,101 +82,88 @@ def process_clean_sheets_on_completion(fixture_id):
 
 
 def _process_team_clean_sheet(fixture: Fixture, team: Team) -> Dict:
-    """
-    Process clean sheet for a specific team.
-    Awards points to GKP, DEF, and MID who played.
-    """
-    updated_players = []
-    errors = []
+    """Record the clean sheet and goals conceded for one side, then rescore.
 
-    # Get all performances for this team in this fixture
-    # Only players who actually played (minutes > 0)
+    Recomputed rather than accumulated: the stat is derived from the final score
+    every time, points are recalculated from the whole line, and the affected
+    gameweeks are rescored by the engine. That makes the task safe to re-run,
+    and correct if the score is later corrected — the previous version added an
+    increment behind an "already processed" marker, so a score changed after the
+    fact left the clean-sheet points behind for good.
+
+    It also no longer carries its own copy of the captain rules. That copy had
+    the same defect as the others: it worked out a role and then added the
+    undoubled points.
+    """
+    conceded = (
+        fixture.away_team_score
+        if team == fixture.home_team
+        else fixture.home_team_score
+    ) or 0
+
     performances = PlayerPerformance.objects.filter(
-        fixture=fixture,
-        gameweek=fixture.gameweek,
-        player__team=team,
-        minutes_played__gt=0,
+        fixture=fixture, gameweek=fixture.gameweek, player__team=team
     ).select_related("player")
 
-    logger.info(f"Found {performances.count()} players from {team.name} who played")
+    updated_players = []
+    errors = []
 
     with transaction.atomic():
         for performance in performances:
             player = performance.player
-            position = player.position
-
-            # Only GKP, DEF, and MID get clean sheet points
-            if position not in ["GKP", "DEF", "MID"]:
-                logger.debug(
-                    f"Skipping {player.name} ({position}) - not eligible for clean sheet"
-                )
-                continue
-
-            # Check if clean sheet already processed
-            event_key = MatchEventService._generate_event_key(
-                "clean_sheet", fixture.id, player.id, 0, f"team_{team.id}"
-            )
-
-            if MatchEventService._is_event_processed(fixture, event_key):
-                logger.info(f"Clean sheet already processed for {player.name}")
-                continue
-
             try:
-                # Store old values
-                old_values = MatchEventService._store_old_values(performance)
-                old_clean_sheets = performance.clean_sheets
-                old_points = performance.fantasy_points
-
-                performance.clean_sheets += 1
-
-                is_captain = MatchEventService._get_captain_status(player, fixture)
-
-                incremental_points = FantasyPointsCalculator.calculate_incremental(
-                    performance, old_values, is_captain
-                )
-                performance.fantasy_points += incremental_points
-
-                performance.save()
-
-                # Mark event as processed
-                MatchEventService._mark_event_processed(
-                    fixture, "clean_sheet", event_key, player=player
+                before = performance.fantasy_points
+                kept = (
+                    1
+                    if conceded == 0
+                    and performance.minutes_played >= scoring.CLEAN_SHEET_MIN_MINUTES
+                    else 0
                 )
 
-                _update_fantasy_teams_with_captain_logic(
-                    player, fixture, incremental_points
-                )
+                changed = []
+                if performance.clean_sheets != kept:
+                    performance.clean_sheets = kept
+                    changed.append("clean_sheets")
+                if performance.goals_conceded != conceded:
+                    performance.goals_conceded = conceded
+                    changed.append("goals_conceded")
 
-                updated_players.append(
-                    {
-                        "player_name": player.name,
-                        "position": position,
-                        "team": team.name,
-                        "old_clean_sheets": old_clean_sheets,
-                        "new_clean_sheets": performance.clean_sheets,
-                        "old_points": old_points,
-                        "new_points": performance.fantasy_points,
-                        "points_added": incremental_points,
-                        "is_captain": is_captain,
-                    }
-                )
+                points = scoring.score_performance(performance)
+                if performance.fantasy_points != points:
+                    performance.fantasy_points = points
+                    changed.append("fantasy_points")
 
-                logger.info(
-                    f"Clean sheet awarded to {player.name} ({position}): "
-                    f"{old_points} → {performance.fantasy_points} points "
-                    f"{'(CAPTAIN - 2x)' if is_captain else ''}"
-                )
-
-            except Exception as e:
+                if changed:
+                    performance.save(update_fields=changed + ["updated_at"])
+                    updated_players.append(
+                        {
+                            "player_name": player.name,
+                            "position": player.position,
+                            "team": team.name,
+                            "clean_sheet": bool(kept),
+                            "goals_conceded": conceded,
+                            "old_points": before,
+                            "new_points": performance.fantasy_points,
+                        }
+                    )
+            except Exception as exc:  # noqa: BLE001 - one player must not stop the rest
                 logger.error(
-                    f"Error processing clean sheet for {player.name}: {e}",
+                    "Error processing clean sheet for %s: %s",
+                    player.name,
+                    exc,
                     exc_info=True,
                 )
-                errors.append({"player_name": player.name, "error": str(e)})
+                errors.append({"player_name": player.name, "error": str(exc)})
+
+    # One rescore per affected team, after every performance is settled.
+    if updated_players and fixture.gameweek:
+        scoring_engine.recalculate_gameweek(fixture.gameweek)
 
     logger.info(
-        f"Clean sheet processing for {team.name}: "
-        f"{len(updated_players)} players updated, {len(errors)} errors"
+        "Clean sheet processing for %s: %d players updated, %d errors",
+        team.name,
+        len(updated_players),
+        len(errors),
     )
 
     return {
@@ -188,102 +173,6 @@ def _process_team_clean_sheet(fixture: Fixture, team: Team) -> Dict:
         "updated_players": updated_players,
         "errors": errors,
     }
-
-
-def _update_fantasy_teams_with_captain_logic(player, fixture, base_incremental_points):
-    """
-    Update fantasy team points with proper captain/vice-captain handling.
-    If captain didn't play, vice-captain gets double points.
-    """
-    try:
-        fantasy_players = FantasyPlayer.objects.filter(player=player)
-
-        for fantasy_player in fantasy_players:
-            try:
-                team_selection = TeamSelection.objects.get(
-                    fantasy_team=fantasy_player.fantasy_team,
-                    gameweek=fixture.gameweek,
-                    is_finalized=True,
-                )
-
-                is_starter = fantasy_player in team_selection.starters.all()
-
-                if not is_starter:
-                    logger.debug(
-                        f"{player.name} not in starting lineup for {fantasy_player.fantasy_team.name}"
-                    )
-                    continue
-
-                points_to_add = base_incremental_points
-                role = "starter"
-
-                if team_selection.captain.player == player:
-                    captain_performance = PlayerPerformance.objects.get(
-                        player=team_selection.captain.player,
-                        fixture=fixture,
-                        gameweek=fixture.gameweek,
-                    )
-
-                    if captain_performance.minutes_played > 0:
-                        role = "captain"
-                    else:
-                        logger.info(
-                            f"Captain {team_selection.captain.player.name} didn't play"
-                        )
-
-                elif team_selection.vice_captain.player == player:
-                    captain_performance = PlayerPerformance.objects.filter(
-                        player=team_selection.captain.player,
-                        fixture=fixture,
-                        gameweek=fixture.gameweek,
-                    ).first()
-
-                    if (
-                        not captain_performance
-                        or captain_performance.minutes_played == 0
-                    ):
-                        points_to_add = base_incremental_points * 2
-                        role = "vice_captain_active"
-                        logger.info(
-                            f"Vice-captain {player.name} gets double points "
-                            f"(captain didn't play) for {fantasy_player.fantasy_team.name}"
-                        )
-                    else:
-                        role = "vice_captain"
-
-                fantasy_player.total_points += points_to_add
-                fantasy_player.save()
-
-                fantasy_team = fantasy_player.fantasy_team
-                fantasy_team.total_points += points_to_add
-                fantasy_team.save()
-
-                logger.info(
-                    f"Updated {fantasy_player.fantasy_team.name}: "
-                    f"+{points_to_add} points for {player.name} ({role})"
-                )
-
-            except TeamSelection.DoesNotExist:
-                logger.debug(
-                    f"No finalized team selection for {fantasy_player.fantasy_team.name} in GW{fixture.gameweek.number}"
-                )
-                continue
-            except PlayerPerformance.DoesNotExist:
-                logger.warning(
-                    f"No performance record for {player.name} in fixture {fixture.id}"
-                )
-                continue
-            except Exception as e:
-                logger.error(
-                    f"Error updating fantasy team {fantasy_player.fantasy_team.name} "
-                    f"for player {player.name}: {e}",
-                    exc_info=True,
-                )
-
-    except Exception as e:
-        logger.error(
-            f"Error in captain/vice-captain logic for {player.name}: {e}", exc_info=True
-        )
 
 
 def trigger_clean_sheet_processing():

@@ -520,7 +520,7 @@ if CELERY_SCRAPING_QUEUE_ENABLED:
     CELERY_TASK_ROUTES = {
         "apps.kpl.tasks.sync.*": {"queue": "scraping"},
         "apps.kpl.tasks.lineups.*": {"queue": "scraping"},
-        "apps.kpl.tasks.live_games.*": {"queue": "scraping"},
+        "apps.kpl.tasks.live.*": {"queue": "scraping"},
     }
 else:
     CELERY_TASK_ROUTES = {}

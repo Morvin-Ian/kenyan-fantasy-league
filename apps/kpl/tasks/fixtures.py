@@ -23,8 +23,8 @@ from .gameweeks import (
     check_current_active_gameweek,
     set_active_gameweek_from_date_ranges,
     set_active_gameweek_from_fixtures,
+    setup_team_finalization_task,
 )
-from .live_games import setup_gameweek_monitoring
 
 logging.config.dictConfig(base.DEFAULT_LOGGING)
 logger = logging.getLogger(__name__)
@@ -291,6 +291,26 @@ def find_player(
     return None
 
 
+def _schedule_finalization() -> None:
+    """Make sure the active gameweek has its team-finalisation task scheduled.
+
+    This used to be reached through setup_gameweek_monitoring, which also
+    created a per-fixture polling task for the browser-driven live monitor. That
+    monitor is gone — a single scheduled task now polls every match at once —
+    but the finalisation task it set up is still needed, so it is called here
+    directly.
+    """
+    gameweek = Gameweek.objects.filter(is_active=True).first()
+    if gameweek is None:
+        return
+    try:
+        setup_team_finalization_task(gameweek)
+    except Exception as exc:  # noqa: BLE001 - scheduling must not fail the update
+        logger.error(
+            "could not schedule finalisation for GW%s: %s", gameweek.number, exc
+        )
+
+
 @shared_task
 def update_active_gameweek():
     try:
@@ -298,18 +318,18 @@ def update_active_gameweek():
         current_date = current_datetime.date()
 
         if check_current_active_gameweek(current_datetime):
-            setup_gameweek_monitoring.delay()
+            _schedule_finalization()
             return True
 
         Gameweek.objects.update(is_active=False)
 
         if set_active_gameweek_from_fixtures(current_datetime, current_date):
-            setup_gameweek_monitoring.delay()
+            _schedule_finalization()
             return True
 
         # Fallback: try to set active gameweek based on date ranges
         if set_active_gameweek_from_date_ranges(current_datetime, current_date):
-            setup_gameweek_monitoring.delay()
+            _schedule_finalization()
             return True
 
         logger.warning("No suitable gameweek found to set as active.")
