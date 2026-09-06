@@ -2,8 +2,11 @@ import logging
 from typing import Dict, List
 
 from django.db import transaction
+from django.db.models import Q
 
-from apps.fantasy.models import FantasyPlayer, PlayerPerformance, TeamSelection
+from apps.fantasy import scoring
+from apps.fantasy.models import PlayerPerformance, TeamSelection
+from apps.fantasy.services import scoring_engine
 from apps.kpl.models import Fixture, ProcessedMatchEvent, Team
 
 logger = logging.getLogger(__name__)
@@ -64,115 +67,28 @@ class FixtureValidator:
 
 
 class FantasyPointsCalculator:
-    @staticmethod
-    def calculate_full(performance, is_captain=False):
-        """Calculate full points from scratch"""
-        position = performance.player.position
-        points = 0
+    """Thin wrapper over :mod:`apps.fantasy.scoring`.
 
-        if performance.minutes_played > 0:
-            points += 1
-        if performance.minutes_played >= 60:
-            points += 1
-
-        if position == "GKP":
-            points += performance.goals_scored * 6
-        elif position == "DEF":
-            points += performance.goals_scored * 6
-        elif position == "MID":
-            points += performance.goals_scored * 5
-        else:  # FWD
-            points += performance.goals_scored * 4
-
-        points += performance.assists * 3
-
-        if position in ["GKP", "DEF"]:
-            points += performance.clean_sheets * 4
-        elif position == "MID":
-            points += performance.clean_sheets * 1
-
-        if position == "GKP":
-            points += performance.saves // 3
-
-        points += performance.penalties_saved * 5
-        points -= performance.penalties_missed * 2
-
-        points -= performance.own_goals * 2
-
-        points -= performance.yellow_cards * 1
-        points -= performance.red_cards * 3
-
-        if is_captain:
-            return points * 2
-        return points
+    This used to hold its own copy of the rules, in two variants. The
+    incremental one only applied a rule when a stat increased, so a correction
+    downward (a card rescinded, a goal reassigned) was never refunded, and it
+    ran ``saves // 3`` per delta so two saves at a time scored nothing. Both are
+    gone: points are recomputed from the whole stat line every time, which makes
+    a correction in either direction land correctly.
+    """
 
     @staticmethod
-    def calculate_incremental(new_performance, old_values, is_captain=False):
-        position = new_performance.player.position
-        points = 0
+    def calculate_full(performance, is_captain=False, multiplier=None):
+        """Points for one performance, with the captain multiplier applied.
 
-        old_minutes = old_values["minutes_played"]
-        new_minutes = new_performance.minutes_played
-
-        if new_minutes != old_minutes:
-            if old_minutes == 0 and new_minutes > 0:
-                points += 1  # Appearance point
-            if old_minutes < 60 and new_minutes >= 60:
-                points += 1  # 60+ minutes point
-
-        goals_diff = new_performance.goals_scored - old_values["goals_scored"]
-        if goals_diff > 0:
-            if position == "GKP":
-                points += goals_diff * 6
-            elif position == "DEF":
-                points += goals_diff * 6
-            elif position == "MID":
-                points += goals_diff * 5
-            else:  # FWD
-                points += goals_diff * 4
-
-        assists_diff = new_performance.assists - old_values["assists"]
-        if assists_diff > 0:
-            points += assists_diff * 3
-
-        clean_sheets_diff = new_performance.clean_sheets - old_values["clean_sheets"]
-        if clean_sheets_diff > 0:
-            if position in ["GKP", "DEF"]:
-                points += clean_sheets_diff * 4
-            elif position == "MID":
-                points += clean_sheets_diff * 1
-
-        saves_diff = new_performance.saves - old_values["saves"]
-        if saves_diff > 0 and position == "GKP":
-            points += saves_diff // 3
-
-        penalties_saved_diff = (
-            new_performance.penalties_saved - old_values["penalties_saved"]
-        )
-        if penalties_saved_diff > 0:
-            points += penalties_saved_diff * 5
-
-        penalties_missed_diff = (
-            new_performance.penalties_missed - old_values["penalties_missed"]
-        )
-        if penalties_missed_diff > 0:
-            points -= penalties_missed_diff * 2
-
-        own_goals_diff = new_performance.own_goals - old_values["own_goals"]
-        if own_goals_diff > 0:
-            points -= own_goals_diff * 2
-
-        yellow_cards_diff = new_performance.yellow_cards - old_values["yellow_cards"]
-        if yellow_cards_diff > 0:
-            points -= yellow_cards_diff * 1
-
-        red_cards_diff = new_performance.red_cards - old_values["red_cards"]
-        if red_cards_diff > 0:
-            points -= red_cards_diff * 3
-
-        if is_captain:
-            return points * 2
-        return points
+        ``multiplier`` overrides the captain doubling — 3 for a Triple Captain
+        gameweek. It is passed explicitly rather than read from the chip here so
+        this stays a pure function of the stat line.
+        """
+        points = scoring.score_performance(performance)
+        if multiplier is not None:
+            return points * multiplier
+        return points * 2 if is_captain else points
 
 
 class MatchEventService:
@@ -232,108 +148,37 @@ class MatchEventService:
 
     @staticmethod
     def _update_fantasy_team_points(player, fixture, incremental_points=None):
-        """
-        Update fantasy team points with proper captain/vice-captain handling.
-        If captain didn't play, vice-captain gets double points.
+        """Rescore every fantasy team affected by a change to this player.
 
-        Args:
-            player: The player whose performance changed
-            fixture: The fixture
-            incremental_points: If provided, use this instead of recalculating from performance
+        This used to add points straight onto ``FantasyTeam.total_points`` as
+        each event arrived. That accumulated, so re-processing a fixture double
+        counted and a corrected stat could never be taken back off; it also
+        never actually doubled the captain's score, and ignored chips entirely.
+
+        Scoring is now delegated to :mod:`apps.fantasy.services.scoring_engine`,
+        which recomputes a gameweek from the selection and the performances.
+        Running it twice on the same data gives the same answer.
+
+        ``incremental_points`` is accepted and ignored so the existing call
+        sites keep working; there is no longer an incremental path.
         """
         try:
-            fantasy_players = FantasyPlayer.objects.filter(player=player)
+            selections = (
+                TeamSelection.objects.filter(
+                    gameweek=fixture.gameweek, is_finalized=True
+                )
+                .filter(Q(starters__player=player) | Q(bench__player=player))
+                .select_related("fantasy_team", "captain", "vice_captain", "gameweek")
+                .distinct()
+            )
 
-            for fantasy_player in fantasy_players:
-                try:
-                    team_selection = TeamSelection.objects.get(
-                        fantasy_team=fantasy_player.fantasy_team,
-                        gameweek=fixture.gameweek,
-                        is_finalized=True,
-                    )
+            for selection in selections:
+                scoring_engine.recalculate_selection(selection)
 
-                    is_starter = fantasy_player in team_selection.starters.all()
-
-                    if not is_starter:
-                        continue
-
-                    performance = PlayerPerformance.objects.get(
-                        player=player, fixture=fixture, gameweek=fixture.gameweek
-                    )
-
-                    if incremental_points is not None:
-                        base_points = incremental_points
-                    else:
-                        base_points = performance.fantasy_points
-
-                    points_to_add = base_points
-                    role = "starter"
-
-                    if team_selection.captain.player == player:
-                        captain_performance = performance
-
-                        if captain_performance.minutes_played > 0:
-                            role = "captain"
-                        else:
-                            role = "captain_no_play"
-                            logger.info(
-                                f"Captain {player.name} didn't play in {fantasy_player.fantasy_team.name}"
-                            )
-
-                    elif team_selection.vice_captain.player == player:
-                        # This player is the vice-captain
-                        # Check if captain played
-                        try:
-                            captain_performance = PlayerPerformance.objects.get(
-                                player=team_selection.captain.player,
-                                fixture=fixture,
-                                gameweek=fixture.gameweek,
-                            )
-
-                            if captain_performance.minutes_played == 0:
-                                if incremental_points is not None:
-                                    points_to_add = base_points * 2
-                                else:
-                                    points_to_add = base_points * 2
-
-                                role = "vice_captain_active"
-                                logger.info(
-                                    f"Vice-captain {player.name} gets double points "
-                                    f"(captain didn't play) for {fantasy_player.fantasy_team.name}"
-                                )
-                            else:
-                                role = "vice_captain"
-
-                        except PlayerPerformance.DoesNotExist:
-                            if incremental_points is not None:
-                                points_to_add = base_points * 2
-                            else:
-                                points_to_add = base_points * 2
-                            role = "vice_captain_active"
-                            logger.info(
-                                f"Vice-captain {player.name} gets double points "
-                                f"(captain no performance) for {fantasy_player.fantasy_team.name}"
-                            )
-
-                    fantasy_player.total_points += points_to_add
-                    fantasy_player.save()
-
-                    fantasy_team = fantasy_player.fantasy_team
-                    fantasy_team.total_points += points_to_add
-                    fantasy_team.save()
-
-                    logger.debug(
-                        f"Updated {fantasy_player.fantasy_team.name}: "
-                        f"+{points_to_add} points for {player.name} ({role})"
-                    )
-
-                except TeamSelection.DoesNotExist:
-                    continue
-                except PlayerPerformance.DoesNotExist:
-                    continue
-
-        except Exception as e:
-            logger.error(f"Error updating fantasy team points for {player.name}: {e}")
+        except Exception as exc:  # noqa: BLE001 - one team must not stop the rest
+            logger.error(
+                "Error updating fantasy team points for %s: %s", player.name, exc
+            )
 
     @staticmethod
     def _store_old_values(performance):
@@ -453,19 +298,11 @@ class MatchEventService:
 
                     is_captain = MatchEventService._get_captain_status(player, fixture)
 
-                    if created:
-                        performance.fantasy_points = (
-                            FantasyPointsCalculator.calculate_full(
-                                performance, is_captain
-                            )
-                        )
-                    else:
-                        incremental_points = (
-                            FantasyPointsCalculator.calculate_incremental(
-                                performance, old_values, is_captain
-                            )
-                        )
-                        performance.fantasy_points += incremental_points
+                    # One rule table, always from the whole stat line: see
+                    # apps.fantasy.scoring. This row is shared by every manager who
+                    # owns the player, so it stores the raw score - the captain
+                    # multiplier belongs to a team's selection, not to the player.
+                    performance.fantasy_points = scoring.score_performance(performance)
 
                     performance.save()
 
@@ -610,19 +447,11 @@ class MatchEventService:
 
                     is_captain = MatchEventService._get_captain_status(player, fixture)
 
-                    if created:
-                        performance.fantasy_points = (
-                            FantasyPointsCalculator.calculate_full(
-                                performance, is_captain
-                            )
-                        )
-                    else:
-                        incremental_points = (
-                            FantasyPointsCalculator.calculate_incremental(
-                                performance, old_values, is_captain
-                            )
-                        )
-                        performance.fantasy_points += incremental_points
+                    # One rule table, always from the whole stat line: see
+                    # apps.fantasy.scoring. This row is shared by every manager who
+                    # owns the player, so it stores the raw score - the captain
+                    # multiplier belongs to a team's selection, not to the player.
+                    performance.fantasy_points = scoring.score_performance(performance)
 
                     performance.save()
 
@@ -796,15 +625,8 @@ class MatchEventService:
             old_card_count = current_value
             setattr(performance, field_name, current_value + count)
 
-            if created:
-                performance.fantasy_points = FantasyPointsCalculator.calculate_full(
-                    performance, is_captain
-                )
-            else:
-                incremental_points = FantasyPointsCalculator.calculate_incremental(
-                    performance, old_values, is_captain
-                )
-                performance.fantasy_points += incremental_points
+            # Raw score from the whole stat line; see apps.fantasy.scoring.
+            performance.fantasy_points = scoring.score_performance(performance)
 
             performance.save()
 
@@ -911,19 +733,13 @@ class MatchEventService:
                             old_minutes_out = perf_out.minutes_played
                             perf_out.minutes_played = minute
 
-                            if created_out:
-                                perf_out.fantasy_points = (
-                                    FantasyPointsCalculator.calculate_full(
-                                        perf_out, is_captain_out
-                                    )
-                                )
-                            else:
-                                incremental_points = (
-                                    FantasyPointsCalculator.calculate_incremental(
-                                        perf_out, old_values_out, is_captain_out
-                                    )
-                                )
-                                perf_out.fantasy_points += incremental_points
+                            # One rule table, always from the whole stat line: see
+                            # apps.fantasy.scoring. This row is shared by every manager who
+                            # owns the player, so it stores the raw score - the captain
+                            # multiplier belongs to a team's selection, not to the player.
+                            perf_out.fantasy_points = scoring.score_performance(
+                                perf_out
+                            )
 
                             perf_out.save()
 
@@ -1013,19 +829,11 @@ class MatchEventService:
                             old_minutes_in = perf_in.minutes_played
                             perf_in.minutes_played = minutes_in
 
-                            if created_in:
-                                perf_in.fantasy_points = (
-                                    FantasyPointsCalculator.calculate_full(
-                                        perf_in, is_captain_in
-                                    )
-                                )
-                            else:
-                                incremental_points = (
-                                    FantasyPointsCalculator.calculate_incremental(
-                                        perf_in, old_values_in, is_captain_in
-                                    )
-                                )
-                                perf_in.fantasy_points += incremental_points
+                            # One rule table, always from the whole stat line: see
+                            # apps.fantasy.scoring. This row is shared by every manager who
+                            # owns the player, so it stores the raw score - the captain
+                            # multiplier belongs to a team's selection, not to the player.
+                            perf_in.fantasy_points = scoring.score_performance(perf_in)
 
                             perf_in.save()
 
@@ -1152,19 +960,11 @@ class MatchEventService:
 
                     is_captain = MatchEventService._get_captain_status(player, fixture)
 
-                    if created:
-                        performance.fantasy_points = (
-                            FantasyPointsCalculator.calculate_full(
-                                performance, is_captain
-                            )
-                        )
-                    else:
-                        incremental_points = (
-                            FantasyPointsCalculator.calculate_incremental(
-                                performance, old_values, is_captain
-                            )
-                        )
-                        performance.fantasy_points += incremental_points
+                    # One rule table, always from the whole stat line: see
+                    # apps.fantasy.scoring. This row is shared by every manager who
+                    # owns the player, so it stores the raw score - the captain
+                    # multiplier belongs to a team's selection, not to the player.
+                    performance.fantasy_points = scoring.score_performance(performance)
 
                     performance.save()
 
@@ -1292,19 +1092,11 @@ class MatchEventService:
 
                     is_captain = MatchEventService._get_captain_status(player, fixture)
 
-                    if created:
-                        performance.fantasy_points = (
-                            FantasyPointsCalculator.calculate_full(
-                                performance, is_captain
-                            )
-                        )
-                    else:
-                        incremental_points = (
-                            FantasyPointsCalculator.calculate_incremental(
-                                performance, old_values, is_captain
-                            )
-                        )
-                        performance.fantasy_points += incremental_points
+                    # One rule table, always from the whole stat line: see
+                    # apps.fantasy.scoring. This row is shared by every manager who
+                    # owns the player, so it stores the raw score - the captain
+                    # multiplier belongs to a team's selection, not to the player.
+                    performance.fantasy_points = scoring.score_performance(performance)
 
                     performance.save()
 
@@ -1323,13 +1115,9 @@ class MatchEventService:
                             "new_own_goals": performance.own_goals,
                             "old_points": old_values["fantasy_points"],
                             "new_points": performance.fantasy_points,
-                            "points_deducted": (
-                                abs(incremental_points)
-                                if not created
-                                else abs(
-                                    performance.fantasy_points
-                                    - old_values["fantasy_points"]
-                                )
+                            "points_deducted": abs(
+                                performance.fantasy_points
+                                - old_values["fantasy_points"]
                             ),
                             "is_captain": is_captain,
                             "points_multiplier": 2 if is_captain else 1,

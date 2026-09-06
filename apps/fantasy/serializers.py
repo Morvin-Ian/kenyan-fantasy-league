@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db.models import Sum
 from rest_framework import serializers
 
+from apps.fantasy import scoring
 from apps.fantasy.models import (
     Chip,
     FantasyPlayer,
@@ -238,6 +239,8 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
     current_value = serializers.SerializerMethodField(read_only=True)
     gameweek_points = serializers.SerializerMethodField(read_only=True)
     total_points_for_team = serializers.SerializerMethodField(read_only=True)
+    points_breakdown = serializers.SerializerMethodField(read_only=True)
+    bench_order = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = FantasyPlayer
@@ -258,6 +261,8 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             "jersey_image",
             "gameweek_points",
             "total_points_for_team",
+            "points_breakdown",
+            "bench_order",
         )
         read_only_fields = (
             "total_points",
@@ -270,6 +275,8 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
             "fantasy_team",
             "gameweek_points",
             "total_points_for_team",
+            "points_breakdown",
+            "bench_order",
         )
 
     def get_total_points(self, obj):
@@ -305,6 +312,28 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
     def get_current_value(self, obj):
         return obj.player.current_value
+
+    def get_points_breakdown(self, obj):
+        """How this player's gameweek points were made up.
+
+        Rendered in the player modal so a manager can see exactly what was
+        added and what was taken off, rather than only a net number. Built from
+        apps.fantasy.scoring, the same rules that produced the number.
+        """
+        try:
+            gameweek = (
+                self.context.get("requested_gameweek")
+                or Gameweek.objects.filter(is_active=True).first()
+            )
+            if not gameweek:
+                return []
+            performance = obj.player.performances.filter(gameweek=gameweek).first()
+            if not performance:
+                return []
+            return scoring.breakdown_for(performance)
+        except Exception as exc:  # noqa: BLE001 - never break the team view
+            logger.warning("could not build a points breakdown for %s: %s", obj, exc)
+            return []
 
     def get_gameweek_points(self, obj):
         try:
@@ -397,6 +426,7 @@ class FantasyPlayerSerializer(serializers.ModelSerializer):
 
 
 class PlayerPerformanceSerializer(serializers.ModelSerializer):
+    points_breakdown = serializers.SerializerMethodField(read_only=True)
     player_name = serializers.CharField(source="player.name", read_only=True)
     team_name = serializers.CharField(source="player.team.name", read_only=True)
 
@@ -416,10 +446,22 @@ class PlayerPerformanceSerializer(serializers.ModelSerializer):
             "penalties_saved",
             "penalties_missed",
             "minutes_played",
+            "goals_conceded",
+            "bonus",
+            "bps",
             "fantasy_points",
+            "points_breakdown",
             "created_at",
             "updated_at",
         ]
+
+    def get_points_breakdown(self, obj):
+        """The itemised rules that produced fantasy_points.
+
+        Comes from apps.fantasy.scoring so the explanation can never drift from
+        the number it is explaining.
+        """
+        return scoring.breakdown_for(obj)
 
 
 class TeamSelectionSerializer(serializers.ModelSerializer):

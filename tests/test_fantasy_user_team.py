@@ -10,8 +10,6 @@ comparisons that are false, so neither branch rendered and the page was blank.
 The endpoint must keep its list contract so the frontend's guards work.
 """
 
-from unittest.mock import MagicMock
-
 import pytest
 from django.test.utils import override_settings
 from rest_framework.test import APIClient
@@ -83,9 +81,8 @@ def test_gameweek_players_returns_not_found_when_no_gameweek_is_available(monkey
     """GET /fantasy/players/gameweek-players must not dereference a missing gameweek."""
     # The FantasyTeam post_save signal reaches past the cache for a raw Redis
     # client, which the locmem backend cannot hand out.
-    monkeypatch.setattr(
-        "apps.fantasy.signals.get_redis_connection", lambda alias: MagicMock()
-    )
+    # apps.fantasy.signals.drop() swallows its own cache failures now, so the
+    # receivers no longer need a stand-in Redis connection to survive.
 
     user = User.objects.create_user(
         username="team-owner",
@@ -115,9 +112,8 @@ def test_gameweek_players_rejects_non_positive_or_non_numeric_gameweek(
     monkeypatch, gameweek
 ):
     """The optional gameweek query parameter must not reach an integer ORM field raw."""
-    monkeypatch.setattr(
-        "apps.fantasy.signals.get_redis_connection", lambda alias: MagicMock()
-    )
+    # apps.fantasy.signals.drop() swallows its own cache failures now, so the
+    # receivers no longer need a stand-in Redis connection to survive.
     user = User.objects.create_user(
         username="team-owner",
         email="team-owner@example.com",
@@ -136,3 +132,42 @@ def test_gameweek_players_rejects_non_positive_or_non_numeric_gameweek(
 
     assert response.status_code == 400
     assert response.data == {"detail": "Gameweek must be a positive integer."}
+
+
+@override_settings(CACHES=LOCMEM_CACHE)
+@pytest.mark.django_db
+def test_a_failed_load_is_not_reported_as_having_no_team(monkeypatch):
+    """A team that exists but cannot be serialised must not look like no team.
+
+    The endpoint caught every exception and returned a ``{"detail": ...}`` body,
+    and the client coerced any non-list body to ``[]``. So a server-side failure
+    rendered the "Build Your KPL Fantasy Team!" empty state, and creating one
+    then failed with "You already have a fantasy team." A pending migration
+    presented exactly that way.
+
+    The endpoint must answer with an error status, so the client can tell the
+    two apart.
+    """
+    user = User.objects.create_user(
+        username="owner",
+        email="owner@example.com",
+        password="password",
+        first_name="Team",
+        last_name="Owner",
+    )
+    FantasyTeam.objects.create(user=user, name="Existing XI", formation="4-4-2")
+
+    def explode(*args, **kwargs):
+        raise RuntimeError("column fantasy_teamselection.points does not exist")
+
+    monkeypatch.setattr(
+        "apps.fantasy.serializers.FantasyTeamSerializer.to_representation", explode
+    )
+
+    client = APIClient()
+    client.force_authenticate(user=user)
+    response = client.get("/api/v1/fantasy/teams/user-team/")
+
+    assert response.status_code >= 500
+    # And crucially not an empty list, which is the "you have no team" answer.
+    assert response.data != []

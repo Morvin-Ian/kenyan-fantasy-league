@@ -1,10 +1,13 @@
 import random
+from decimal import Decimal
+from typing import Optional
 
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.fantasy import scoring
 from apps.kpl.models import Player
 
 from ..models import (
@@ -128,13 +131,33 @@ class FantasyService:
         vice_captain_id = None
         starter_ids = []
 
+        # Every price written to the squad comes from here, so the request body
+        # cannot set what a player was bought for.
+        submitted_ids = [
+            entry.get("player") or entry.get("id")
+            for entry in (
+                [starting_eleven.get("goalkeeper")]
+                + [
+                    player
+                    for key in ("defenders", "midfielders", "forwards")
+                    for player in starting_eleven.get(key, [])
+                ]
+                + list(bench_players)
+            )
+            if entry
+        ]
+        prices = {
+            str(player.id): player.current_value
+            for player in Player.objects.filter(id__in=submitted_ids)
+        }
+
         goalkeeper = starting_eleven.get("goalkeeper")
         if goalkeeper:
             player_id = goalkeeper.get("player") or goalkeeper.get("id")
             all_player_ids.append(player_id)
             starter_ids.append(player_id)
             players_to_update[player_id] = FantasyService._build_player_data(
-                goalkeeper, is_starter=True
+                goalkeeper, is_starter=True, price=prices.get(str(player_id))
             )
             if goalkeeper.get("is_captain"):
                 captain_id = player_id
@@ -148,18 +171,22 @@ class FantasyService:
                 all_player_ids.append(player_id)
                 starter_ids.append(player_id)
                 players_to_update[player_id] = FantasyService._build_player_data(
-                    player_data, is_starter=True
+                    player_data, is_starter=True, price=prices.get(str(player_id))
                 )
                 if player_data.get("is_captain"):
                     captain_id = player_id
                 if player_data.get("is_vice_captain"):
                     vice_captain_id = player_id
 
-        for player_data in bench_players:
+        # The client sends the bench as an ordered list; that order is who comes
+        # on first when a starter does not play.
+        bench_order = {}
+        for index, player_data in enumerate(bench_players, start=1):
             player_id = player_data.get("player") or player_data.get("id")
             all_player_ids.append(player_id)
+            bench_order[str(player_id)] = index
             players_to_update[player_id] = FantasyService._build_player_data(
-                player_data, is_starter=False
+                player_data, is_starter=False, price=prices.get(str(player_id))
             )
 
         num_transfers = 0
@@ -177,21 +204,30 @@ class FantasyService:
 
             free_transfers = fantasy_team.free_transfers
             additional_transfers = max(0, num_transfers - free_transfers)
-            transfer_cost = additional_transfers * 4  # 4 points per additional transfer
-
-            if transfer_cost > float(fantasy_team.transfer_budget):
-                raise ValidationError(
-                    f"Insufficient transfer budget. Required: {transfer_cost}, Available: {fantasy_team.transfer_budget}"
-                )
+            # A transfer beyond the free allowance costs points, not money. This
+            # used to be charged against transfer_budget, a DecimalField that
+            # defaults to 0.00, so the check below rejected every extra transfer
+            # outright and the -4 hit could never actually be taken.
+            transfer_cost = additional_transfers * abs(scoring.TRANSFER_HIT_POINTS)
 
             # Handle transfers
+            paid_transfers = additional_transfers
             for player_id_out in players_to_remove:
                 player_out = Player.objects.get(id=player_id_out)
                 player_in_id = players_to_add.pop() if players_to_add else None
                 player_in = (
                     Player.objects.get(id=player_in_id) if player_in_id else None
                 )
-                transfer_cost_per_player = 4 if num_transfers > free_transfers else 0
+                # Only the transfers beyond the free allowance are charged. The
+                # previous version tagged every transfer in the batch with 4, so
+                # three transfers on one free transfer recorded a cost of 12
+                # against a hit of 8.
+                charged = paid_transfers > 0
+                if charged:
+                    paid_transfers -= 1
+                transfer_cost_per_player = (
+                    abs(scoring.TRANSFER_HIT_POINTS) if charged else 0
+                )
                 PlayerTransfer.objects.create(
                     fantasy_team=fantasy_team,
                     player_out=player_out,
@@ -200,9 +236,7 @@ class FantasyService:
                     transfer_cost=transfer_cost_per_player,
                 )
 
-            # Update transfer budget and free transfers
             if num_transfers > free_transfers:
-                fantasy_team.transfer_budget -= transfer_cost
                 fantasy_team.free_transfers = 0
             else:
                 fantasy_team.free_transfers -= num_transfers
@@ -269,6 +303,8 @@ class FantasyService:
             captain_id=captain_id,
             vice_captain_id=vice_captain_id,
             starter_ids=starter_ids,
+            bench_order=bench_order,
+            transfer_hit=-transfer_cost,
         )
 
         return {
@@ -276,6 +312,7 @@ class FantasyService:
             "players_updated": len(players_to_bulk_update),
             "transfers_made": num_transfers,
             "transfer_cost": transfer_cost,
+            "points_hit": -transfer_cost,
             "remaining_free_transfers": fantasy_team.free_transfers,
             "remaining_transfer_budget": float(fantasy_team.transfer_budget),
             "team_selection_id": str(team_selection.id),
@@ -299,15 +336,25 @@ class FantasyService:
         fantasy_team.save(update_fields=["budget"])
 
     @staticmethod
-    def _create_team_selection(
+    def _create_team_selection(  # noqa: PLR0913 - one call site, all required
         fantasy_team: FantasyTeam,
         gameweek: Gameweek,
         formation: str,
         captain_id: str,
         vice_captain_id: str,
         starter_ids: list,
+        bench_order: dict = None,
+        transfer_hit: int = 0,
     ) -> TeamSelection:
-        """Create or update team selection for the gameweek"""
+        """Create or update the team selection for a gameweek.
+
+        ``transfer_hit`` is the points deduction for transfers beyond the free
+        allowance, stored on the gameweek it applies to so the scoring engine
+        can subtract it and the client can show gross and net separately.
+
+        ``bench_order`` is ``{player id: position on the bench}``, which decides
+        who comes on first when a starter does not play.
+        """
         captain = FantasyPlayer.objects.get(
             fantasy_team=fantasy_team, player__id=captain_id
         )
@@ -330,6 +377,7 @@ class FantasyService:
                 "captain": captain,
                 "vice_captain": vice_captain,
                 "is_finalized": False,
+                "transfer_hit": transfer_hit,
             },
         )
 
@@ -337,10 +385,19 @@ class FantasyService:
             team_selection.formation = formation
             team_selection.captain = captain
             team_selection.vice_captain = vice_captain
+            # Hits accumulate across several saves inside one gameweek.
+            team_selection.transfer_hit += transfer_hit
             team_selection.save()
 
         team_selection.starters.set(starters)
         team_selection.bench.set(bench)
+
+        if bench_order:
+            for fantasy_player in bench:
+                order = bench_order.get(str(fantasy_player.player_id))
+                if order is not None and fantasy_player.bench_order != order:
+                    fantasy_player.bench_order = order
+                    fantasy_player.save(update_fields=["bench_order", "updated_at"])
 
         return team_selection
 
@@ -399,19 +456,25 @@ class FantasyService:
         return starting_eleven
 
     @staticmethod
-    def _build_player_data(player_data: dict, is_starter: bool) -> dict:
+    def _build_player_data(
+        player_data: dict, is_starter: bool, price: Optional[Decimal] = None
+    ) -> dict:
+        """Build the stored fields for one squad member.
+
+        Prices are taken from the ``Player`` row rather than the request body.
+        They used to be read straight off ``player_data``, so a caller could
+        post any purchase price it liked — the budget check read the database
+        but the value that was *stored* came from the client, which is what
+        later sell-price and profit maths is based on.
+        """
         return {
             "is_starter": is_starter,
             "is_captain": player_data.get("is_captain", False) if is_starter else False,
             "is_vice_captain": (
                 player_data.get("is_vice_captain", False) if is_starter else False
             ),
-            "purchase_price": player_data.get(
-                "purchase_price", player_data.get("price", 0)
-            ),
-            "current_value": player_data.get(
-                "current_value", player_data.get("price", 0)
-            ),
+            "purchase_price": price if price is not None else Decimal("0"),
+            "current_value": price if price is not None else Decimal("0"),
         }
 
     @staticmethod
@@ -444,13 +507,41 @@ class FantasyService:
         starter_counts = {"GKP": 0, "DEF": 0, "MID": 0, "FWD": 0}
         bench_counts = {"GKP": 0, "DEF": 0, "MID": 0, "FWD": 0}
 
-        if starting_eleven.get("goalkeeper"):
-            starter_counts["GKP"] += 1
+        # Counted by the position the database holds, not by which array the
+        # client put the player in. Only the bench used to be checked this way,
+        # so an eleven of forwards submitted as "defenders" passed validation —
+        # and then scored as forwards, because that is what the scoring engine
+        # reads. The client also rewrites a player's position locally when you
+        # swap across positions, which made that easy to trigger by accident.
+        submitted_positions = {}
+        goalkeeper = starting_eleven.get("goalkeeper")
+        if goalkeeper:
+            submitted_positions[goalkeeper.get("player") or goalkeeper.get("id")] = (
+                "goalkeeper"
+            )
         for position in ["defenders", "midfielders", "forwards"]:
-            pos_key = {"defenders": "DEF", "midfielders": "MID", "forwards": "FWD"}[
-                position
-            ]
-            starter_counts[pos_key] += len(starting_eleven.get(position, []))
+            for player_data in starting_eleven.get(position, []):
+                submitted_positions[
+                    player_data.get("player") or player_data.get("id")
+                ] = position
+
+        expected_for_slot = {
+            "goalkeeper": "GKP",
+            "defenders": "DEF",
+            "midfielders": "MID",
+            "forwards": "FWD",
+        }
+        for player_id, slot in submitted_positions.items():
+            try:
+                player = Player.objects.get(id=player_id)
+            except Player.DoesNotExist:
+                continue
+            starter_counts[player.position] += 1
+            if player.position != expected_for_slot[slot]:
+                raise ValidationError(
+                    f"{player.name} is a {player.get_position_display()} and cannot "
+                    f"be played in the {slot} line."
+                )
 
         for player_data in bench_players:
             try:

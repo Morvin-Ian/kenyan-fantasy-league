@@ -161,8 +161,25 @@
       </div>
     </div>
 
+    <!-- Load failure: say so, rather than falling through to "create a team". -->
+    <div v-if="fantasyStore.error && (!fantasyStore.userTeam || fantasyStore.userTeam.length === 0)"
+      class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-3">We could not load your team</h2>
+      <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">{{ fantasyStore.error }}</p>
+      <button @click="reloadTeam"
+        class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-8 rounded-full shadow-lg transition transform hover:scale-105">
+        Try again
+      </button>
+    </div>
+
     <!-- No Team State -->
-    <div v-if="!fantasyStore.userTeam || fantasyStore.userTeam.length === 0"
+    <!--
+      Only offered when the team list actually came back empty. A failed load
+      leaves fantasyStore.error set, and inviting someone to create a team they
+      already have is how "you already have a fantasy team" appeared under a
+      Create button.
+    -->
+    <div v-if="!fantasyStore.error && (!fantasyStore.userTeam || fantasyStore.userTeam.length === 0)"
       class="animate-fade-in max-w-3xl mx-auto text-center py-12 flex flex-col items-center justify-center min-h-[50vh]">
       <h2 class="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4">Build Your KPL Fantasy Team!</h2>
       <p class="text-sm sm:text-base text-gray-500 mb-6 max-w-md">Start your Kenyan Premier League fantasy journey by
@@ -623,6 +640,15 @@ const handlePlayerClick = (player: Player) => {
   }
 };
 
+const reloadTeam = async () => {
+  fantasyStore.error = null;
+  await fantasyStore.fetchUserFantasyTeam();
+  if (fantasyStore.userTeam && fantasyStore.userTeam.length > 0) {
+    await fantasyStore.fetchFantasyTeamPlayers();
+    initializeTeamState();
+  }
+};
+
 const handleFormationChange = (newFormation: string) => {
   currentFormation.value = newFormation;
   hasUnsavedChanges.value = true;
@@ -830,9 +856,9 @@ function performSwitch(targetPlayer: Player) {
   } else {
     swapBenchPlayers(sourcePlayer, targetPlayer);
   }
+  syncFormationToPitch();
   resetSwitchState();
   hasUnsavedChanges.value = true;
-  // showMessage("Players switched successfully!", "success");
 }
 
 const saveTeamChanges = async () => {
@@ -920,10 +946,16 @@ function isValidFormationChange(sourcePlayer: Player, targetPlayer: Player | Kpl
     else if (targetPlayer.position === "MID") midCount++;
     else if (targetPlayer.position === "FWD") fwdCount++;
   }
+  // These are the shapes the server accepts (see FantasyService's formation
+  // map): 3-5 defenders, 2-5 midfielders, 1-3 forwards. The old check demanded
+  // at least three midfielders and so refused legal 5-2-3 substitutions.
   return (
     defCount >= 3 &&
-    midCount >= 3 &&
+    defCount <= 5 &&
+    midCount >= 2 &&
+    midCount <= 5 &&
     fwdCount >= 1 &&
+    fwdCount <= 3 &&
     defCount + midCount + fwdCount + 1 === 11
   );
 }
@@ -1054,26 +1086,37 @@ function swapPlayersInStartingEleven(player1: Player, player2: Player) {
       }
     }
   } else {
-    const is_captain1 = player1.is_captain;
-    const is_vice_captain1 = player1.is_vice_captain;
-    const is_captain2 = player2.is_captain;
-    const is_vice_captain2 = player2.is_vice_captain;
-    removePlayerFromStartingEleven(player1);
-    removePlayerFromStartingEleven(player2);
-    addPlayerToStartingEleven({
-      ...player1,
-      position: player2.position,
-      is_captain: is_captain2,
-      is_vice_captain: is_vice_captain2,
-      is_starter: true,
-    });
-    addPlayerToStartingEleven({
-      ...player2,
-      position: player1.position,
-      is_captain: is_captain1,
-      is_vice_captain: is_vice_captain1,
-      is_starter: true,
-    });
+    // Both are already starting, so there is nothing to swap: they both play
+    // and both score. This branch used to rewrite each player's position to the
+    // other's, which changed what the pitch showed without changing anything
+    // that scores - a midfielder displayed as a forward still scored as a
+    // midfielder - and sent that invented position to the server.
+    showMessage(
+      "Both players are already in your starting eleven. Swap a starter with a substitute instead.",
+      "info",
+    );
+  }
+}
+
+/**
+ * The formation the current starting eleven actually is.
+ *
+ * A substitution across positions changes the shape, and the formation string
+ * has to follow it: the server validates the eleven against the formation it is
+ * sent, so leaving it stale makes a legal substitution look like an illegal
+ * team.
+ */
+function derivedFormation(): string {
+  const def = startingElevenRef.value.defenders.length;
+  const mid = startingElevenRef.value.midfielders.length;
+  const fwd = startingElevenRef.value.forwards.length;
+  return `${def}-${mid}-${fwd}`;
+}
+
+function syncFormationToPitch() {
+  const derived = derivedFormation();
+  if (derived !== currentFormation.value) {
+    currentFormation.value = derived;
   }
 }
 

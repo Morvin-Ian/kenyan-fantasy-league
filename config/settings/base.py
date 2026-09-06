@@ -451,6 +451,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.kpl.tasks.sync.sync_top_scorers",
         "schedule": crontab(hour=23, minute=30),
     },
+    # --- live scores: only worth polling while matches are actually on ---
+    "sync-live-scores": {
+        "task": "apps.kpl.tasks.live.sync_live_scores",
+        "schedule": crontab(day_of_week="fri,sat,sun", hour="14-22", minute="*/5"),
+    },
     # --- gameweek bookkeeping ---
     "update-kpl-gameweek": {
         "task": "apps.kpl.tasks.fixtures.update_active_gameweek",
@@ -499,6 +504,12 @@ SCRAPER_PRIMARY_PATHS = env("SCRAPER_PRIMARY_PATHS", "")
 # Lineup providers to try, in order.
 SCRAPER_LINEUP_PROVIDERS = env("SCRAPER_LINEUP_PROVIDERS", "")
 
+# Live scores. This source renders in the browser rather than on the server, so
+# the adapter drives a real browser; see apps/kpl/scraping/providers/live.py.
+SCRAPER_LIVE_BASE_URL = env("SCRAPER_LIVE_BASE_URL", "")
+SCRAPER_LIVE_PATH = env("SCRAPER_LIVE_PATH", "")
+SCRAPER_LIVE_COMPETITION = env("SCRAPER_LIVE_COMPETITION", "")
+
 # Route scraping onto its own Celery queue. Leave false until the images have
 # been rebuilt with the queue-aware start scripts, otherwise the routed tasks
 # have no worker listening for them.
@@ -509,7 +520,7 @@ if CELERY_SCRAPING_QUEUE_ENABLED:
     CELERY_TASK_ROUTES = {
         "apps.kpl.tasks.sync.*": {"queue": "scraping"},
         "apps.kpl.tasks.lineups.*": {"queue": "scraping"},
-        "apps.kpl.tasks.live_games.*": {"queue": "scraping"},
+        "apps.kpl.tasks.live.*": {"queue": "scraping"},
     }
 else:
     CELERY_TASK_ROUTES = {}

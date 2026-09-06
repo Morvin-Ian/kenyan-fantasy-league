@@ -280,3 +280,57 @@ def test_provider_refuses_to_run_unconfigured():
     ):
         with pytest.raises(primary.SourceNotConfigured):
             primary.path_for("standings", season="x")
+
+
+# --------------------------------------------------------------------------- #
+# The per-fixture live monitor was removed
+# --------------------------------------------------------------------------- #
+
+
+def test_the_old_per_fixture_live_monitor_is_gone():
+    """``apps.kpl.tasks.live_games`` was replaced by ``apps.kpl.tasks.live``.
+
+    It drove a browser against a second source one match at a time, from a
+    Celery periodic task it created per fixture, and carried its own copies of
+    the event parsing and the fantasy points rules.
+    """
+    assert not (REPO_ROOT / "apps" / "kpl" / "tasks" / "live_games.py").exists()
+
+    with pytest.raises(ImportError):
+        importlib.import_module("apps.kpl.tasks.live_games")
+
+
+def test_nothing_still_imports_the_removed_monitor():
+    """A stale import would take the whole task registry down with it."""
+    offenders = []
+    for path in REPO_ROOT.glob("apps/**/*.py"):
+        text = path.read_text(encoding="utf-8")
+        # The docstrings that explain the removal are allowed to name it.
+        for line in text.splitlines():
+            stripped = line.strip()
+            if stripped.startswith(("import ", "from ")) and "live_games" in stripped:
+                offenders.append(f"{path.relative_to(REPO_ROOT)}: {stripped}")
+    assert offenders == []
+
+
+def test_the_replacement_live_task_is_registered_with_celery():
+    import apps.kpl.tasks  # noqa: F401  (registers the tasks)
+    from config.celery import app as celery_app
+
+    assert "apps.kpl.tasks.live.sync_live_scores" in celery_app.tasks
+    assert not any("live_games" in name for name in celery_app.tasks)
+
+
+def test_every_scheduled_task_actually_exists():
+    """A beat entry naming a task nobody registered fails on every tick."""
+    import apps.fantasy.tasks  # noqa: F401
+    import apps.kpl.tasks  # noqa: F401
+    from config.celery import app as celery_app
+    from config.settings import base
+
+    missing = [
+        entry["task"]
+        for entry in base.CELERY_BEAT_SCHEDULE.values()
+        if entry["task"] not in celery_app.tasks
+    ]
+    assert missing == []

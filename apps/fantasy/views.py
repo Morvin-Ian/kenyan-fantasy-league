@@ -1,3 +1,5 @@
+import logging
+
 from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from rest_framework import permissions, status
@@ -26,6 +28,8 @@ from .serializers import (
 from .services.fantasy import FantasyService
 from .services.gameweek_status import GameweekStatusService
 from .services.team_service import TeamOfTheWeekService
+
+logger = logging.getLogger(__name__)
 
 
 class FantasyTeamViewSet(ModelViewSet):
@@ -99,9 +103,17 @@ class FantasyTeamViewSet(ModelViewSet):
             cache.set(cache_key, serializer.data, 300)
 
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
+        except Exception as exc:  # noqa: BLE001 - reported, not hidden
+            # This used to swallow the cause into an opaque 500 body. The client
+            # coerced any non-list body to [], so the Team page rendered "Build
+            # your team" and creating one then failed with "you already have a
+            # fantasy team". A pending migration presented exactly that way, so
+            # the reason has to reach the log.
+            logger.exception(
+                "could not serialise the fantasy team for user %s", request.user.id
+            )
             return Response(
-                {"detail": f"An error occurred: {str(e)}"},
+                {"detail": f"An error occurred: {exc}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

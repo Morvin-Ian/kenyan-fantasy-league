@@ -5,9 +5,10 @@ module missing from this list is never registered and its schedule entries fail
 with ``NotRegistered``. Every task module belongs here.
 """
 
-from . import gameweeks, live_games, sync  # noqa: F401
+from . import gameweeks, sync  # noqa: F401
 from .fixtures import update_active_gameweek
 from .lineups import fetch_lineup_for_fixture_task, scan_upcoming_fixtures_for_lineups
+from .live import sync_live_scores
 from .sync import (
     sync_all,
     sync_fixtures,
@@ -22,6 +23,7 @@ from .sync import (
 
 __all__ = [
     "sync_all",
+    "sync_live_scores",
     "sync_teams",
     "sync_team_logos",
     "sync_fixtures",

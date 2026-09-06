@@ -65,7 +65,19 @@ export const useFantasyStore = defineStore("fantasy", {
         // FantasyTeam[]` state against a non-array body so TeamView's
         // `.length` guards never see a dict (regression: a 200
         // {"detail": ...} response blanked the whole Team page).
-        const data = Array.isArray(response.data) ? response.data : [];
+        //
+        // A non-array body means the request failed, which is NOT the same as
+        // having no team: coercing both to [] made a server error render as the
+        // "Build your team" empty state, so a manager with a team was invited to
+        // create one and then told they already had one. Record it as an error
+        // and leave the existing team in place.
+        if (!Array.isArray(response.data)) {
+          this.error =
+            (response.data as { detail?: string })?.detail ??
+            "Could not load your team. Please try again.";
+          return null;
+        }
+        const data = response.data;
         this.userTeam = data;
 
         if (data.length > 0) {

@@ -34,7 +34,11 @@ class FantasyTeam(TimeStampedUUIDModel):
         max_length=10, choices=FORMATION_CHOICES, default="3-4-3"
     )
     free_transfers = models.PositiveIntegerField(default=1)
-    total_points = models.PositiveIntegerField(default=0)
+    # Signed: a gameweek can be negative (a red card is -3, an own goal -2, a
+    # transfer hit -4). As a PositiveIntegerField this carried a database CHECK
+    # (total_points >= 0) and every points update for a sent-off player failed
+    # with IntegrityError, rolling back the whole gameweek.
+    total_points = models.IntegerField(default=0)
     overall_rank = models.PositiveIntegerField(null=True, blank=True)
     transfer_budget = models.DecimalField(max_digits=6, decimal_places=2, default=0.00)
 
@@ -85,10 +89,14 @@ class FantasyPlayer(TimeStampedUUIDModel):
         FantasyTeam, on_delete=models.CASCADE, related_name="players"
     )
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    total_points = models.PositiveIntegerField(default=0)
+    total_points = models.IntegerField(default=0)  # signed; see FantasyTeam
     is_captain = models.BooleanField(default=False)
     is_vice_captain = models.BooleanField(default=False)
     is_starter = models.BooleanField(default=True)
+    # Which bench player comes on first when a starter does not play. 1 is the
+    # first outfield substitute; the reserve keeper is picked by position, not
+    # by this order, exactly as it works in the game being modelled.
+    bench_order = models.PositiveIntegerField(default=0)
     purchase_price = models.DecimalField(max_digits=6, decimal_places=2)
     current_value = models.DecimalField(max_digits=6, decimal_places=2)
     gameweek_added = models.ForeignKey(
@@ -201,11 +209,22 @@ class PlayerPerformance(TimeStampedUUIDModel):
     goals_scored = models.PositiveIntegerField(default=0)
     assists = models.PositiveIntegerField(default=0)
     clean_sheets = models.PositiveIntegerField(default=0)
+    # Goalkeepers and defenders lose a point per two conceded. There was no
+    # field for this at all, so the rule could not be applied.
+    goals_conceded = models.PositiveIntegerField(default=0)
     saves = models.PositiveIntegerField(default=0)
     own_goals = models.PositiveIntegerField(default=0)
     penalties_saved = models.PositiveIntegerField(default=0)
     penalties_missed = models.PositiveIntegerField(default=0)
     minutes_played = models.PositiveIntegerField(default=0)
+    # Combined clearances, blocks, interceptions and tackles, and key passes.
+    # Only the bonus score reads these; they stay 0 while the source does not
+    # publish them, which simply makes bonus turn on goals, assists and saves.
+    defensive_actions = models.PositiveIntegerField(default=0)
+    key_passes = models.PositiveIntegerField(default=0)
+    # Raw bonus-point score, and the 3/2/1 actually awarded for the match.
+    bps = models.IntegerField(default=0)
+    bonus = models.PositiveIntegerField(default=0)
     fantasy_points = models.IntegerField(default=0)
 
     class Meta:
@@ -242,6 +261,15 @@ class TeamSelection(TimeStampedUUIDModel):
     starters = models.ManyToManyField(FantasyPlayer, related_name="starter_selections")
     bench = models.ManyToManyField(FantasyPlayer, related_name="bench_selections")
     is_finalized = models.BooleanField(default=False)
+    # The gameweek score, recomputed from the performances rather than
+    # accumulated. Points used to be added straight onto FantasyTeam.total_points
+    # as events arrived, so a re-run double counted and a correction could not be
+    # undone. Storing the per-gameweek total makes the season total derivable.
+    points = models.IntegerField(default=0)
+    # Points deducted for transfers beyond the free allowance, held separately so
+    # the gross and net scores can both be shown.
+    transfer_hit = models.IntegerField(default=0)
+    points_calculated_at = models.DateTimeField(null=True, blank=True)
     active_chip = models.CharField(
         max_length=2,
         choices=ChipType.choices,

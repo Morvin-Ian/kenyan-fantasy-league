@@ -144,11 +144,36 @@ on it.
   that still needs a human. The admin action *Confirm position* flips a row to
   `manual` so the nightly sync stops touching it.
 
+See `docs/scoring.md` for how these stats become fantasy points.
+
 ## Live scoring
 
-`apps/kpl/tasks/live_games.py` is a separate, older path: it drives a browser
-against `MATCHES_URL` for in-play scores. It is untouched by this pipeline and
-still the only source of live updates, because the match report `sync_match_details`
-reads is published after the final whistle. The two do not overlap —
-`MatchEventService` deduplicates on `event_key`, so whichever arrives first wins
-and the other is a no-op.
+`apps/kpl/tasks/live.py` polls a browser-rendered scores source every five
+minutes on match afternoons (`SCRAPER_LIVE_*`). The primary source publishes a
+match only after the final whistle, so without this nothing moves while a match
+is being played. That page is a JavaScript shell with no server-rendered markup,
+so the adapter drives a real browser, clicks the site's own competition filter
+and parses the DOM — the same thing a visitor's browser does. It writes
+conservatively: a fixture the settlement path has already completed is never
+rewritten, and an unrecognised state is treated as "still to play" rather than
+settling a match that is still on.
+
+The per-fixture browser monitor that used to live in
+`apps/kpl/tasks/live_games.py` has been removed. It drove a browser against a
+second source one match at a time, from a Celery periodic task it created per
+fixture — about a thousand lines carrying its own copies of the event parsing
+and of the fantasy points rules. The task above reads every match on the page in
+one pass on a single schedule, and settles points through the one scoring
+engine.
+
+Two things it did are kept. When a fixture turns completed the live task
+triggers `process_clean_sheets_on_completion`, and `update_active_gameweek` now
+schedules the team-finalisation task directly rather than reaching it through
+the monitor's setup. Migration `kpl.0024` deletes the per-fixture `PeriodicTask`
+rows it left behind, which would otherwise fail every beat tick with
+`NotRegistered`.
+
+The live task and the settlement path do not conflict: `MatchEventService`
+deduplicates on `event_key`, the clean-sheet task recomputes rather than
+accumulates, and a fixture the settlement path has completed is never rewritten
+from the live source.

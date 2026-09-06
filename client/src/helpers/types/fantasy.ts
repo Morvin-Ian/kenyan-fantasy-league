@@ -1,3 +1,9 @@
+export interface PointsBreakdownLine {
+  label: string;
+  points: number;
+  detail: string;
+}
+
 export interface FantasyTeam {
   user: string;
   id: string;
@@ -40,6 +46,10 @@ export interface FantasyPlayer {
   gameweek: number;
   total_points: number;
   gameweek_points: number | null;
+  /** How gameweek_points was made up: one line per scoring rule that applied. */
+  points_breakdown?: PointsBreakdownLine[];
+  /** Position on the bench; decides who comes on in an automatic substitution. */
+  bench_order?: number;
   is_captain: boolean;
   is_vice_captain: boolean;
   is_starter: boolean;
