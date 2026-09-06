@@ -6,14 +6,14 @@
       <div class="flex items-center justify-between mb-2 sm:mb-4">
         <div class="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
           <div class="min-w-0 flex-1">
-            <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 truncate">{{ team.name
+            <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-800 truncate">{{ team?.name
             }}</h2>
             <p class="text-xs sm:text-sm text-gray-500">Manager Dashboard</p>
           </div>
         </div>
         <div class="text-right flex-shrink-0">
           <div class="text-xs text-gray-400 uppercase tracking-wide">Gameweek</div>
-          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ team.requested_gameweek }}
+          <div class="text-sm sm:text-base lg:text-lg font-bold text-indigo-600">{{ team?.requested_gameweek }}
           </div>
         </div>
       </div>
@@ -26,7 +26,7 @@
         <h3 class="text-sm sm:text-base font-semibold text-gray-800 flex items-center">
           Team Value
         </h3>
-        <span class="text-sm sm:text-base font-bold text-gray-800">KES {{ team.budget }}m</span>
+        <span class="text-sm sm:text-base font-bold text-gray-800">KES {{ team?.budget }}m</span>
       </div>
       <div class="space-y-1 sm:space-y-2">
         <div class="flex items-center justify-between">
@@ -37,12 +37,11 @@
       </div>
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Formation</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team.requested_gameweek_formation
-          }}</span>
+          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ displayFormation }}</span>
         </div>
         <div class="flex items-center justify-between">
           <span class="text-xs sm:text-sm text-gray-600">Free Transfers</span>
-          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team.free_transfers
+          <span class="text-xs sm:text-sm font-semibold text-green-600">{{ team?.free_transfers
           }}</span>
         </div>
       </div>
@@ -57,7 +56,7 @@
             <div class="min-w-0 flex-1">
               <div class="text-blue-100 text-xs uppercase tracking-wide mb-1">Gameweek Points</div>
               <div class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
-                {{ team.requested_gameweek_points }}
+                {{ team?.requested_gameweek_points }}
               </div>
             </div>
             <div
@@ -79,8 +78,8 @@
               <div class="text-orange-100 text-xs uppercase tracking-wide mb-1">Best Week</div>
 
               <!-- Show best week data if available -->
-              <div v-if="team.best_week" class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
-                {{ team.best_week }} pts
+              <div v-if="team?.best_week" class="font-bold text-lg sm:text-xl lg:text-2xl truncate">
+                {{ team?.best_week }} pts
               </div>
 
               <!-- Show message if no best week yet -->
@@ -220,7 +219,7 @@
                 <h4 class="font-semibold text-yellow-800 text-sm sm:text-base">Transfer Information</h4>
               </div>
               <div class="text-xs sm:text-sm text-yellow-700 space-y-1">
-                <p>• You have <span class="font-semibold">{{ team.free_transfers }}</span> free
+                <p>• You have <span class="font-semibold">{{ team?.free_transfers }}</span> free
                   transfer(s) this gameweek</p>
                 <p>• Additional transfers cost 4 points each</p>
                 <p>• Available budget: <span class="font-semibold">KES {{ inBank.toFixed(1) }}m</span></p>
@@ -258,6 +257,8 @@ const props = defineProps<{
   inBank?: number;
   currentGameweek: number | null;
   recentForm?: number[];
+  /** The shape currently on the pitch, used until the gameweek has a saved one. */
+  formation?: string;
 }>();
 
 const inBank = computed(() => props.inBank || 0.5);
@@ -277,7 +278,19 @@ const getFormClass = (score: number) => {
   return 'bg-red-500 text-white shadow-lg';
 };
 
-const team = fantasyStore.userTeam[0]
-const budget = Number(team.budget)
-const remaining = 70.0 - budget
+// A computed, not a snapshot. This was `const team = fantasyStore.userTeam[0]`,
+// read once at setup: every figure in this panel then kept whatever the store
+// happened to hold at first mount and never updated again — including after a
+// save refetched the team.
+const team = computed(() => fantasyStore.userTeam[0] ?? null);
+
+const budget = computed(() => Number(team.value?.budget ?? 0));
+const remaining = computed(() => 70.0 - budget.value);
+
+// requested_gameweek_formation is null until a selection has been saved for that
+// gameweek, so fall back to the shape currently on the pitch rather than showing
+// an empty row.
+const displayFormation = computed(
+  () => team.value?.requested_gameweek_formation || props.formation || "—",
+);
 </script>

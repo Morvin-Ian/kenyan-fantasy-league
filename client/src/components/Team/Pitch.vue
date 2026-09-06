@@ -152,11 +152,14 @@ const currentFormation = computed(() => {
   return `${props.defenders.length}-${props.midfielders.length}-${props.forwards.length}`;
 });
 
+// immediate: a watcher does not fire for its initial value, so the shape the
+// pitch is actually drawing was never announced on load. The parent kept its
+// default formation string, and saving sent that instead of what was on screen.
 watch(currentFormation, (newFormation, oldFormation) => {
   if (newFormation !== oldFormation) {
     emit('formation-change', newFormation);
   }
-});
+}, { immediate: true });
 
 
 const isPlayerDisabled = (player: Player) => {

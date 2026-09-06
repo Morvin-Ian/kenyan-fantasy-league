@@ -157,7 +157,7 @@
 
         <Sidebar :total-points="totalPoints" :average-points="averagePoints" :highest-points="highestPoints"
           :overall-rank="overallRank" :team="userTeamName" :in-bank="remainingBudget"
-          :currentGameweek="fantasyStore.currentGameweek" />
+          :currentGameweek="fantasyStore.currentGameweek" :formation="currentFormation" />
       </div>
     </div>
 
@@ -434,6 +434,11 @@ const defenders = computed(() => startingElevenRef.value.defenders);
 const midfielders = computed(() => startingElevenRef.value.midfielders);
 const forwards = computed(() => startingElevenRef.value.forwards);
 const benchPlayers = computed(() => benchPlayersRef.value);
+// Seeded from the store if it happens to be loaded already, but the pitch is
+// the authority: initializeTeamState() derives this from the players actually
+// placed. The ref's initialiser runs once at setup, before the team is fetched,
+// so on its own it would sit on the default while the pitch showed something
+// else — and the mismatched formation is what gets validated on save.
 const currentFormation = ref(fantasyStore.userTeam[0]?.formation || "4-4-2");
 
 const totalPoints = computed(() => (userTeam.value.length ? userTeam.value[0].total_points : 0));
@@ -577,6 +582,12 @@ function initializeTeamState() {
   while (benchPlayersRef.value.length < requiredBenchPlayers) {
     benchPlayersRef.value.push(createPlaceholderPlayer("MID", benchIndex++, false));
   }
+
+  // The pitch is the authority on the shape. currentFormation is a ref whose
+  // initialiser runs at setup, before the team has been fetched, so without this
+  // it sat on the "4-4-2" default while the pitch drew 3-4-3 — and it is the
+  // formation string, not the pitch, that is sent and validated on save.
+  syncFormationToPitch();
 
   initialTeamState.value = {
     startingEleven: JSON.parse(JSON.stringify(startingElevenRef.value)),
