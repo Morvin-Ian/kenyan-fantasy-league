@@ -292,6 +292,7 @@ def sync_standings():
     with transaction.atomic():
         Standing.objects.all().delete()
         Standing.objects.bulk_create(snapshot)
+        transaction.on_commit(lambda: cache.delete("standings_list_page_1"))
 
     logger.info(
         "league table for %s replaced with %d rows", season.label, len(snapshot)

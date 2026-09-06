@@ -10,6 +10,7 @@ now built and validated in full before anything is deleted.
 from datetime import datetime, timedelta
 
 import pytest
+from django.core.cache import cache
 from django.utils import timezone
 
 from apps.kpl.models import (
@@ -98,6 +99,42 @@ def test_standings_snapshot_replaces_the_table(monkeypatch, clubs):
         (2, 21),
         (3, 18),
     ]
+
+
+@pytest.mark.django_db
+def test_a_written_table_is_not_hidden_behind_an_empty_cached_page(
+    monkeypatch, clubs, django_capture_on_commit_callbacks
+):
+    """The standings endpoint caches page one for 24 hours, including an empty one.
+
+    ``bulk_create`` emits no ``post_save``, so the ``Standing`` signal that
+    invalidates ``standings_list_page_*`` never fires for a snapshot — the rows
+    land in the database and the client keeps being served the empty page it
+    cached before the season started.
+
+    The invalidation is deliberately deferred to ``transaction.on_commit``, so it
+    has to be captured and run here: under ``django_db`` the test's own
+    transaction is rolled back and the callback would otherwise never fire.
+    """
+    cache.set("standings_list_page_1", {"results": []}, timeout=86400)
+
+    monkeypatch.setattr(
+        primary,
+        "fetch_standings",
+        lambda tournament_id: [
+            # A pre-season table: every row valid, every number zero.
+            standing_row(1, "clb00036", "Gor Mahia FC", 0),
+            standing_row(2, "clb00038", "AFC Leopards", 0),
+            standing_row(3, "clb00035", "Tusker FC", 0),
+        ],
+    )
+
+    with django_capture_on_commit_callbacks(execute=True) as callbacks:
+        sync.sync_standings()
+
+    assert Standing.objects.count() == 3
+    assert callbacks, "the snapshot registered no cache invalidation on commit"
+    assert cache.get("standings_list_page_1") is None
 
 
 @pytest.mark.django_db
