@@ -357,3 +357,69 @@ def test_a_sent_off_player_does_not_crash_the_update(squad):
     squad["team"].refresh_from_db()
     assert result.points < 0
     assert squad["team"].total_points == result.points
+
+
+# --------------------------------------------------------------------------- #
+# The deploy path: historical gameweeks have to be scored, not zeroed
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.django_db
+def test_rescore_rebuilds_totals_from_the_recorded_performances(squad, capsys):
+    """Season totals used to be accumulated; they are derived now.
+
+    A selection written before this change carries the column default of 0, so
+    without a rescore the derived total would be lower than the accumulated one
+    and the first match event to touch the team would write the lower number.
+    """
+    from django.core.management import call_command
+
+    for name in ELEVEN:
+        perform(squad, name, minutes_played=90)
+    selection = select(squad, ELEVEN, BENCH, captain="Forward 1", vice="Midfielder 1")
+
+    # As it would look straight after the migration: finalised, never scored.
+    assert selection.points == 0
+    assert selection.points_calculated_at is None
+    squad["team"].total_points = 999  # the old accumulated value
+    squad["team"].save()
+
+    call_command("rescore")
+
+    selection.refresh_from_db()
+    squad["team"].refresh_from_db()
+    assert selection.points > 0
+    assert selection.points_calculated_at is not None
+    assert squad["team"].total_points == selection.points
+
+
+@pytest.mark.django_db
+def test_rescore_is_safe_to_run_twice(squad):
+    from django.core.management import call_command
+
+    for name in ELEVEN:
+        perform(squad, name, minutes_played=90)
+    select(squad, ELEVEN, BENCH, captain="Forward 1", vice="Midfielder 1")
+
+    call_command("rescore")
+    squad["team"].refresh_from_db()
+    first = squad["team"].total_points
+
+    call_command("rescore")
+    squad["team"].refresh_from_db()
+    assert squad["team"].total_points == first
+
+
+@pytest.mark.django_db
+def test_a_dry_run_writes_nothing(squad):
+    from django.core.management import call_command
+
+    for name in ELEVEN:
+        perform(squad, name, minutes_played=90)
+    selection = select(squad, ELEVEN, BENCH, captain="Forward 1", vice="Midfielder 1")
+
+    call_command("rescore", "--dry-run")
+
+    selection.refresh_from_db()
+    assert selection.points == 0
+    assert selection.points_calculated_at is None

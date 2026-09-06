@@ -66,6 +66,17 @@ sum of its gameweek scores. It is derived rather than accumulated, so it cannot
 drift from the gameweeks it is supposed to be the sum of, and rescoring a
 gameweek is safe to repeat.
 
+Because the total is derived, a deploy that introduces this needs one rescore:
+existing selections carry the column default of 0, so until they are scored a
+team's derived total is lower than the total it accumulated under the old
+scheme, and the first match event to touch that team writes the lower number.
+
+    python manage.py rescore --dry-run   # report what would change
+    python manage.py rescore             # every gameweek with a selection
+
+It is safe to re-run at any time — nothing is accumulated, and it never writes
+to `PlayerPerformance`, which is what it reads.
+
 `scoring.breakdown()` itemises a score into the lines that produced it. It is
 built from the same rule table and asserted against `score()` in the tests, so
 the explanation shown in the player modal cannot disagree with the number.
