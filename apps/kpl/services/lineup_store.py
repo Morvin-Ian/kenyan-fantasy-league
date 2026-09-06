@@ -15,6 +15,7 @@ from apps.kpl.models import (
     PlayerAlias,
     Team,
 )
+from apps.kpl.scraping.normalize import position_code
 
 logger = logging.getLogger(__name__)
 
@@ -39,59 +40,13 @@ def normalize_player_name(raw_name: str) -> str:
 def map_role_to_position(
     role: Optional[str], position_guess: Optional[str] = None
 ) -> Optional[str]:
-    tokens: List[str] = []
-    if role:
-        tokens.append(role.lower())
-    if position_guess:
-        tokens.append(position_guess.lower())
-    token_str = " ".join(tokens)
-    if any(k in token_str for k in ["gk", "keeper", "goalkeeper"]):
-        return "GKP"
-    if any(
-        k in token_str
-        for k in [
-            "def",
-            "full back",
-            "centre back",
-            "center back",
-            "cb",
-            "rb",
-            "lb",
-            "wing back",
-            "back",
-        ]
-    ):
-        return "DEF"
-    if any(
-        k in token_str
-        for k in [
-            "mid",
-            "cm",
-            "am",
-            "dm",
-            "winger",
-            "wide",
-            "number 10",
-            "no 10",
-            "playmaker",
-        ]
-    ):
-        return "MID"
-    if any(
-        k in token_str
-        for k in [
-            "fwd",
-            "fw",
-            "striker",
-            "forward",
-            "cf",
-            "attacker",
-            "no 9",
-            "number 9",
-        ]
-    ):
-        return "FWD"
-    return None
+    """Reduce a lineup entry's role text to a ``POSITION_CHOICES`` code.
+
+    Delegates to :func:`apps.kpl.scraping.normalize.position_code` so lineups and
+    the squad scraper read the source's wording the same way. This wrapper is
+    kept because it is part of the ``apps.kpl.services`` public surface.
+    """
+    return position_code(role, position_guess)
 
 
 def _token_set_ratio(a: str, b: str) -> float:

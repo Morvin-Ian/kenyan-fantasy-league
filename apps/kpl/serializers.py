@@ -279,6 +279,9 @@ class PlayerCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         team_id = validated_data.pop("team_id")
         validated_data["team_id"] = team_id
+        # Someone typed this position in, so it outranks the scraper: sync_players
+        # leaves anything marked "manual" alone.
+        validated_data.setdefault("position_source", "manual")
         return Player.objects.create(**validated_data)
 
 

@@ -40,9 +40,41 @@ class StandingAdmin(admin.ModelAdmin):
 
 @admin.register(Player)
 class PlayerAdmin(admin.ModelAdmin):
-    list_display = ("name", "team", "position", "jersey_number", "age", "created_at")
-    list_filter = ("team", "position")
+    """The place unverified positions get corrected.
+
+    The upstream source publishes a position for a little under half the league,
+    so the rest sit on the ``MID`` placeholder. Filter on
+    "Unverified default" to get exactly the list that still needs a human, and
+    use the action below to lock a correction in — ``sync_players`` will not
+    overwrite a position marked ``manual``.
+    """
+
+    list_display = (
+        "name",
+        "team",
+        "position",
+        "position_source",
+        "jersey_number",
+        "age",
+        "created_at",
+    )
+    list_filter = ("position_source", "team", "position")
+    list_editable = ("position",)
     search_fields = ("name", "team__name")
+    actions = ("confirm_positions", "release_positions_to_the_source")
+
+    @admin.action(description="Confirm position (stop the scraper overwriting it)")
+    def confirm_positions(self, request, queryset):
+        updated = queryset.update(position_source="manual")
+        self.message_user(request, f"Confirmed the position of {updated} player(s).")
+
+    @admin.action(description="Release position back to the source")
+    def release_positions_to_the_source(self, request, queryset):
+        updated = queryset.update(position_source="default")
+        self.message_user(
+            request,
+            f"{updated} player(s) will take the source's position on the next sync.",
+        )
 
 
 @admin.register(Fixture)

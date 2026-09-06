@@ -46,6 +46,7 @@ SOURCE_SETTINGS = {
             "results=results.php?t={season}",
             "scorers=scorers.php?t={season}",
             "squads=squads.php?t={season}",
+            "squad=team_squad.php?t={team}",
             "match=match.php?s={match}",
         ]
     ),
@@ -306,3 +307,116 @@ def test_match_report_rejects_a_page_that_is_not_a_result(monkeypatch):
     )
     with pytest.raises(StructureChanged):
         primary.fetch_match_detail("1")
+
+
+# --------------------------------------------------------------------------- #
+# Club roster: the only page on this source that publishes a position
+# --------------------------------------------------------------------------- #
+
+
+def test_roster_carries_the_position_and_shirt_the_squads_page_omits(served):
+    """The whole point of the extra request per club."""
+    served("team_squad.html")
+    roster = primary.fetch_team_squad("clb00038", CURRENT_SEASON)
+
+    assert roster
+    assert all(player.provider_player_id for player in roster)
+
+    positioned = [player for player in roster if player.position]
+    assert positioned, "no position was read at all"
+    assert {player.position for player in positioned} <= {"GKP", "DEF", "MID", "FWD"}
+    assert any(player.position == "GKP" for player in positioned)
+    assert any(player.shirt_number for player in roster)
+
+
+def test_a_blank_position_is_left_unknown_rather_than_guessed(served):
+    """The source publishes no position for about half the league.
+
+    A guess is indistinguishable from a real position once it is in the
+    database, so a blank cell has to come back as ``None``.
+    """
+    served("team_squad.html")
+    roster = primary.fetch_team_squad("clb00038", CURRENT_SEASON)
+
+    blank = [player for player in roster if not player.position_label.strip()]
+    assert blank, "fixture no longer exercises the blank-position case"
+    assert all(player.position is None for player in blank)
+
+
+def test_the_league_squad_is_read_not_a_cup_squad(served):
+    """A club page stacks one table per competition it is entered in.
+
+    Reading the first table on the page would pick up whichever competition the
+    source happened to list first — a domestic cup, a friendly series — and
+    quietly attach that squad's positions to the league players.
+    """
+    served("team_squad.html")
+
+    league = primary.fetch_team_squad("clb00038", CURRENT_SEASON)
+    cup = primary.fetch_team_squad("clb00038", "cmp0100")
+
+    assert league and cup
+    league_ids = {player.provider_player_id for player in league}
+    cup_ids = {player.provider_player_id for player in cup}
+    assert league_ids != cup_ids
+
+
+def test_a_season_with_no_squad_yet_falls_back_to_the_latest_published_one(served):
+    """The source opens a season before clubs register squads for it.
+
+    Without this the whole league sits on the unverified default for the first
+    weeks of a season, even though the club's previous roster names the same
+    players in the same positions.
+    """
+    served("team_squad.html")
+    roster = primary.fetch_team_squad("clb00038", "cmp-not-on-this-page")
+
+    assert roster
+    assert any(player.position for player in roster)
+    # The fallback prefers this competition's own past seasons over a cup squad.
+    assert {player.provider_player_id for player in roster} == {
+        player.provider_player_id
+        for player in primary.fetch_team_squad("clb00038", CURRENT_SEASON)
+    }
+
+
+def test_the_fallback_can_be_turned_off(served):
+    served("team_squad.html")
+    assert (
+        primary.fetch_team_squad(
+            "clb00038", "cmp-not-on-this-page", allow_other_seasons=False
+        )
+        == []
+    )
+
+
+def test_a_roster_whose_position_column_disappeared_is_reported(monkeypatch):
+    """Losing the column silently would look exactly like an unpositioned league."""
+    from apps.kpl.scraping import http
+
+    html = page("team_squad.html").replace("<th>Position</th>", "<th>Height</th>")
+    monkeypatch.setattr(
+        primary,
+        "fetch",
+        lambda url, **kwargs: http.Response(url=url, status_code=200, text=html),
+    )
+
+    with pytest.raises(StructureChanged):
+        primary.fetch_team_squad("clb00038", CURRENT_SEASON)
+
+
+def test_a_roster_page_with_no_table_is_reported(monkeypatch):
+    from apps.kpl.scraping import http
+
+    monkeypatch.setattr(
+        primary,
+        "fetch",
+        lambda url, **kwargs: http.Response(
+            url=url,
+            status_code=200,
+            text="<html><body>down for maintenance</body></html>",
+        ),
+    )
+
+    with pytest.raises(StructureChanged):
+        primary.fetch_team_squad("clb00038", CURRENT_SEASON)
