@@ -55,6 +55,66 @@
 
       <!-- Content Section -->
       <div class="relative p-8 space-y-5 bg-gradient-to-b from-gray-50 to-white">
+        <!--
+          How this gameweek's points were made up. A manager can otherwise only
+          see a net number, which makes a deduction — a card, goals conceded, a
+          clean sheet missed for want of an hour on the pitch — invisible.
+        -->
+        <section
+          v-if="!selectedPlayer?.id.startsWith('placeholder')"
+          class="rounded-2xl border border-gray-200 bg-white overflow-hidden animate-slide-in-up animation-delay-200"
+        >
+          <header class="flex items-center justify-between px-5 py-3 bg-slate-50 border-b border-gray-200">
+            <span class="text-xs font-black uppercase tracking-wider text-slate-500">
+              This gameweek
+            </span>
+            <span
+              class="text-2xl font-black tabular-nums"
+              :class="gameweekPoints < 0 ? 'text-red-600' : 'text-slate-900'"
+            >{{ gameweekPoints }}</span>
+          </header>
+
+          <ul v-if="breakdown.length" class="divide-y divide-gray-100">
+            <li
+              v-for="line in breakdown"
+              :key="line.label"
+              class="flex items-center justify-between px-5 py-2.5 text-sm"
+            >
+              <span class="text-slate-700">
+                {{ line.label }}
+                <span v-if="line.detail" class="ml-1.5 text-xs text-slate-400">{{ line.detail }}</span>
+              </span>
+              <span
+                class="font-bold tabular-nums"
+                :class="line.points > 0 ? 'text-emerald-600' : line.points < 0 ? 'text-red-600' : 'text-slate-400'"
+              >{{ line.points > 0 ? '+' : '' }}{{ line.points }}</span>
+            </li>
+          </ul>
+          <p v-else class="px-5 py-4 text-sm text-slate-400">
+            No points recorded yet this gameweek.
+          </p>
+
+          <p
+            v-if="selectedPlayer?.is_captain"
+            class="px-5 py-2.5 text-xs text-slate-500 bg-slate-50 border-t border-gray-100"
+          >
+            Captain: these points are doubled in your total.
+          </p>
+          <p
+            v-else-if="selectedPlayer?.is_vice_captain"
+            class="px-5 py-2.5 text-xs text-slate-500 bg-slate-50 border-t border-gray-100"
+          >
+            Vice-captain: doubled only if your captain does not play.
+          </p>
+          <p
+            v-else-if="!selectedPlayer?.is_starter"
+            class="px-5 py-2.5 text-xs text-slate-500 bg-slate-50 border-t border-gray-100"
+          >
+            On the bench<span v-if="selectedPlayer?.bench_order"> (substitute {{ selectedPlayer.bench_order }})</span>.
+            Comes on automatically if a starter does not play.
+          </p>
+        </section>
+
         <ActionButton
           v-if="!selectedPlayer?.id.startsWith('placeholder')"
           @click="emitAction('initiate-switch')"
@@ -117,10 +177,10 @@
 </template>
 
 <script setup lang="ts">
-import type { FantasyPlayer as Player } from "@/helpers/types/fantasy";
+import type { FantasyPlayer as Player, PointsBreakdownLine } from "@/helpers/types/fantasy";
 import ActionButton from "./ActionButton.vue";
 import PositionBadge from "./PositionBadge.vue";
-import { watch } from 'vue';
+import { computed, watch } from 'vue';
 
 const props = defineProps<{
   showModal: boolean;
@@ -131,6 +191,12 @@ const emit = defineEmits<(
   event: "close-modal" | "initiate-switch" | "make-captain" | "make-vice-captain" | "transfer-player",
   payload?: Player | null
 ) => void>();
+
+const breakdown = computed<PointsBreakdownLine[]>(
+  () => props.selectedPlayer?.points_breakdown ?? [],
+);
+
+const gameweekPoints = computed(() => props.selectedPlayer?.gameweek_points ?? 0);
 
 const emitAction = (action: "close-modal" | "initiate-switch" | "make-captain" | "make-vice-captain" | "transfer-player") => {
   emit(action, props.selectedPlayer);

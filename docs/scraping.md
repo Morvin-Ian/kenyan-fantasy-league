@@ -144,7 +144,19 @@ on it.
   that still needs a human. The admin action *Confirm position* flips a row to
   `manual` so the nightly sync stops touching it.
 
+See `docs/scoring.md` for how these stats become fantasy points.
+
 ## Live scoring
+
+`apps/kpl/tasks/live.py` polls a browser-rendered scores source every five
+minutes on match afternoons (`SCRAPER_LIVE_*`). The primary source publishes a
+match only after the final whistle, so without this nothing moves while a match
+is being played. That page is a JavaScript shell with no server-rendered markup,
+so the adapter drives a real browser, clicks the site's own competition filter
+and parses the DOM — the same thing a visitor's browser does. It writes
+conservatively: a fixture the settlement path has already completed is never
+rewritten, and an unrecognised state is treated as "still to play" rather than
+settling a match that is still on.
 
 `apps/kpl/tasks/live_games.py` is a separate, older path: it drives a browser
 against `MATCHES_URL` for in-play scores. It is untouched by this pipeline and

@@ -21,7 +21,7 @@ correction — upward or downward — land correctly.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 # --------------------------------------------------------------------------- #
 # The rule table
@@ -250,3 +250,73 @@ def award_bonus(scores: Dict[object, int]) -> Dict[object, int]:
         for key, value in scores.items()
         if value in tier_for_value
     }
+
+
+# --------------------------------------------------------------------------- #
+# Explaining a score
+# --------------------------------------------------------------------------- #
+
+
+def breakdown(stats: Stats) -> List[Dict]:
+    """Itemise a score into the lines that produced it.
+
+    Built from the same rule table as :func:`score`, so the two cannot disagree,
+    and it is asserted against it in the tests. Only rules that actually scored
+    are listed — a player with no card does not need a line saying so.
+    """
+    position = _position(stats.position)
+    lines: List[Dict] = []
+
+    def add(label: str, points: int, detail: str = "", force: bool = False) -> None:
+        # Zero-point rules are left out — a player with no card needs no line
+        # saying so — except where the zero is the thing worth explaining.
+        if points or force:
+            lines.append({"label": label, "points": points, "detail": detail})
+
+    if stats.minutes_played >= MINUTES_FOR_FULL_APPEARANCE:
+        add(
+            "Played 60+ minutes",
+            APPEARANCE_POINTS + FULL_APPEARANCE_POINTS,
+            f"{stats.minutes_played} min",
+        )
+    elif stats.minutes_played >= MINUTES_FOR_APPEARANCE:
+        add("Appearance", APPEARANCE_POINTS, f"{stats.minutes_played} min")
+
+    add(
+        "Goals",
+        stats.goals_scored * GOAL_POINTS[position],
+        f"{stats.goals_scored} x {GOAL_POINTS[position]}" if stats.goals_scored else "",
+    )
+    add(
+        "Assists",
+        stats.assists * ASSIST_POINTS,
+        f"{stats.assists} x {ASSIST_POINTS}" if stats.assists else "",
+    )
+
+    if stats.clean_sheets and stats.minutes_played >= CLEAN_SHEET_MIN_MINUTES:
+        add("Clean sheet", stats.clean_sheets * CLEAN_SHEET_POINTS[position])
+    elif stats.clean_sheets:
+        add("Clean sheet", 0, f"needs {CLEAN_SHEET_MIN_MINUTES} min", force=True)
+
+    if position in GOALS_CONCEDED_POSITIONS and stats.goals_conceded:
+        add(
+            "Goals conceded",
+            -(stats.goals_conceded // GOALS_CONCEDED_PER_POINT),
+            f"{stats.goals_conceded} conceded",
+        )
+
+    if position == "GKP" and stats.saves:
+        add("Saves", stats.saves // SAVES_PER_POINT, f"{stats.saves} saves")
+
+    add("Penalties saved", stats.penalties_saved * PENALTY_SAVE_POINTS)
+    add("Penalties missed", stats.penalties_missed * PENALTY_MISS_POINTS)
+    add("Own goals", stats.own_goals * OWN_GOAL_POINTS)
+    add("Yellow cards", stats.yellow_cards * YELLOW_CARD_POINTS)
+    add("Red card", stats.red_cards * RED_CARD_POINTS)
+    add("Bonus", stats.bonus)
+
+    return lines
+
+
+def breakdown_for(performance) -> List[Dict]:
+    return breakdown(Stats.from_performance(performance))

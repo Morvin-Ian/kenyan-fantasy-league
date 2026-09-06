@@ -219,3 +219,38 @@ def test_an_unverified_position_is_scored_as_a_midfielder_not_crashed():
     """Half the league carries the unverified MID placeholder."""
     assert scoring.score(line(position=None, minutes_played=90, goals_scored=1)) == 7
     assert scoring.score(line(position="", minutes_played=90, goals_scored=1)) == 7
+
+
+# --------------------------------------------------------------------------- #
+# Explaining a score
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    "stats",
+    [
+        line(position="GKP", minutes_played=90, saves=5, clean_sheets=1, bonus=3),
+        line(position="DEF", minutes_played=90, goals_conceded=3, yellow_cards=1),
+        line(position="MID", minutes_played=72, goals_scored=1, assists=2),
+        line(position="FWD", minutes_played=20, red_cards=1, penalties_missed=1),
+        line(position="DEF", minutes_played=10, clean_sheets=1),
+        line(position="MID", minutes_played=0),
+    ],
+)
+def test_the_breakdown_always_adds_up_to_the_score(stats):
+    """The explanation and the number have to come from the same rules."""
+    assert sum(item["points"] for item in scoring.breakdown(stats)) == scoring.score(
+        stats
+    )
+
+
+def test_the_breakdown_says_why_a_clean_sheet_did_not_count():
+    items = scoring.breakdown(line(position="DEF", minutes_played=10, clean_sheets=1))
+    clean_sheet = next(i for i in items if i["label"] == "Clean sheet")
+    assert clean_sheet["points"] == 0
+    assert "60" in clean_sheet["detail"]
+
+
+def test_the_breakdown_omits_rules_that_did_not_score():
+    items = scoring.breakdown(line(position="MID", minutes_played=90))
+    assert [i["label"] for i in items] == ["Played 60+ minutes"]
